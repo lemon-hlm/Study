@@ -1,4 +1,29 @@
-[TOC]
+- 1 前景回顾
+    - 1.1 Linux的调度器组成
+        - 1.1.1 2个调度器
+        - 1.1.2 6种调度策略
+        - 1.1.3 5个调度器类
+        - 1.1.4 3个调度实体
+        - 1.1.5 调度器整体框架
+- 2 linux优先级的表示
+    - 2.1 优先级的内核表示
+        - 2.1.1 linux优先级概述
+        - 2.1.2 内核的优先级表示
+        - 2.1.3 DEF最早截至时间优先实时调度算法的优先级描述
+    - 2.2 进程的优先级表示
+        - 2.2.1 动态优先级 静态优先级 实时优先级
+- 3 进程优先级的计算
+    - 3.1 normal\_prio设置普通优先级normal\_prio
+        - 3.1.1 辅助函数task\_has\_dl\_policy和task\_has\_rt\_policy
+        - 3.1.2 关于rt\_priority数值越大, 实时进程优先级越高的问题
+        - 3.1.3 为什么需要\_\_normal\_prio函数
+    - 3.2 effective\_prio设置动态优先级prio
+        - 3.2.1 为什么effective\_prio使用优先级数值检测实时进程
+    - 3.3 设置prio的时机
+    - 3.4 nice系统调用的实现
+    - 3.5 fork时优先级的继承
+- 4 总结
+- 5 参考
 
 # 1 前景回顾
 
@@ -79,22 +104,24 @@ linux实现了6种调度策略,依据其调度策略的不同实现了5个调度
 
 ### 2.1.1 linux优先级概述
 
->在**用户空间**通过**nice命令**设置进程的**静态优先级**, 这在内部会调用**nice系统调用**, 进程的**nice值在\-20\~\+19之间(用户空间！！！**。）. 值越低优先级越高.
->
->**setpriority系统调**用也可以用来**设置进程的优先级**.它不仅能够**修改单个线程的优先级**, 还能**修改进程组中所有进程的优先级**,或者通过**制定UID来修改特定用户的所有进程的优先级(特定用户！！！**)
+在**用户空间**通过**nice命令**设置进程的**静态优先级**,这在内部会调用**nice系统调用**,进程的**nice值在\-20\~\+19之间(用户空间！！！**。）.值越低优先级越高.
+
+**setpriority系统调**用也可以用来**设置进程的优先级**.它不仅能够**修改单个线程的优先级**, 还能**修改进程组中所有进程的优先级**,或者通过**制定UID来修改特定用户的所有进程的优先级(特定用户！！！**)
 
 **内核**使用一些简单的数值范围**0\~139表示内部优先级（内核里面使用！！！**), 数值越低, 优先级越高。
 
 - **0\~99**的范围专供**实时进程**使用
 
-- nice的值[\-20,19]则映射到范围100~139, 用于普通进程
+- nice的值[**\-20,19**]则映射到范围**100\~139**, 用于**普通进程**
 
->linux2.6内核将任务优先级进行了一个划分, 实时优先级范围是0到MAX\_RT\_PRIO\-1（即99），而**普通进程的静态优先级**范围是从MAX\_RT\_PRIO到MAX\_PRIO-1（即100到139）.
+>linux2.6内核将任务优先级进行了一个划分, **实时进程**优先级范围是0到MAX\_RT\_PRIO\-1（即99），而**普通进程的静态优先级**范围是从MAX\_RT\_PRIO到MAX\_PRIO-1（即100到139）.
 
-| 优先级范围 | 描述 |
-| ------------- |:-------------|
-| 0——99 | 实时进程 |
-| 100——139 | 非实时进程 |
+内核里面**priority的范围**:
+
+| 优先级范围 | 内核宏 | 描述 |
+| -----------| ------ |:-----|
+| 0 —— 99 | 0 —— (MAX\_RT\_PRIO \- 1) | 实时进程 |
+| 100 —— 139 | MAX\_RT\_PRIO —— (MAX\_PRIO \- 1) | 非实时进程 |
 
 ![内核的优先级标度](../../images/priority.jpg)
 
@@ -126,7 +153,7 @@ linux实现了6种调度策略,依据其调度策略的不同实现了5个调度
 | NICE\_WIDTH | 40 | nice值得范围宽度, 即[\-20, 19]共40个数字的宽度 |
 | MAX\_RT\_PRIO, MAX\_USER\_RT\_PRIO | 100 | **实时进程的最大优先级** |
 | MAX\_PRIO | 140 | **普通进程的最大优先级** |
-| DEFAULT\_PRIO | 120 | **进程的默认优先级**, 对应于nice=0 |
+| DEFAULT\_PRIO | **120** | **进程的默认优先级**, 对应于nice=0 |
 | MAX\_DL\_PRIO | **0** | 使用**EDF最早截止时间优先**调度算法的**实时进程最大的优先级** |
 
 而内核提供了一组宏将优先级在各种不同的表示形之间转移
@@ -173,7 +200,7 @@ static inline long rlimit_to_nice(long prio)
 
 ### 2.1.3 DEF最早截至时间优先实时调度算法的优先级描述
 
-此外新版本的内核还引入了**EDF实时调度算法**, 它的优先级比RT进程和NORMAL/BATCH进程的优先级都要高, 关于EDF的优先级的设置信息都在内核头文件[include/linux/sched/deadline.h](http://lxr.free-electrons.com/source/include/linux/sched/deadline.h?v=4.6#L10)
+此外新版本的内核还引入了**EDF实时调度算法**,它的优先级比RT进程和NORMAL/BATCH进程的优先级都要高,关于**EDF的优先级的设置信息都在内核头文件**[include/linux/sched/deadline.h](http://lxr.free-electrons.com/source/include/linux/sched/deadline.h?v=4.6#L10)
 
 因此内核将MAX\_DL\_PRIO设置为0,可以参见内核文件[include/linux/sched/deadline.h](http://lxr.free-electrons.com/source/include/linux/sched/deadline.h?v=4.6#L10)
 
@@ -181,7 +208,7 @@ static inline long rlimit_to_nice(long prio)
 #define  MAX_DL_PRIO  0
 ```
 
-此外也提供了一些EDF优先级处理所需的函数,如下所示,可以参见内核文件[include/linux/sched/deadline.h](http://lxr.free-electrons.com/source/include/linux/sched/deadline.h?v=4.6#L12)
+此外也提供了一些**EDF优先级处理所需的函数**,如下所示,可以参见内核文件[include/linux/sched/deadline.h](http://lxr.free-electrons.com/source/include/linux/sched/deadline.h?v=4.6#L12)
 
 ```c
 static inline int dl_prio(int prio)
@@ -220,7 +247,10 @@ struct task_struct
 
 ### 2.2.1 动态优先级 静态优先级 实时优先级
 
-其中task\_struct采用了三个成员表示进程的优先级:prio和normal\_prio表示动态优先级, static\_prio表示进程的静态优先级.
+其中task\_struct采用了**三个成员**表示**进程的优先级**:
+
+- **prio**和**normal\_prio**表示**动态优先级**
+- **static\_prio**表示进程的**静态优先级**.
 
 >为什么表示动态优先级需要两个值prio和normal\_prio
 >
@@ -249,9 +279,9 @@ struct task_struct
 
 ## 3.1 normal\_prio设置普通优先级normal\_prio
 
-**静态优先级static\_prio(普通进程**)和**实时优先级rt_priority(实时进程**)是**计算的起点**
+**静态优先级static\_prio(普通进程**)和**实时优先级rt_priority(实时进程**)是**计算的起点(！！！**)
 
-因此他们也是进程创建的时候设定好的,我们通过**nice修改**的就是**普通进程的静态优先级static\_prio**
+因此他们也是进程创建的时候设定好的,我们通过**nice修改**的就是**普通进程的静态优先级static\_prio(！！！**。）
 
 首先通过**静态优先级static\_prio**计算出**普通优先级normal\_prio**, 该工作可以由**normal\_prio**来完成,该函数定义在[kernel/sched/core.c#L861](http://lxr.free-electrons.com/source/kernel/sched/core.c#L861)
 
@@ -288,9 +318,9 @@ static inline int normal_prio(struct task_struct *p)
 
 | 进程类型  | 调度器 | **普通优先级normal\_prio** |
 | ---------- |:---------|:-------------|
-| **EDF实时进程** | EDF |  MAX\_DL_PRIO\-1 = \-1 |
-| **普通实时进程** | RT | MAX\_RT\_PRIO\-1 \- p\->rt\_priority = 99 \- rt\_priority |
-| **普通进程** | CFS | \_\_normal\_prio(p) = static\_prio |
+| **EDF实时进程** | **EDF** |  MAX\_DL_PRIO \- 1 = \-1 |
+| **普通实时进程** | **RT** | MAX\_RT\_PRIO \- 1 \- p\->rt\_priority = 99 \- rt\_priority |
+| **普通进程** | **CFS** | \_\_normal\_prio(p) = static\_prio |
 
 普通优先级normal\_prio需要根据普通进程和实时进程进行不同的计算, 其中\_\_normal\_prio适用于普通进程,直接将普通优先级normal\_prio设置为静态优先级static\_prio.而实时进程的普通优先级计算依据其实时优先级rt\_priority.
 
@@ -298,7 +328,7 @@ static inline int normal_prio(struct task_struct *p)
 
 定义在[kernel/sched/sched.h#L117](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L117) 中
 
-其本质其实就是传入task->policy调度策略字段看其值等于SCHED_NORMAL, SCHED_BATCH, SCHED_IDLE, SCHED_FIFO, SCHED_RR, SCHED_DEADLINE中的哪个, 从而确定其所属的调度类, 进一步就确定了其进程类型
+其本质其实就是传入**task->policy调度策略字段**看其值**等于SCHED\_NORMAL**, **SCHED\_BATCH, SCHED\_IDLE, SCHED\_FIFO, SCHED\_RR, SCHED_\DEADLINE中的哪个**,从而**确定其所属的调度类**,进一步就**确定了其进程类型**
 
 ```c
 static inline int idle_policy(int policy)
@@ -336,39 +366,31 @@ static inline int task_has_dl_policy(struct task_struct *p)
 }
 ```
 
+### 3.1.2 关于rt\_priority数值越大, 实时进程优先级越高的问题
 
-###3.1.2	关于rt_priority数值越大, 实时进程优先级越高的问题
---------
-
-我们前面提到了数值越小, 优先级越高, 但是此处我们会发现rt_priority的值越大, 其普通优先级越小, 从而优先级越高.
+我们前面提到了**数值越小**,**优先级越高**,但是此处我们会发现**rt\_priority的值越大**,其**普通优先级越小**,从而**优先级越高**.
 
 因此网上出现了一种说法, 优先级越高？这又是怎么回事？难道有一种说法错了吗？
 
-实际的原因是这样的，对于一个实时进程，他有两个参数来表明优先级——prio 和 rt_priority，
+实际的原因是这样的，对于一个**实时进程(！！！**)，他有**两个参数来表明优先级(！！！**)——**prio** 和 **rt\_priority**，
 
-prio才是调度所用的最终优先级数值，这个值越小，优先级越高；
+**prio才是调度所用的最终优先级数值(！！！**)，这个**值越小**，**优先级越高**；
 
-而rt_priority 被称作实时进程优先级，他要经过转化——prio=MAX_RT_PRIO - 1- p->rt_priority; 
+而**rt\_priority**被称作**实时进程优先级**，prio要经过转化——**prio=MAX\_RT\_PRIO \- 1 \- p\->rt\_priority**; 
 
-MAX_RT_PRIO = 100, ;这样意味着rt_priority值越大，优先级越高；
+**MAX\_RT\_PRIO = 100**;这样意味着**rt\_priority值越大，优先级越高**；
 
-而内核提供的修改优先级的函数，是修改rt_priority的值，所以越大，优先级越高。
+而**内核提供的修改优先级的函数**，是**修改rt\_priority的值**，所以**越大**，优先级**越高**。
 
- 所以用户在使用实时进程或线程，在修改优先级时，就会有“优先级值越大，优先级越高的说法”，也是对的。
+所以**用户在使用实时进程或线程**，在修改优先级时，就会有“**优先级值越大，优先级越高的说法**”，也是对的。
 
-###3.1.3	为什么需要__normal_prio函数
--------
+### 3.1.3 为什么需要\_\_normal\_prio函数
 
-我们肯定会奇怪, 为什么增加了一个__normal_prio函数做了这么简单的工作, 这个其实是有历史原因的: 在早期的$O(1)$调度器中, 普通优先级的计算涉及相当多技巧性地工作,  必须检测交互式进程并提高其优先级, 而必须"惩罚"非交互进程, 以便是得系统获得更好的交互体验. 这需要很多启发式的计算, 他们可能完成的很好, 也可能不工作
+我们肯定会奇怪, 为什么增加了一个\_\_normal\_prio函数做了这么简单的工作,这个其实是有**历史原因**的:在早期的$O(1)$调度器中,普通优先级的计算涉及相当多技巧性地工作,必须检测交互式进程并提高其优先级,而必须"惩罚"非交互进程,以便是得系统获得更好的交互体验.这需要很多启发式的计算,他们可能完成的很好,也可能不工作
 
+## 3.2 effective\_prio设置动态优先级prio
 
-##3.2	effective_prio设置动态优先级prio
--------
-
-
-<font color=0x00ffff>
-可以通过函数effective_prio用静态优先级static_prio计算动态优先级prio, 即·
-</font>
+可以通过**函数effective\_prio**用**静态优先级static\_prio**计算**动态优先级prio**, 即·
 
 ```c
 p->prio = effective_prio(p);
@@ -399,30 +421,27 @@ static int effective_prio(struct task_struct *p)
 ```
 
 <fonr color=0x00ffff>
-我们会发现函数首先effective_prio设置了普通优先级, 显然我们用effective_prio同时设置了两个优先级(普通优先级normal_prio和动态优先级prio)
+我们会发现函数首先**effective\_prio设置了普通优先级**,显然我们用effective\_prio同时设置了**两个优先级**(**普通优先级normal\_prio**和**动态优先级prio**)
 </font>
 
+因此计算**动态优先级的流程**如下
 
-因此计算动态优先级的流程如下
+- 设置进程的**普通优先级(实时进程99\-rt\_priority,普通进程为static\_priority**)
 
-*	设置进程的普通优先级(实时进程99-rt_priority, 普通进程为static_priority)
-
-*	计算进程的动态优先级(实时进程则维持动态优先级的prio不变, 普通进程的动态优先级即为其普通优先级)
+- 计算进程的**动态优先级**(**实时进程**则维持**动态优先级的prio不变**,**普通进程**的**动态优先级即为其普通优先级**)
 
 最后, 我们综述一下在针对不同类型进程的计算结果
 
-| 进程类型  | 实时优先级rt_priority | 静态优先级static_prio | 普通优先级normal_prio | 动态优先级prio |
-| ------- |:-------:|:-------:|:-------:|
-| EDF调度的实时进程 | rt_priority | 不使用 | MAX_DL_PRIO-1 | 维持原prio不变 |
-| RT算法调度的实时进程 | rt_priority | 不使用 | MAX_RT_PRIO-1-rt_priority | 维持原prio不变 |
-| 普通进程 | 不使用 | static_prio | static_prio | static_prio |
-| 优先级提高的普通进程 | 不使用 | static_prio(改变) | static_prio | 维持原prio不变 |
+| 进程类型  | 实时优先级rt\_priority | 静态优先级static\_prio | 普通优先级normal\_prio | 动态优先级prio |
+| ------- |:-------:|:-------:|:-------:|:-------:|
+| EDF调度的实时进程 | rt\_priority | 不使用 | MAX\_DL\_PRIO\-1 | 维持原prio不变 |
+| RT算法调度的实时进程 | rt\_priority | 不使用 | MAX\_RT\_PRIO\-1\-rt\_priority | 维持原prio不变 |
+| 普通进程 | 不使用 | static\_prio | static\_prio | static\_prio |
+| **优先级提高的普通进程** | 不使用 | static\_prio(改变) | static\_prio | 维持原prio不变 |
 
+### 3.2.1 为什么effective\_prio使用优先级数值检测实时进程
 
-###3.2.1	为什么effective_prio使用优先级数值检测实时进程
--------
-
-t_prio会检测普通优先级是否在实时范围内, 即是否小于MAX_RT_PRIO.参见[include/linux/sched/rt.h#L6](http://lxr.free-electrons.com/source/include/linux/sched/rt.h#L6)
+**rt\_prio**会检测**普通优先级是否在实时范围内**,即是否小于MAX\_RT\_PRIO.参见[include/linux/sched/rt.h#L6](http://lxr.free-electrons.com/source/include/linux/sched/rt.h#L6)
 
 ```c
 static inline int rt_prio(int prio)
@@ -432,44 +451,37 @@ static inline int rt_prio(int prio)
 	return 0;
 }
 ```
-而前面我们在normal_prio的时候, 则通过task_has_rt_policy来判断其policy属性来确定
+
+而前面我们在normal\_prio的时候,则通过task\_has\_rt\_policy来判断其policy属性来确定
+
 ```
 policy == SCHED_FIFO || policy == SCHED_RR;
 ```
-那么为什么effective_prio重检测实时进程是rt_prio基于优先级数值, 而非task_has_rt_policy或者rt_policy?
+那么为什么effective\_prio重检测实时进程是rt\_prio基于**优先级数值**,而非task\_has\_rt\_policy或者rt\_policy?
 
-对于临时提高至实时优先级的非实时进程来说, 这个是必要的, 这种情况可能发生在是哦那个实时互斥量(RT-Mutex)时.
+对于**临时提高至实时优先级的非实时进程(临时提高到实时优先级！！！**)来说,这个是必要的,这种情况可能发生在是那个实时互斥量(RT\-Mutex)时.
 
+## 3.3 设置prio的时机
 
-##3.3	设置prio的时机
--------
+- 在**新进程**用**wake\_up\_new\_task唤醒**时,或者使用**nice系统调用**改变其**静态优先级**时, 则会**通过effective\_prio的方法设置p\->prio**
 
-*	在新进程用wake_up_new_task唤醒时, 或者使用nice系统调用改变其静态优先级时, 则会通过effective_prio的方法设置p->prio
+>wake\_up\_new\_task(),计算此进程的优先级和其他调度参数，将新的进程加入到进程调度队列并设此进程为可被调度的，以后这个进程可以被进程调度模块调度执行。
 
->wake_up_new_task(), 计算此进程的优先级和其他调度参数，将新的进程加入到进程调度队列并设此进程为可被调度的，以后这个进程可以被进程调度模块调度执行。
+- 进程创建时**copy\_process**通过调用**sched\_fork**来初始化和设置调度器的过程中会设置**子进程的优先级**
 
-*	进程创建时copy_process通过调用sched_fork来初始化和设置调度器的过程中会设置子进程的优先级
+## 3.4 nice系统调用的实现
 
+**nice系统调用**是的内核实现是**sys\_nice**,其定义在[kernel/sched/core.c#L7498](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L7498)，
 
-
-##3.4	nice系统调用的实现
--------
-
-nice系统调用是的内核实现是sys_nice, 其定义在[kernel/sched/core.c#L7498](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L7498)，
-
-它在通过一系列检测后, 通过[set_user_nice函数](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3497)， 其定义在[kernel/sched/core.c#L3497](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3497)
+它在通过一系列检测后,通过[set\_user\_nice函数](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3497)，其定义在[kernel/sched/core.c#L3497](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3497)
 
 关于其具体实现我们会在另外一篇博客里面详细讲
 
+## 3.5 fork时优先级的继承
 
-##3.5	fork时优先级的继承
--------
+在进程分叉处子进程时,**子进程**的**静态优先级继承自父进程**.子进程的**动态优先级p\->prio**则被设置为**父进程的普通优先级(！！！**),这确保了**实时互斥量(RT-Mutex)**引起的**优先级提高不会传递到子进程**.
 
-
-在进程分叉处子进程时, 子进程的静态优先级继承自父进程. 子进程的动态优先级p->prio则被设置为父进程的普通优先级, 这确保了实时互斥量引起的优先级提高不会传递到子进程.
-
-可以参照sched_fork函数, 在进程复制的过程中copy_process通过调用sched_fork来设置子进程优先级, 参见[sched_fork函数](http://lxr.free-electrons.com/source/kernel/sched/core.c#L2236)
-
+可以参照**sched\_fork**函数,在进程复制的过程中copy\_process通过调用sched\_fork来设置子进程优先级,参见[sched\_fork函数](http://lxr.free-electrons.com/source/kernel/sched/core.c#L2236)
 
 ```c
 /*
@@ -528,38 +540,28 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 }
 ```
 
-
-
-#4	总结
--------
+# 4 总结
 
 <font color=0x00ffff>
-task_struct采用了四个成员表示进程的优先级:prio和normal_prio表示动态优先级, static_prio表示进程的静态优先级. 同时还用了rt_priority表示实时进程的优先级
+task\_struct采用了**四个成员**表示**进程的优先级**:prio和normal\_prio表示动态优先级,static\_prio表示进程的静态优先级.同时还用了rt\_priority表示实时进程的优先级
 </font>
-
 
 | 字段 | 描述 |
 | ------------- |:-------------:|
-| static_prio | 用于保存静态优先级, 是进程启动时分配的优先级, ，可以通过nice和sched_setscheduler系统调用来进行修改, 否则在进程运行期间会一直保持恒定 |
+| static\_prio | 用于保存静态优先级, 是进程启动时分配的优先级, ，可以通过nice和sched\_setscheduler系统调用来进行修改, 否则在进程运行期间会一直保持恒定 |
 | prio | 进程的动态优先级, 这个有显示才是调度器重点考虑的进程优先级 |
-| normal_prio | 普通进程的静态优先级static_prio和调度策略计算出的优先级. 因此即使普通进程和实时进程具有相同的静态优先级, 其普通优先级也是不同的, 进程分叉(fork)时, 子进程会继承父进程的普通优先级, 可以通过normal_prio来计算(非实时进程用static_prIo计算, 实时进程用rt_priority计算) |
-| rt_priority | 实时进程的静态优先级  |
+| normal\_prio | 普通进程的静态优先级static\_prio和调度策略计算出的优先级. 因此即使普通进程和实时进程具有相同的静态优先级, 其普通优先级也是不同的, 进程分叉(fork)时, 子进程会继承父进程的普通优先级, 可以通过normal\_prio来计算(非实时进程用static\_prIo计算, 实时进程用rt\_priority计算) |
+| rt\_priority | 实时进程的静态优先级  |
 
+调度器会考虑的优先级则保存在prio.由于在某些情况下内核需要暂时提高进程的优先级, 因此需要用prio表示.由于这些改变不是持久的,因此静态优先级static\_prio和普通优先级normal\_prio不受影响.此外还用了一个字段rt\_priority保存了实时进程的优先级静态优先级static\_prio(普通进程)和实时优先级rt\_priority(实时进程)是计算的起点, 通过他们计算进程的普通优先级normal\_prio和动态优先级prio.
 
-调度器会考虑的优先级则保存在prio. 由于在某些情况下内核需要暂时提高进程的优先级, 因此需要用prio表示. 由于这些改变不是持久的, 因此静态优先级static_prio和普通优先级normal_prio不受影响.
-此外还用了一个字段rt_priority保存了实时进程的优先级静态优先级static_prio(普通进程)和实时优先级rt_priority(实时进程)是计算的起点, 通过他们计算进程的普通优先级normal_prio和动态优先级prio.
+- 内核通过**normal\_prIo函数**计算**普通优先级normal\_prio**
+- 通过**effective\_prio函数**计算**动态优先级prio**
 
-<font color=0x00ffff>
-内核通过normal_prIo函数计算普通优先级normal_prio
-通过effective_prio函数计算动态优先级prio
-</font>
+# 5 参考
 
+[进程调度之sys_nice()系统调用](http://blog.sina.com.cn/s/blog_9ca3f6e70102wkwp.html)
 
+[linux调度器源码研究 - 概述（一）](http://blog.chinaunix.net/uid-20671208-id-4909623.html)
 
->参考
->
->[进程调度之sys_nice()系统调用](http://blog.sina.com.cn/s/blog_9ca3f6e70102wkwp.html)
->
->[linux调度器源码研究 - 概述（一）](http://blog.chinaunix.net/uid-20671208-id-4909623.html)
->
->[深入 Linux 的进程优先级](http://www.linuxidc.com/Linux/2016-05/131244.htm)
+[深入 Linux 的进程优先级](http://www.linuxidc.com/Linux/2016-05/131244.htm)
