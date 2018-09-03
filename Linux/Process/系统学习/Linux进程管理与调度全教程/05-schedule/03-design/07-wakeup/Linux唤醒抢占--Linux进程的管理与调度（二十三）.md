@@ -175,9 +175,9 @@ void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
 
 几乎在所有的情况下,进程都会在检查了某些条件之后,发现**条件不满足才进入睡眠**.可是有的时候进程却会在**判定条件为真后开始睡眠**,如果这样的话进程就会无限期地休眠下去, 这就是所谓的无效唤醒问题.
 
-在操作系统中, 当**多个进程都企图对共享数据进行某种处理**,而最后的结果又取决于进程运行的顺序时,就会发生竞争条件,这是操作系统中一个典型的问题,无效唤醒恰恰就是由于**竞争条件**导致的.
+在操作系统中, 当**多个进程都企图对共享数据进行某种处理**,而最后的结果又取决于进程运行的顺序时,就会发生竞争条件,这是操作系统中一个典型的问题,**无效唤醒**恰恰就是由于**竞争条件**导致的.
 
-设想有两个进程A和B,A进程正在处理一个链表,它需要检查这个链表是否为空,如果不空就对链表里面的数据进行一些操作,同时B进程也在往这个链表添加节点.当这个链表是空的时候,由于无数据可操作,这时A进程就进入睡眠,当B进程向链表里面添加了节点之后它就唤醒A进程, 其代码如下:
+设想有**两个进程A和B**,A进程正在处理一个链表,它需要检查这个链表是否为空,如果不空就对链表里面的数据进行一些操作,同时B进程也在往这个链表添加节点.当这个**链表是空**的时候,由于**无数据可操作**,这时**A进程就进入睡眠**,当B进程向链表里面添加了节点之后它就唤醒A进程, 其代码如下:
 
 A进程:
 
@@ -204,19 +204,19 @@ spin_unlock(&list_lock);
 wake_up_process(A);
 ```
 
-这里会出现一个问题，假如当A进程执行到第4行后第5行前的时候,B进程被另外一个处理器调度投入运行.在这个时间片内,B进程执行完了它所有的指令,因此它试图唤醒A进程, 而此时的A进程还没有进入睡眠, 所以唤醒操作无效.
+这里会出现一个问题，假如当A进程执行到**第4行后(spin\_unlock(&list\_lock);)第5行前(set\_current\_state(TASK\_INTERRUPTIBLE);)**的时候,B进程被另外一个处理器调度投入运行.在这个时间片内,**B进程执行完了它所有的指令**,因此它试图**唤醒A进程**,而此时的A进程还**没有进入睡眠**, 所以**唤醒操作无效**.
 
-在这之后, A进程继续执行, 它会错误地认为这个时候链表仍然是空的, 于是将自己的状态设置为TASK\_INTERRUPTIBLE然后调用schedule()进入睡眠. 由于错过了B进程唤醒, 它将会无限期的睡眠下去, 这就是无效唤醒问题, 因为即使链表中有数据需要处理, A进程也还是睡眠了.
+在这之后, A进程继续执行, 它会错误地认为这个时候链表仍然是空的,于是将自己的状态设置为TASK\_INTERRUPTIBLE然后调用schedule()进入睡眠. 由于**错过了B进程唤醒**, 它将会**无限期的睡眠**下去, 这就是**无效唤醒问题**, 因为即使链表中有数据需要处理, A进程也还是睡眠了.
 
 ## 4.2 无效唤醒的原因
 
 如何**避免无效唤醒**问题呢?
 
-我们发现**无效唤醒**主要发生在**检查条件之后**和**进程状态被设置为睡眠状态之前**,本来B进程的wake\_up\_process提供了一次将A进程状态置为TASK\_RUNNING的机会，可惜这个时候A进程的状态仍然是TASK\_RUNNING，所以wake\_up\_process将A进程状态从睡眠状态转变为运行状态的努力没有起到预期的作用.
+我们发现**无效唤醒**主要发生在**检查条件之后(链表为空)**和**进程状态被设置为睡眠状态之前**,本来B进程的wake\_up\_process提供了一次将A进程状态置为TASK\_RUNNING的机会，可惜这个时候A进程的状态仍然是TASK\_RUNNING，所以wake\_up\_process将A进程状态从睡眠状态转变为运行状态的努力没有起到预期的作用.
 
 ## 4.3 避免无效抢占
 
-要解决这个问题, 必须使用一种保障机制使得判断链表为空和设置进程状态为睡眠状态成为一个不可分割的步骤才行,也就是必须消除竞争条件产生的根源,这样在这之后出现的wake\_up\_process就可以起到唤醒状态是睡眠状态的进程的作用了.
+要解决这个问题, 必须使用一种保障机制使得**判断链表为空**和**设置进程状态为睡眠状态**成为**一个不可分割的步骤**才行,也就是必须消除竞争条件产生的根源,这样在这之后出现的wake\_up\_process就可以起到唤醒状态是睡眠状态的进程的作用了.
 
 找到了原因后, 重新设计一下A进程的代码结构,就可以避免上面例子中的无效唤醒问题了.
 
@@ -236,9 +236,9 @@ set_current_state(TASK_RUNNING);
 spin_unlock(&list_lock);
 ```
 
-可以看到，这段代码在测试条件之前就将当前执行进程状态转设置成TASK\_INTERRUPTIBLE了, 并且在链表不为空的情况下又将自己置为TASK\_RUNNING状态.
+可以看到，这段代码在**测试条件之前(链表为空)**就将当前执行进程状态转设置成**TASK\_INTERRUPTIBLE**了,并且在**链表不为空**的情况下又将自己置为**TASK\_RUNNING状态**.
 
-这样一来如果B进程在A进程进程检查了链表为空以后调用wake\_up\_process,那么A进程的状态就会自动由原来TASK\_INTERRUPTIBLE变成TASK\_RUNNING,此后即使进程又调用了schedule,由于它现在的状态是TASK\_RUNNING,所以仍然不会被从运行队列中移出, 因而不会错误的进入睡眠，当然也就避免了无效唤醒问题.
+这样一来如果B进程在A进程检查了链表为空以后调用wake\_up\_process,那么A进程的状态就会自动由原来TASK\_INTERRUPTIBLE变成TASK\_RUNNING,此后即使进程又调用了schedule,由于它现在的状态是TASK\_RUNNING,所以仍然不会被从运行队列中移出, 因而不会错误的进入睡眠，当然也就避免了无效唤醒问题.
 
 # 5 Linux内核的例子
 
@@ -271,15 +271,21 @@ remove_wait_queue(q, &wait);
 
 ## 5.2 2号进程的例子-避免无效抢占
 
-下面让我们用linux内核中的实例来看看Linux内核是如何避免无效睡眠的,我还记得2号进程吧, 它的主要工作就是接手内核线程kthread的创建,其工作流程函数是kthreadd
+下面让我们用linux内核中的实例来看看**Linux内核是如何避免无效睡眠**的,我还记得2号进程吧,它的主要工作就是接手内核线程kthread的创建,其**工作流程函数是kthreadd**
 
 代码在[kernel/kthread.c, kthreadd函数, line L514](http://lxr.free-electrons.com/source/kernel/kthread.c?v=4.6#L514)
 
 ```c
 for (;;) {
+    // 避免无效睡眠
+    /* 首先将kthreadd线程状态设置为TASK_INTERRUPTIBLE, 如果当前
+    没有要创建的线程则主动放弃CPU完成调度.此进程变为阻塞态*/
     set_current_state(TASK_INTERRUPTIBLE);
-    if (list_empty(&kthread_create_list))
-        schedule();
+    if (list_empty(&kthread_create_list))  // 没有需要创建的内核线程
+        schedule();                        // 什么也不做, 执行一次调度, 让出CPU
+        
+    /* 运行到此表示kthreadd线程被唤醒(就是我们当前)
+    设置进程运行状态为 TASK_RUNNING */
     __set_current_state(TASK_RUNNING);
 
     spin_lock(&kthread_create_lock);
@@ -302,11 +308,11 @@ for (;;) {
 
 ## 5.3 kthread\_worker\_fn
 
-kthread\_worker/kthread\_work是一种内核工作的更好的管理方式,可以多个内核线程在同一个worker上工作, 共同完成work的工作, 有点像线程池的工作方式.
+**kthread\_worker**/**kthread\_work**是一种内核工作的更好的管理方式,可以**多个内核线程**在**同一个worker上**工作, **共同完成work的工作(！！！**), 有点像**线程池的工作方式**.
 
-内核提供了kthread\_worker\_fn函数一般作为 kthread\_create或者 kthread\_run函数的 threadfn参数运行,可以将多个内核线程附加的同一个worker上面，即将同一个worker结构传给kthread\_run或者kthread\_create当作threadfn的参数就可以了.
+内核提供了**kthread\_worker\_fn**函数一般作为**kthread\_create**或者**kthread\_run**函数的 **threadfn参数**运行,可以将**多个内核线程**附加的**同一个worker**上面，即**将同一个worker结构(！！！**)传给**kthread\_run**或者**kthread\_create**当作threadfn的参数就可以了.
 
-其kthread\_worker\_fn函数作为worker的主函数框架,也包含了避免无效唤醒的代码, [kernel/kthread.c, kthread\_worker\_fn函数,line573](http://lxr.free-electrons.com/source/kernel/kthread.c?v=4.6#L573), 如下所示
+其**kthread\_worker\_fn函数**作为**worker**的**主函数框架**,也**包含了避免无效唤醒的代码**, [kernel/kthread.c, kthread\_worker\_fn函数,line573](http://lxr.free-electrons.com/source/kernel/kthread.c?v=4.6#L573), 如下所示
 
 ```c
 int kthread_worker_fn(void *worker_ptr)
@@ -329,14 +335,13 @@ int kthread_worker_fn(void *worker_ptr)
 
 # 6 总结
 
-通过上面的讨论, 可以发现在Linux 中避免进程的无效唤醒的关键是
+通过上面的讨论, 可以发现在Linux中**避免进程的无效唤醒的关键**是
 
-- 在进程检查条件之前就将进程的状态置为TASK\_INTERRUPTIBLE或TASK\_UNINTERRUPTIBLE
+- 在**进程检查条件之前**就将**进程的状态**置为**TASK\_INTERRUPTIBLE或TASK\_UNINTERRUPTIBLE**
 
-- 并且如果检查的条件满足的话就应该将其状态重新设置为TASK\_RUNNING.
+- 并且如果**检查的条件满足**的话就应该将其状态重新设置为**TASK\_RUNNING**.
 
-这样无论进程等待的条件是否满足,进程都不会因为被移出就绪队列而错误地进入睡眠状态, 从而避免了无效唤醒问题.
-
+这样无论进程**等待的条件是否满足**,进程都不会因为被移出就绪队列而错误地进入睡眠状态,从而避免了无效唤醒问题.
 
 ```C
 set_current_state(TASK_INTERRUPTIBLE);

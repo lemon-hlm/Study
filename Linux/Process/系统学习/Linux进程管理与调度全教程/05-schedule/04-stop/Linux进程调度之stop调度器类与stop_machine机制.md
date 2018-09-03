@@ -1,34 +1,23 @@
-Linux进程调度之stop调度器类与stop_machine机制
-=======
+- 1 stop调度器类stop\_sched\_class
+- 2 stop\_machine机制
+    - 2.1 cpu\_stop\_work
+    - 2.2 stop\_one\_cpu
+    - 2.3 stop\_machine
+    - 2.4 stop\_machine机制的应用
 
+所属调度器类为stop\_sched\_class的进程是系统中优先级最高的进程,其次才是dl\_shced\_class和rt\_sched\_class
 
-| 日期 | 内核版本 | 架构| 作者 | GitHub| CSDN |
-| ------- |:-------:|:-------:|:-------:|:-------:|:-------:|
-| 2016-06-14 | [Linux-4.7](http://lxr.free-electrons.com/source/?v=4.7) | X86 & arm | [gatieme](http://blog.csdn.net/gatieme) | [LinuxDeviceDrivers](https://github.com/gatieme/LDD-LinuxDeviceDrivers) | [Linux进程管理与调度](http://blog.csdn.net/gatieme/article/category/6225543) |
+stop\_sched\_class用于停止CPU,一般在SMP系统上使用，用以实现负载平衡和CPU热插拔.这个类有最高的调度优先级, 如果你的系统没有定义CONFIG\_SMP. 你可以试着将此类移除.
 
+stop调度器类实现了Unix的stop\_machine 特性(根据UNIX 风格，也可能是等效的其他特性)准备拼接新代码。
 
+stop\_machine是一个通信信号:在SMP的情况下相当于暂时停止其他的CPU的运行,它让一个CPU继续运行，而让所有其他CPU空闲.在单CPU的情况下这个东西就相当于关中断
 
-所属调度器类为stop_sched_class的进程是系统中优先级最高的进程, 其次才是dl_shced_class和rt_sched_class
+我的理解是如果Mulit CPU共享的东西需要修改, 且无法借助OS的lock, 关中断等策略来实现这一功能, 则需要stop\_machine
 
+# 1 stop调度器类stop\_sched\_class
 
-stop_sched_class用于停止CPU, 一般在SMP系统上使用， 用以实现负载平衡和CPU热插拔. 这个类有最高的调度优先级, 
-如果你的系统没有定义CONFIG_SMP. 你可以试着将此类移除.
-
-
-stop调度器类实现了Unix的stop_machine 特性(根据UNIX 风格，也可能是等效的其他特性)准备拼接新代码。
-
-stop_machine 是一个通信信号	:	在SMP的情况下相当于暂时停止其他的CPU的运行, 它让一个 CPU 继续运行，而让所有其他CPU空闲. 在单CPU的情况下这个东西就相当于关中断
-
-我的理解是如果Mulit CPU共享的东西需要修改, 且无法借助OS的lock, 关中断等策略来实现这一功能, 则需要stop_machine
-
-
-
-
-
-#1		stop调度器类stop_sched_class
--------
-
-stop调度器类是优先级最高的调度器类, [kernel/sched/stop_task.c](http://lxr.free-electrons.com/source/kernel/sched/stop_task.c?v=4.7#L112), 
+stop调度器类是优先级最高的调度器类,[kernel/sched/stop_task.c](http://lxr.free-electrons.com/source/kernel/sched/stop_task.c?v=4.7#L112), 
 
 ```cpp
 /*
@@ -62,8 +51,8 @@ const struct sched_class stop_sched_class = {
 };
 ```
 
+内核提供了sched\_set\_stop\_task函数用来将某个进程stop的调度器类设置为stop\_sched\_class,该函数定义在[/kernel/sched/core.c, line 849](http://lxr.free-electrons.com/source/kernel/sched/core.c#L849)
 
-内核提供了sched_set_stop_task函数用来将某个进程stop的调度器类设置为stop_sched_class, 该函数定义在[/kernel/sched/core.c, line 849](http://lxr.free-electrons.com/source/kernel/sched/core.c#L849)
 ```cpp
 void sched_set_stop_task(int cpu, struct task_struct *stop)
 {
@@ -98,23 +87,17 @@ void sched_set_stop_task(int cpu, struct task_struct *stop)
 }
 ```
 
-sched_set_stop_task把stop进程绑定为编号为cpu的处理器上的stop进程, 进程的调度策略设置为SCHED_FIFO, 但是所属的进程的调度器类设置为stop_sched_class, 这样当恢复进程的调度类时, 只需要将进程的调度器类设置为rt_sched_class即可
+sched\_set\_stop\_task把stop进程绑定为编号为cpu的处理器上的stop进程,进程的调度策略设置为SCHED\_FIFO, 但是所属的进程的调度器类设置为stop\_sched\_class,这样当恢复进程的调度类时,只需要将进程的调度器类设置为rt\_sched\_class即可
 
+# 2 stop\_machine机制
 
+内核中很少有地方使用了stop\_sched\_class,因为这个调度器类并不像dl\_shced\_class,rt\_sched\_class和fair\_sched\_class一样直接调度进程
 
-#2	stop_machine机制
--------
+相反它用于完成stop\_machine机制, 有关stop\_machine机制的实现都在[include/linux/stop\_machine.h, line 120](http://lxr.free-electrons.com/source/include/linux/stop_machine.h#L120)和[kernel/stop\_machine.c?v=4.7, line 482](http://lxr.free-electrons.com/source/kernel/stop_machine.c?v=4.7#L482)
 
+## 2.1 cpu\_stop\_work
 
-内核中很少有地方使用了stop_sched_class, 因为这个调度器类并不像dl_shced_class, rt_sched_class和fair_sched_class一样直接调度进程
-
-相反它用于完成stop_machine机制, 有关stop_machine机制的实现都在[include/linux/stop_machine.h, line 120](http://lxr.free-electrons.com/source/include/linux/stop_machine.h#L120)和[kernel/stop_machine.c?v=4.7, line 482](http://lxr.free-electrons.com/source/kernel/stop_machine.c?v=4.7#L482)
-
-
-##2.1	cpu_stop_work
--------
-
-struct cpu_stop_work是用以完成stop_machine工作的任务实体信息, 他在SMP和非SMP结构下有不同的定义, 参见[include/linux/stop_machine.h?v=4.7, line 23](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L23)
+struct cpu\_stop\_work是用以完成stop\_machine工作的任务实体信息, 他在SMP和非SMP结构下有不同的定义, 参见[include/linux/stop\_machine.h?v=4.7, line 23](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L23)
 
 ```cpp
 #ifdef CONFIG_SMP
@@ -140,8 +123,7 @@ struct cpu_stop_work {
 };
 ```
 
-
-SMP系统中, migration用来执行任务迁移的一组进程, 其comm字段为migration/%u, 后面标识绑定的CPU编号
+SMP系统中, migration用来执行任务迁移的一组进程, 其comm字段为migration/\%u, 后面标识绑定的CPU编号
 
 ```cpp
 static struct smp_hotplug_thread cpu_stop_threads = {
@@ -155,27 +137,23 @@ static struct smp_hotplug_thread cpu_stop_threads = {
 };
 ```
 
-如下图所示, 我们可以显示出migration/0(当前系统中9号进程), 即第0个cpu上的任务迁移内核线程, 该线程的调度策略是SCHED_FIFO, 但是所属的调度器类为stop_sched_class.与我们之前讲解sched_set_stop_task看到的内容一致
-
+如下图所示, 我们可以显示出migration/0(当前系统中9号进程), 即第0个cpu上的任务迁移内核线程, 该线程的调度策略是SCHED\_FIFO,但是所属的调度器类为stop\_sched\_class.与我们之前讲解sched\_set\_stop\_task看到的内容一致
 
 ![任务迁移](./stop-migration.jpg)
 
+## 2.2 stop\_one\_cpu
 
-##2.2	stop_one_cpu
--------
-
-在非SMP系统中, 使用stop_one_cpu等一组函数来停止一个CPU的工作, 其实质相当于关中断, 定义在[include/linux/stop_machine.h?v=4.7](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L49)
+在非SMP系统中, 使用stop\_one\_cpu等一组函数来停止一个CPU的工作, 其实质相当于关中断, 定义在[include/linux/stop_machine.h?v=4.7](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L49)
 
 | 函数 | 描述 |
-|:-------:|:-------:|
-|  stop_one_cpu | 停止CPU工作, 关闭中断, 并执行fn(arg)函数 |
-|  stop_one_cpu_nowait_workfn | 开始一个任务来完成fn(arg)的工作, 而该函数无需等待fn工作的完成 |
-| stop_one_cpu_nowait | 关闭中断, 并执行fn(arg)函数, 但不等待其完成 |
-|  stop_cpus | 同stop_one_cpu |
-|  try_stop_cpus | 同stop_cpus |
+|:-------:|:-------|
+|  stop\_one\_cpu | 停止CPU工作, 关闭中断, 并执行fn(arg)函数 |
+|  stop\_one\_cpu\_nowait\_workfn | 开始一个任务来完成fn(arg)的工作, 而该函数无需等待fn工作的完成 |
+| stop\_one\_cpu\_nowait | 关闭中断, 并执行fn(arg)函数, 但不等待其完成 |
+|  stop\_cpus | 同stop\_one\_cpu |
+|  try\_stop\_cpus | 同stop\_cpus |
 
-
-下面我们列出了, stop_one_cpu函数的实现, 以供参考 定义在[include/linux/stop_machine.h?v=4.7, line 49](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L49)
+下面我们列出了, stop\_one\_cpu函数的实现, 以供参考定义在[include/linux/stop\_machine.h?v=4.7, line 49](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L49)
 
 ```cpp
 static inline int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
@@ -189,7 +167,7 @@ static inline int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
 }
 ```
 
-在SMP系统中, 则实现了如下函数, 声明在[include/linux/stop_machine.h?v=4.7, line 30](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L30), 定义在[kernel/stop_machine.c?v=4.7, line 120](http://lxr.free-electrons.com/source/kernel/stop_machine.c?v=4.7#L120)
+在SMP系统中, 则实现了如下函数, 声明在[include/linux/stop_machine.h?v=4.7, line 30](http://lxr.free-electrons.com/source/include/linux/stop_machine.h?v=4.7#L30),定义在[kernel/stop_machine.c?v=4.7, line 120](http://lxr.free-electrons.com/source/kernel/stop_machine.c?v=4.7#L120)
 
 ```cpp
 int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg);
@@ -200,8 +178,7 @@ int stop_cpus(const struct cpumask *cpumask, cpu_stop_fn_t fn, void *arg);
 int try_stop_cpus(const struct cpumask *cpumask, cpu_stop_fn_t fn, void *arg);
 ```
 
-
-下面是stop_one_cpu函数的smp实现
+下面是stop\_one\_cpu函数的smp实现
 
 ```cpp
 int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
@@ -217,10 +194,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
 }
 ```
 
-
-##2.3	stop_machine
--------
-
+## 2.3 stop\_machine
 
 ```cpp
 #if defined(CONFIG_SMP) || defined(CONFIG_HOTPLUG_CPU)
@@ -253,21 +227,15 @@ static inline int stop_machine_from_inactive_cpu(cpu_stop_fn_t fn, void *data,
 }
 ```
 
-#2.4	stop_machine机制的应用
--------
+# 2.4 stop\_machine机制的应用
 
-一般来说, 内核会在如下情况下使用stop_machine技术
-
+一般来说, 内核会在如下情况下使用stop\_machine技术
 
 | 应用 | 描述 |
-|:-----:|:------:|
+|:-----:|:------|
 | module install and remove | 增加删除模块, 在不需要重启内核的情况下, 加载和删除模块 |
-| cpu hotplug | CPU的热插拔, 用以执行任务迁移的工作, [cpu_stop_threads](http://lxr.free-electrons.com/source/kernel/stop_machine.c?v=4.7#L29), 该任务由CPU绑定的migration内核线程来完成  |
+| cpu hotplug | CPU的热插拔, 用以执行任务迁移的工作, [cpu\_stop\_threads](http://lxr.free-electrons.com/source/kernel/stop_machine.c?v=4.7#L29), 该任务由CPU绑定的migration内核线程来完成  |
 | memory hotplug | Memory的热插拔 |
 | ftrace | 内核trace，debug功能, 参见[kernel/trace/ftrace.c](http://lxr.free-electrons.com/source/kernel/trace/ftrace.c?v=4.7#L2571)  |
-| hwlat_detector | 检测系统硬件引入的latency，debug功能 |
+| hwlat\_detector | 检测系统硬件引入的latency，debug功能 |
 | Kernel Hotpatch | [Ksplice](http://www.ibm.com/developerworks/cn/aix/library/au-spunix_ksplice/)可以在不到一秒时间里动态地应用内核补丁, 不需要重新引导 |
-
-
-
-

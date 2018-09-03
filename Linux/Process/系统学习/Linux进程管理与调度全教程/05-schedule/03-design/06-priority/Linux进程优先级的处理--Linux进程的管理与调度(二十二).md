@@ -254,7 +254,7 @@ struct task_struct
 
 >为什么表示动态优先级需要两个值prio和normal\_prio
 >
->调度器会考虑的优先级则保存在prio.由于在某些情况下内核需要暂时提高进程的优先级, 因此需要用prio表示.由于这些改变不是持久的,因此静态优先级static\_prio和普通优先级normal\_prio不受影响.
+>调度器会考虑的优先级则保存在prio.由于在某些情况下内核需要**暂时提高进程的优先级**, 因此需要用**prio**表示.由于这些改变不是持久的,因此静态优先级**static\_prio**和普通优先级**normal\_prio不受影响**.
 
 此外还用了一个字段rt\_priority保存了实时进程的优先级
 
@@ -328,7 +328,7 @@ static inline int normal_prio(struct task_struct *p)
 
 定义在[kernel/sched/sched.h#L117](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L117) 中
 
-其本质其实就是传入**task->policy调度策略字段**看其值**等于SCHED\_NORMAL**, **SCHED\_BATCH, SCHED\_IDLE, SCHED\_FIFO, SCHED\_RR, SCHED_\DEADLINE中的哪个**,从而**确定其所属的调度类**,进一步就**确定了其进程类型**
+其本质其实就是传入**task->policy调度策略字段**看其值**等于SCHED\_NORMAL**, **SCHED\_BATCH, SCHED\_IDLE, SCHED\_FIFO, SCHED\_RR, SCHED\_DEADLINE中的哪个**,从而**确定其所属的调度类**,进一步就**确定了其进程类型**
 
 ```c
 static inline int idle_policy(int policy)
@@ -420,9 +420,7 @@ static int effective_prio(struct task_struct *p)
 }
 ```
 
-<fonr color=0x00ffff>
 我们会发现函数首先**effective\_prio设置了普通优先级**,显然我们用effective\_prio同时设置了**两个优先级**(**普通优先级normal\_prio**和**动态优先级prio**)
-</font>
 
 因此计算**动态优先级的流程**如下
 
@@ -542,9 +540,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 
 # 4 总结
 
-<font color=0x00ffff>
 task\_struct采用了**四个成员**表示**进程的优先级**:prio和normal\_prio表示动态优先级,static\_prio表示进程的静态优先级.同时还用了rt\_priority表示实时进程的优先级
-</font>
 
 | 字段 | 描述 |
 | ------------- |:-------------:|
