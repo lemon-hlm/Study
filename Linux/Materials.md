@@ -63,3 +63,7 @@ Linux论坛：https://lkml.org/
 http://blog.csdn.net/u012398362
 
 各模块详细讲解：http://blog.csdn.net/gatieme/article/details/52384965
+
+Linux inside: https://github.com/0xAX/linux-insides
+
+Linux inside中文: https://xinqiu.gitbooks.io/linux-insides-cn/content/index.html
