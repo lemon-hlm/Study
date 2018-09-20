@@ -1,4 +1,20 @@
-[TOC]
+- 3 x86下Linux的中断向量表
+    - 3.1 异常中断向量（0 - 15, 0x0h - 0xfh）
+    - 3.2 不可屏蔽中断向量（16 - 31， 0x10h - 0x1fh）
+    - 3.3 可屏蔽中断向量（32 - 47， 0x20h - 0x2fh）
+    - 3.4 软中断向量（48 - 255， 0x30h - 0xffh）
+- 4 protect mode中断模式切换
+    - 4.1 Call gates & Task Gate
+    - 4.2 Trap gates & Interrupt gates
+    - 4.3 Fast System Call
+    - 4.4 Interrupt Context
+- 5 Linux Top and Bottom Half
+    - 5.1 Softirq & Tasklet
+    - 5.2 WOrking Queue
+- 6 热插拔(Hot-Plug)
+- 7 时钟中断
+- 8 网络中断
+- 9 TX and RX
 
 # 3 x86下Linux的中断向量表
 
@@ -219,3 +235,87 @@ Working Queue类似于Tasklets，不同之处在于**Working Queue**在**Process
 
 # 6 热插拔(Hot\-Plug)
 
+Linxu依赖于**udev(！！！**)去**热插拔某个硬件（包括/dev挂载点的创建**）。当**某个设备**被插入系统系统时候，一个**uevent被触发时**，udev尝试：
+
+1. 按照**系统中/etc/udev/rules.d/定义的rules**去捕捉event
+2. **create/remove device files**,
+3. **load/unload** 对应的**module（driver**）
+4. 通知**用户空间**
+
+而**中断分配等工作**就是在**module（driver）被load/unload**时候发生。
+
+一台PnP兼容的电脑必须满足下列三个要素：
+
+- 操作系统必须兼容PnP
+- BIOS必须支持PnP
+- 要安装的设备本身必须是PnP设备
+
+**PnP设备**会和**BIOS（PIC）申请IRQ号**，随后**向OS注册**，随后当**Drvier被引入**时候，就可以**通过调用函数询问设备的IRQ号**而不必要自己探测。
+
+# 7 时钟中断
+
+Linux中的**sleep操作**依赖于**时钟中断去实现**。当**一个时钟中断触发**时候，Linux会检查**sleep队列**中是否有需要**唤醒的task**，随后唤醒如果需要。
+
+在计算机系统中存在着许多**硬件计时器**，例如**Real Timer Clock(RTC**)、**Time Stamp Counter(TSC**)和**Programmable Interval Timer(PIT**)等等。
+
+- Real Timer Clock （ RTC ）：
+    - **独立**于整个计算机系统（例如： CPU 和其他 chip ）
+    - 内核利用其获取**系统当前时间和日期**
+- Time Stamp Counter （ TSC ）：
+    - 从 Pentium 起，提供一个**寄存器 TSC**，用来**累计每一次外部振荡器产生的时钟信号**
+    - 通过**指令rdtsc**访问这个寄存器
+    - 比起**PIT，TSC**可以提供**更精确的时间测量**
+- Programmable Interval Timer （ PIT ）：
+    - 时间测量设备
+    - **内核**使用的**产生时钟中断的设备**，产生的时钟中断依赖于硬件的体系结构，慢的为**10 ms**一次，快的为**1 ms**一次
+- High Precision Event Timer （ HPET ）：
+    - **PIT** 和 **RTC** 的替代者，和之前的计时器相比，HPET提供了**更高的时钟频率**（至少10 MHz ）以及**更宽的计数器宽度（64位**）
+    - 一个 HPET 包括了一个**固定频率的数值增加的计数器**以及**3到32个独立的计时器**，这**每一个计时器**有包含了一个**比较器**和一个**寄存器**（保存一个数值，表示**触发中断的时机**）。每一个比较器都比较计数器中的数值和寄存器中的数值，当这**两个数值相等**时，将**产生一个中断**
+
+其中PIT和HPET会触发时钟中断，而且HPET是可编程的。
+
+# 8 网络中断
+
+当**一个packet**到达**某个网卡（NIC**），如下的流程会被触发：
+
+1. **数据**会通过**DMA的模式copy到RAM中的一个ring buffer上面**
+2. NIC触发一个**IRQ通知CPU**，数据来了
+3. **IRQ的handler被运行**，raise一个**Softirq**
+4. IRQ返回，**清理NIC的Interrupt Flag(！！！**)
+5. **Softirq运行触发NAPI**
+6. NAPI继续运行，做一系列可能数据合并等优化，数据在**整理后发送给Protocol Stacks**
+
+在此过程中可能会包括和其他Core**直接的IPI(inter\-processor interrupt)通讯**。
+
+# 9 TX and RX
+
+cat /proc/interrupts你会发现一些的网络相关的中断上面会有eth0\-tx\-0，eth0\-rx\-0或者eth0\-TxRx\-0的中断。其中**Tx和Rx**分别表示**Transmit**和**Receive**。**一个网卡**会有**多个tx和rx**，另外还有个**单独的网卡的中断**：
+
+```
+PCI-MSI-edge      eth0
+PCI-MSI-edge      eth0-TxRx-0
+PCI-MSI-edge      eth0-TxRx-1
+PCI-MSI-edge      eth0-TxRx-2
+PCI-MSI-edge      eth0-TxRx-3
+PCI-MSI-edge      eth0-TxRx-4
+PCI-MSI-edge      eth0-TxRx-5
+PCI-MSI-edge      eth0-TxRx-6
+PCI-MSI-edge      eth0-TxRx-7
+```
+
+如上，可以看到会有8个发送接受合并中断。所以，理论上而言，开**同时开8个链接可以最大化的提升网络性能**？While, it is another story.
+
+**每个rx和tx**也可以**单独的分配一个中断**：
+
+```
+CPU0 CPU1 CPU2 CPU3 CPU4 CPU5
+105: 141606 0 0 0 0 0 IR-PCI-MSI-edge eth2-rx-0
+106: 0 141091 0 0 0 0 IR-PCI-MSI-edge eth2-rx-1
+107: 2 0 163785 0 0 0 IR-PCI-MSI-edge eth2-rx-2
+108: 3 0 0 194370 0 0 IR-PCI-MSI-edge eth2-rx-3
+109: 0 0 0 0 0 0 IR-PCI-MSI-edge eth2-tx
+```
+
+不过具体**每个中断名的意思依赖于driver和硬件**，可能某个NIC的rx和tx就共享一个中断。
+
+另外**MSI**是**PCI socket专门的一种中断触发机制**，不走**传统的INT引脚**，通过**PCI总线**向**专门的存储结构写信息来触发中断(！！！**)。
