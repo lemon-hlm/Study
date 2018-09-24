@@ -8,37 +8,42 @@
 
 ![config](./images/1.png)
 
-今天，虚拟化技术的各方面都有了进步，虚拟化也从纯软件逐深入到处理器级虚拟化，再到平台级虚拟化乃至输入/输出级虚拟化，代表性技术就是 Intel Virtualization Technology for Directed I/O，简写为 Intel VT-d，在介绍这个 Intel VT-d 之前，我们先来看看x86硬件虚拟化的第一步：处理器辅助虚拟化技术，也就是 Intel Virtualization Technology，分为对应Itanium 平台的 VT-i 和对应 x86 平台的 VT-x 两个版本。AMD 公司也有对应的技术 AMD-V，用于 x86 平台。我们介绍的是 x86 平台上的 VT-x 技术，VT-i 技术原理上略为相近。
+今天，虚拟化技术的各方面都有了进步，**虚拟化**也从**纯软件**逐深入到**处理器级虚拟化**，再到**平台级虚拟化**乃至**输入/输出级虚拟化**，代表性技术就是 Intel Virtualization Technology for Directed I/O，简写为 Intel **VT\-d**，在介绍这个 Intel VT-d 之前，我们先来看看**x86硬件虚拟化**的**第一步**：**处理器辅助虚拟化技术**，也就是Intel Virtualization Technology，分为对应Itanium平台的VT\-i和对应**x86**平台的**VT\-x**两个版本。AMD 公司也有对应的技术**AMD-V**。我们介绍的是 x86 平台上的 VT-x 技术，VT-i 技术原理上略为相近。
 
-纯软件虚拟化主要的问题是性能和隔离性。Full Virtualization完全虚拟化技术可以提供较好的客户操作系统独立性，不过其性能不高，在不同的应用下，可以消耗掉主机 10%~30%的资源。而OS Virtualization可以提供良好的性能，然而各个客户操作系统之间的独立性并不强。无论是何种软件方法，隔离性都是由Hypervisor软件提供的，过多的隔离必然会导致性能的下降。
+**纯软件虚拟化**主要的问题是**性能**和**隔离性**。**Full Virtualization完全虚拟化技术**可以提供较好的客户操作系统独立性，不过其性能不高，在不同的应用下，可以消耗掉主机10%~30%的资源。而OS Virtualization可以提供良好的性能，然而各个客户操作系统之间的独立性并不强。无论是何种软件方法，**隔离性**都是由**Hypervisor软件**提供的，**过多的隔离**必然会导致**性能的下降**。
 
 这些问题主要跟 x86 设计时就没有考虑虚拟化有关。我们先来看看 x86 处理器的Privilege 特权等级设计。
 
 ![config](./images/2.png)
 
-x86 架构为了保护指令的运行，提供了指令的 4 个不同 Privilege 特权级别，术语称为Ring，从 Ring 0～Ring 3。Ring 0 的优先级最高，Ring 3 最低。各个级别对可以运行的指令有所限制，例如，GDT，IDT，LDT，TSS 等这些指令就只能运行于 Privilege 0，也就是 Ring 0。要注意 Ring/Privilege级别和我们通常认知的进程在操作系统中的优先级并不同。
+x86 架构为了保护指令的运行，提供了指令的**4个不同Privilege 特权级别**，术语称为Ring，从 Ring 0～Ring 3。Ring 0 的优先级最高，Ring 3 最低。各个级别对可以运行的指令有所限制，例如，**GDT，IDT，LDT，TSS 等这些指令**就只能运行于**Privilege 0**，也就是 Ring 0。要注意 Ring/Privilege级别和我们通常认知的进程在操作系统中的优先级并不同。
 
-操作系统必须要运行一些 Privilege 0 的特权指令，因此 Ring 0 是被用于运行操作系统内核，Ring 1 和 Ring 2 是用于操作系统服务，Ring 3 则是用于应用程序。然而实际上并没有必要用完 4 个不同的等级，一般的操作系统实现都仅仅使用了两个等级，即 Ring 0 和 Ring 3，如图所示：
+操作系统必须要运行一些 Privilege 0 的特权指令，因此Ring 0 是被用于运行操作系统内核，Ring 1 和 Ring 2 是用于操作系统服务，Ring 3 则是用于应用程序。然而实际上并没有必要用完 4 个不同的等级，**一般的操作系统**实现都**仅仅使用了两个等级**，即 Ring 0 和 Ring 3，如图所示：
 
 ![config](./images/3.png)
 
-也就是说，在一个常规的 x86 操作系统中，系统内核必须运行于 Ring 0，而 VMM 软件以及其管理下的 Guest OS 却不能运行于 Ring 0——因为那样就无法对所有虚拟机进行有效的管理，就像以往的协同式多任务操作系统（如，Windows 3.1）无法保证系统的稳健运行一样。在没有处理器辅助的虚拟化情况下，挑战就是采用 Ring 0 之外的等级来运行 VMM(Virtual Machine Monitor，虚拟机监视器)或 Hypervisor，以及 Guest OS。
+也就是说，在一个常规的x86操作系统中，系统内核必须运行于 Ring 0，而 **VMM 软件**以及其管理下的 **Guest OS** 却**不能运行于 Ring 0**——因为那样就**无法对所有虚拟机进行有效的管理**，就像以往的协同式多任务操作系统（如，Windows 3.1）无法保证系统的稳健运行一样。在**没有处理器辅助的虚拟化**情况下，挑战就是采用**Ring 0 之外**的等级来**运行 VMM**(Virtual Machine Monitor，虚拟机监视器)或 Hypervisor，以及 Guest OS。
 
-现在流行的解决方法是 Ring Deprivileging（暂时译为特权等级下降），并具有两种选择：客户 OS 运行于 Privilege 1（0/1/3 模型），或者 Privilege 3（0/3/3 模型）。
+现在流行的解决方法是 **Ring Deprivileging（暂时译为特权等级下降**），并具有**两种选择**：客户OS运行于 Privilege 1（**0/1/3 模型**），或者 **Privilege 3（0/3/3 模型**）。
 
-无论是哪一种模型，客户 OS 都无法运行于 Privilege 0，这样，如 GDT，IDT，LDT，TSS 这些特权指令就必须通过模拟的方式来运行，这会带来很明显的性能问题。特别是在负荷沉重、这些指令被大量执行的时候。
+无论是哪一种模型，客户 OS 都**无法运行于 Privilege 0**，这样，如**GDT，IDT，LDT，TSS**这些**特权指令**就**必须通过模拟的方式(！！！**)来运行，这会带来很**明显的性能问题**。特别是在**负荷沉重**、**这些指令被大量执行**的时候。
 
-同时，这些特权指令是真正的“特权”，隔离不当可以严重威胁到其他客户 OS，甚至主机 OS。Ring Deprivileging 技术使用 IA32 架构的 Segment Limit（限制分段）和 Paging（分页）来隔离 VMM 和 Guest OS，不幸的是 EM64T 的 64bit 模式并不支持 Segment Limit 模式，要想运行 64bit 操作系统，就必须使用 Paging 模式。
+同时，**这些特权指令**是真正的“特权”，**隔离不当**可以严重威胁到其他客户 OS，甚至主机 OS。**Ring Deprivileging技术**使用**IA32(32位**)架构的**Segment Limit（限制分段**）和 **Paging（分页**）来**隔离VMM和Guest OS**，不幸的是EM64T的**64bit模式**并**不支持Segment Limit**模式，要想运行 64bit 操作系统，就**必须使用 Paging 模式**。
 
-对于虚拟化而言，使用 Paging 模式的一个致命之处是它不区分 Privileg 0/1/2 模式，因此客户机运行于 Privileg 3 就成为了必然（0/3/3 模型），这样 Paging 模式才可以将主机OS和客户 OS 隔离开来，然而在同一个 Privileg 模式下的不同应用程序（如，不同的虚拟机）是无法受到 Privileg 机构保护的，这就是目前 IA32 带来的隔离性问题，这个问题被称为 Ring Compression。
+对于虚拟化而言，使用**Paging模式**的一个致命之处是它**不区分Privileg 0/1/2模式(！！！只区分是否3级别！！！**)，因此**客户机运行于Privileg 3 就成为了必然**（**0/3/3模型**），这样Paging模式**才可以**将**主机OS**和**客户OS隔离**开来，然而在**同一个Privileg模式**下的**不同应用程序**（如，**不同的虚拟机**）是**无法受到Privileg机制保护**的，这就是目前**IA32**带来的**隔离性问题**，这个问题被称为Ring Compression。
 
 ![config](./images/4.png)
 
-IA32 不支持 VT，就无法虚拟 64-bit 客户操作系统这个问题的实际表现是：VMware 在不支持 Intel VT 的 IA32 架构 CPU 上无法虚拟64\-bit客户操作系统，因为无法在客户 OS 之间安全地隔离。
+**IA32不支持VT**，就**无法虚拟64\-bit客户操作系统**这个问题的实际表现是：**VMware**在**不支持 Intel VT**的**IA32架构CPU**上**无法虚拟64\-bit客户操作系统**，因为**无法在客户 OS 之间安全地隔离**。
 
-作为一个芯片辅助（Chip-Assisted）的虚拟化技术，VT 可以同时提升虚拟化效率和虚拟机的安全性，下面我们就来看看 Intel VT 带来了什么架构上的变迁。我们谈论的主要是IA32 上的 VT 技术，一般称之为 VT-x，而在 Itanium 平台上的 VT 技术，被称之为 VT-i。
+作为一个**芯片辅助（Chip\-Assisted**）的虚拟化技术，VT可以同时提升虚拟化效率和虚拟机的安全性，下面我们就来看看Intel VT带来了什么架构上的变迁。我们谈论的主要是**IA32上的VT技术**，一般称之为**VT\-x**，而在 Itanium 平台上的 VT 技术，被称之为 VT-i。
 
-VT-x 将 IA32 的 CU 操作扩展为两个 forms（窗体）：VMX root operation（根虚拟化操作）和 VMX non-root operation（非根虚拟化操作），VMX root operation 设计来供给VMM/Hypervisor 使用，其行为跟传统的 IA32 并无特别不同，而 VMX non-root operation 则是另一个处在 VMM 控制之下的 IA32 环境。所有的 forms 都能支持所有的四个 Privileges levels，这样在 VMX non-root operation环境下运行的虚拟机就能完全地利用 Privilege 0等级。
+VT\-x将**IA32的CU操作**扩展为**两个forms窗体**:
+
+- VMX root operation（**根虚拟化操作**）: 设计来供给**VMM/Hypervisor**使用，其行为**跟传统的IA32**并**无特别不同**
+- VMX non\-root operation（**非根虚拟化操作**）: 则是另一个**处在VMM控制之下的IA32环境**。
+
+所有的forms都能支持所有的**四个Privileges levels**，这样在VMX non\-root operation环境下运行的虚拟机就能完全地利用Privilege 0等级。
 
 ![config](./images/5.png)
 
@@ -94,9 +99,9 @@ I/O设备共享：这个模型是I/O分配模型的一个扩展，对硬件具�
 
 运用 VT-d 技术，虚拟机得以使用直接 I/O 设备分配方式或者 I/O 设备共享方式来代替传统的设备模拟/额外设备接口方式，从而大大提升了虚拟化的 I/O 性能。
 
-![config](./images/11.png)
+主流双路 Xeon Stoakley 平台将支持 Intel VT-d 技术:
 
-主流双路 Xeon Stoakley 平台将支持 Intel VT-d 技术
+![config](./images/11.png)
 
 高端四路 Caneland 平台也会支持 VT-d 功能:
 
