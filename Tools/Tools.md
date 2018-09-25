@@ -39,3 +39,4 @@
 - IrfanView：看图软件，https://www.irfanview.com/
 - 微软所有软件下载（系统、工具、资源等）：https://msdn.itellyou.cn/
 - 各种软件等下载以及资源教程: http://www.dayanzai.me/
+- 安卓模拟器: 夜神, 能够复制文本出模拟器
