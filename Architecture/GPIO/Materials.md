@@ -1,0 +1,1 @@
+linux内核中的GPIO系统: http://www.wowotech.net/sort/gpio_subsystem
