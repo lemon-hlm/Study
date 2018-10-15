@@ -40,6 +40,10 @@ http://kernel.meizu.com/slab-allocator-and-kmalloc.html
 
 http://abcdxyzk.github.io/blog/cats/kernel/
 
+各种子系统: https://blog.csdn.net/droidphone/article/category/788233
+
+https://www.cnblogs.com/tolimit/category/697314.html
+
 - 书籍资料：
 
 赵炯书籍网站：http://www.oldlinux.org/

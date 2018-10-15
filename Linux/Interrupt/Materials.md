@@ -3,3 +3,4 @@
 - Linux内核中断: https://blog.csdn.net/bullbat/article/category/958200
 - Linux inside: https://0xax.gitbooks.io/linux-insides/content/Interrupts/
 - Linux inside中文: https://xinqiu.gitbooks.io/linux-insides-cn/content/index.html
+- 中断子系统: https://blog.csdn.net/droidphone/article/category/1118447

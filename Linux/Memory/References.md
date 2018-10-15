@@ -16,6 +16,8 @@ x86：https://blog.csdn.net/zhoudaxia/article/category/1083057
 
 x86：https://blog.csdn.net/bullbat/article/category/1055017/2
 
+x86: https://www.cnblogs.com/tolimit/category/697314.html
+
 ## 知识汇总
 
 http://www.cnblogs.com/wuchanming/category/684643.html
