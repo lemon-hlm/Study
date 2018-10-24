@@ -21,19 +21,21 @@
 
 # 3 spinlock
 
+操作系统中**锁的机制分为两类(！！！**)，一类是**忙等待**，另一类是**睡眠等待**。
+
 **spinlock**主要针对**数据操作集合的临界区**, 临界区是**一个变量**, **原子变量**可以解决. 抢到锁的**进程不能睡眠**, 并要**快速执行**(这是spinlock的**设计语义**).
 
 "FIFO ticket\-based算法": 
 
 锁由slock(和\<next, owner\>组成union)构成
 
-- 获取锁: CPU先领ticket(当前next值), 然后锁的next加1, owner等于ticket, CPU获得锁, 返回, 否则忙等待
+- 获取锁: CPU先领ticket(当前next值), 然后锁的next加1, owner等于ticket, CPU获得锁, 返回, 否则循环忙等待
 - 释放锁: 锁的owner加1
 
 获取锁接口(这里只提这两个):
 
-- spin\_lock(): 关内核抢占, 抢锁, 但来中断(中断会抢占所有)可能导致死锁
-- spin\_lock\_irq(): 关本地中断, 关内核抢占(内核不会主动抢占), 抢锁
+- spin\_lock(): 关内核抢占, 循环抢锁, 但来中断(中断会抢占所有)可能导致死锁
+- spin\_lock\_irq(): 关本地中断, 关内核抢占(内核不会主动抢占), 循环抢锁
 
 spin\_lock()和raw\_spin\_lock():
 
@@ -46,3 +48,29 @@ spin\_lock特点:
 - **同一时刻只能有一个获得**
 - spinlock临界区尽快完成, 不能睡眠
 - 可以在中断上下文使用
+
+# 4 信号量semaphore
+
+信号量**允许进程进入睡眠状态(即睡眠等待**), 是计数器, 支持两个操作原语P(down)和V(up)
+
+```c
+struct semaphore{
+    raw_spinlock_t		lock;       //对count和wait_list的保护
+	unsigned int		count;      // 允许持锁数目
+	struct list_head	wait_list;  // 没成功获锁的睡眠的进程链表
+};
+```
+
+初始化: sema\_init()
+
+获得锁:
+
+- down(struct semaphore \*sem): 失败进入**不可中断的睡眠**状态
+- down\_interruptible(struct semaphore \*sem): **失败**则进入**可中断的睡眠**状态. ①关闭**本地中断(防止中断来导致死锁**); ②count大于0, 当前进程获得semaphore, count减1, 退出; ③count小于等于0, 将**当前进程加入wait\_list链表**, 循环: 设置**进程TASKINTERRUPTIBLE**, 调用**schedule\_timeout()让出CPU<即睡眠**>, 判断被调度到的原因(**能走到这儿说明又被调度**到了), 如果waiter.up为true, 说明**被up操作唤醒**, 获得信号量,退出; ④打开本地中断
+- 等等
+
+释放锁:
+
+up(struct semaphore \*sem): wait\_list为空, 说明没有进程等待信号量, count加1, 退出; wait\_list不为空, 等待队列是先进先出, 将第一个移出队列, 设置waiter.up为true, wake\_up\_process()唤醒waiter\-\>task进程
+
+**睡眠等待, 任意数量的锁持有者**
