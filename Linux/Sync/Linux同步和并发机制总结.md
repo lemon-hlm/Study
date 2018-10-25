@@ -74,3 +74,105 @@ struct semaphore{
 up(struct semaphore \*sem): wait\_list为空, 说明没有进程等待信号量, count加1, 退出; wait\_list不为空, 等待队列是先进先出, 将第一个移出队列, 设置waiter.up为true, wake\_up\_process()唤醒waiter\-\>task进程
 
 **睡眠等待, 任意数量的锁持有者**
+
+# 5 Mutex和MCS锁
+
+## 5.1 MCS锁
+
+传统自旋等待锁, 在多CPU和NUMA系统, 所有自旋等待锁在同一个共享变量自旋, 对同一个变量修改, 由cache一致性原理(例如MESI)导致参与自旋的CPU中的cache line变的无效, 从而导致CPU高速缓存行颠簸现象(CPU cache line bouncing), 即多个CPU上的cache line反复失效.
+
+MCS减少CPU cache line bouncing, 核心思想是每个锁的申请者只在本地CPU的变量上自旋，而不是全局的变量。
+
+```c
+[include/linux/osq_lock.h]
+// Per-CPU的, 表示本地CPU节点
+struct optimistic_spin_node {
+	struct optimistic_spin_node *next, *prev; // 双向链表
+	int locked; /* 1 if lock acquired */ // 加锁状态, 1表明当前能申请
+	int cpu; /* encoded CPU # + 1 value */ // CPU编号, 0表示没有CPU, 1表示CPU0, 类推
+};
+// 一个MCS锁一个
+struct optimistic_spin_queue {
+	/*
+	 * Stores an encoded value of the CPU # of the tail node in the queue.
+	 * If the queue is empty, then it's set to OSQ_UNLOCKED_VAL.
+	 */
+	atomic_t tail;
+};
+```
+
+初始化: osq\_lock\_init()
+
+申请MCS锁: osq\_lock()
+
+- 给当前进程所在CPU编号, 将lock\-\>tail设为当前CPU编号, 如果原有tail是0, 表明没有CPU, 那直接申请成功
+- 通过原有tail获得前继node, 然后将当前node节点加入MCS链表
+- 循环自旋等待, 判断当前node的locked是否是1, 1的话说明前继释放了锁, 申请成功, 退出; 不是1, 判断是否需要重新调度(抢占或调度器要求), 是的话放弃自旋等待, 退出MCS链表, 删除MCS链表节点, 申请失败
+
+![config](./images/1.png)
+
+释放MCS锁: osq\_unlock()
+
+- lock\-\>tail是当前CPU, 说明没人竞争, 直接设tail为0, 退出
+- 当前节点的后继节点存在, 设置后继node的locked为1, 相当于传递锁
+
+## 5.2 Mutex锁
+
+```c
+[include/linux/mutex.h]
+struct mutex {
+	/* 1: unlocked, 0: locked, negative: locked, possible waiters */
+	// 1表示没人持有锁；0表示锁被持有；负数表示锁被持有且有人在等待队列中等待
+	atomic_t		count; 
+	// 保护wait_list睡眠等待队列
+	spinlock_t		wait_lock;
+	// 所有在该Mutex上睡眠的进程
+	struct list_head	wait_list;
+#if defined(CONFIG_MUTEX_SPIN_ON_OWNER)
+    // 锁持有者的task_struct
+	struct task_struct	*owner;
+#endif
+#ifdef CONFIG_MUTEX_SPIN_ON_OWNER
+    // MCS锁
+	struct optimistic_spin_queue osq; /* Spinner MCS lock */
+#endif
+};
+```
+
+初始化: 静态DEFINE\_MUTEX宏, 动态使用mutex\_init()函数
+
+申请Mutex锁:
+
+- mutex\-\>count减1等于0, 说明没人持有锁, 直接申请成功, 设置owner为当前进程, 退出
+- 申请OSQ锁, 减少CPU cache line bouncing, 会将所有等待Mutex的参与者放入OSQ锁队列, 只有第一个等待者才参与自旋等待
+- while循环自旋等待锁持有者释放, 这中间①锁持有者变化 ②锁持有进程被调度出去, 即睡眠(task\-\>on\_cpu=0), ③调度器需要调度其他进程(need\_resched())都会**退出循环**, 但**不是锁持有者释放了锁(lock\-\>owner不是NULL**); 如果是锁持有者释放了锁(lock\-\>owner是NULL), 当前进程获取锁, 设置count为0, 释放OSQ锁, 申请成功, 退出. 
+- 上面自旋等待获取锁失败, 再尝试一次申请, 不成功的话只能走睡眠唤醒的慢车道. 
+- 将当前进程的waiter进入mutex等待队列wait\_list
+- 循环: 获取锁, 失败则让出CPU, 进入睡眠态, 成功则退出循环, 收到异常信号也会退出循环
+- 成功获取锁退出循环的话, 设置进程运行态, 从等待队列出列, 如果等待队列为空, 设置lock\-\>count为0(表明锁被人持有且队列无人)
+- 设置owner为当前进程
+
+释放Mutex锁:
+
+- 清除owner
+- count加1若大于0, 说明队列没人, 成功
+- 释放锁, 将count设为1, 然后唤醒队列第一个进程(waiter\-\>task)
+
+从 **Mutex**实现细节的分析可以知道，**Mutex**比**信号量**的实现要**高效很多**。
+
+- Mutex**最先**实现**自旋等待机制**。
+- Mutex在**睡眠之前尝试获取锁(！！！**)。
+- Mutex实现**MCS锁**来**避免多个CPU争用锁**而导致**CPU高速缓存行颠簸**现象。
+
+正是因为**Mutex**的**简洁性**和**高效性**，因此**Mutex的使用场景**比**信号量**要**更严格**，使用Mutex需要注意的**约束条件**如下。
+
+- **同一时刻**只有**一个线程**可以持有Mutex。
+- 只有**锁持有者可以解锁**。不能在一个进程中持有Mutex，而在另外一个进程中释放它。因此Mutex**不适合内核同用户空间复杂的同步场景(！！！**)，信号量和读写信号量比较适合。
+- **不允许递归地加锁和解锁**。
+- 当**进程持有Mutex**时，进程**不可以退出(！！！**)。
+- Mutex必须使用**官方API来初始化**。
+- Mutex可以**睡眠**，所以**不允许**在**中断处理程序**或者**中断下半部**中使用，例如tasklet、定时器等。
+
+在实际工程项目中，该**如何选择spinlock、信号量和Mutex**呢？
+
+在**中断上下文**中毫不犹豫地使用**spinlock**, 如果**临界区**有**睡眠、隐含睡眠的动作**及**内核API**，应**避免选择spinlock**。在**信号量**和**Mutex**中该如何选择呢？除非代码场景**不符合上述Mutex的约束**中有某一条，**否则都优先使用Mutex**。
