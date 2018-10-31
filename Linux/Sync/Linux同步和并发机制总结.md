@@ -212,10 +212,113 @@ RCU实现目标是, 读者线程没有同步开销(不需要额外的锁, 不需
 接口如下:
 
 - rcu\_read\_lock()/rcu\_read\_unlock(): 组成一个**RCU读临界**。
-- rcu\_dereference(): 用于获取**被RCU保护的指针**(RCU protected pointer)，**读者线程**要访问**RCU保护的共享数据**，需要使用**该函数创建一个新指针**，并且**指向RCU被保护的指针**。
+- rcu\_dereference(): 用于获取**被RCU保护的指针**(RCU protected pointer)，**读者线程**要访问**RCU保护的共享数据**，需要使用**该函数创建一个新指针(！！！**)，并且**指向RCU被保护的指针**。
 - rcu\_assign\_pointer(): 通常用在**写者线程**。在**写者线程**完成新数据的**修改**后，调用该接口可以让**被RCU保护的指针**指向**新创建的数据**，用RCU的术语是发布(Publish) 了更新后的数据。
 - synchronize\_rcu(): 同步等待**所有现存的读访问完成**。
 - call\_rcu(): 注册一个**回调函数(！！！**)，当**所有**现存的**读访问完成**后，调用这个回调函数**销毁旧数据**。
+
+```c
+[RCU的一个简单例子]
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/rcupdate.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+
+struct foo {
+	int a;
+	struct rcu_head rcu;
+};
+        
+static struct foo *g_ptr;
+
+static void myrcu_reader_thread(void *data) //读者线程
+{
+    struct foo *p = NULL;
+    
+    while(1){
+        msleep(200);
+        // 重点1
+        rcu_read_lock();
+        // 重点2
+        p = rcu_dereference(g_ptr);
+        if(p)
+            printk("%s: read a=%d\n", __func__, p->a);
+        // 重点3
+        rcu_read_unlock();
+    }
+}
+
+static void myrcu_del(struct rcu_head *rh)
+{
+    struct foo *p = container_of(rh, struct foo, rcu);
+    printk ("%s: a=%d\n", __func__, p->a);
+    kfree(p);
+}
+
+static void myrcu_writer_thread(void *p)    //写者线程
+{
+    struct foo *mew;
+    struct foo *old;
+    int value = (unsigned long)p;
+    
+    while(1){
+        msleep(400);
+        struct foo *new_ptr = kmalloc(sizeof(struct foo), GFP_KERNEL);
+        old = g_ptr;
+        printk("%s: write to new %d\n", __func__, value);
+        *new_ptr = *old;
+        new_ptr->a = value;
+        // 重点
+        rcu_assign_pointer(g_ptr, new_ptr);
+        // 重点
+        call_rcu(&old->rcu, myrcu_del);
+        value++;
+    }
+}
+
+static int __init my_test_init(void){
+    struct task_struct *reader_thread;
+    struct task_struct *writer_thread ；
+    int value = 5;
+    
+    printk("figo: my module init\n");
+    g_ptr = kzalloc(sizeof (struct foo), GFP_KERNEL);
+    
+    reader_thread = kthread_run(myrcu_reader_thread, NULL, "rcu_reader");
+    writer_thread = kthread_run(myrcu_writer_thread, (void *)(unsigned long)value, "rcu_writer")
+    return 0;
+}
+
+static void __exit my_test_exit(void)
+{
+    printk("goodbye\n");
+    if(g_ptr)
+        kfree(g_ptr);
+}
+MODULE_LICENSE("GPL");
+module_init(my_test_init);
+```
+
+该例子的目的是通过RCU机制保护**my\_test\_init**()**分配的共享数据结构g\_ptr**，另外创建了一个读者线程和一个写者线程来模拟同步场景。
+
+对于**读者线程**myrcu\_reader\_thread:
+
+- 通过**rcu\_read\_lock**()和**rcu\_read\_unlock**()来构建一个**读者临界区**。
+- 调用rcu\_dereference()获取**被保护数据g\_ptr指针**的一个**副本(！！！**)，即**指针p**，这时**p和g\_ptr**都指向**旧的被保护数据**。
+- 读者线程每隔200毫秒读取一次被保护数据。
+
+对于**写者线程**myrcu\_writer\_thread:
+
+- 分配一个**新的保护数据new\_ptr**，并修改相应数据。
+- **rcu\_assign\_pointer**()让g\_ptr指向**新数据**。
+- call\_rcu()注册一个**回调函数(！！！**)，确保**所有对旧数据的引用都执行完成**之后，才调用回调函数来删除旧数据old\_data。
+- 写者线程每隔400毫秒修改被保护数据。
+
+在所有的**读访问完成**之后，内核可以释放旧数据，对于**何时释放旧数据**，内核提供了**两个API函数(！！！**)：**synchronize\_rcu**()和 **call\_rcu**().
 
 ## 7.3 基本概念
 
@@ -267,11 +370,11 @@ Tree通过三个维度确定层次关系: **每个叶子的CPU数量(CONFIG\_RCU
 
 1. **写者程序注册RCU回调函数**:
 
-(1) 参数: rcu_head(每个RCU保护的数据都会内嵌一个), 回调函数指针(GP结束<读者执行完>, 被调用销毁)
+- 参数: rcu_head(每个RCU保护的数据都会内嵌一个), 回调函数指针(GP结束<读者执行完>, 被调用销毁)
 
-(2) 将rcu\_head加入到本地rcu\_data的nxttail链表
+- 将rcu\_head加入到本地rcu\_data的nxttail链表
 
-2. 每次时钟中断处理函数tick\_periodic(), 检查本地CPU的rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话**触发一个软中断raise\_softirq**().
+2. 每次**时钟中断处理函数tick\_periodic**(), 检查本地CPU的rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话**触发一个软中断raise\_softirq**().
 
 3. **软中断处理函数**, 针对**每一个rcu\_state(！！！**): 检查rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话, 调整链表, 设置rsp\->gp\_flags标志位为RCU\_GP\_FLAG\_INIT, rcu\_gp\_kthread\_wake()唤醒**rcu\_state对应的内核线程(！！！**)
 
