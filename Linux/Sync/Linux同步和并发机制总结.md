@@ -196,3 +196,106 @@ struct mutex {
 - **down\_read**(): 如果一个进程持有了**读者锁**，那么允许继续申请**多个读者锁**，申请**写者锁**则要**睡眠等待**。
 - **down\_write**(): 如果一个进程持有了**写者锁**，那么第二个进程申请该**写者锁**要**自旋等待(配置了CONFIG\_RWSEM\_SPIN\_ON\_OWNER选项不睡眠**)，申请**读者锁**则要**睡眠等待**。
 - **up\_write**()/**up\_read**():如果**等待队列**中**第一个成员是写者**，那么**唤醒该写者**，否则**唤醒排在等待队列**中**最前面连续的几个读者**。
+
+# 7 RCU
+
+## 7.1 背景和原理
+
+spinlock、读写信号量和mutex的实现，它们都使用了原子操作指令，即原子地访问内存，多CPU争用共享的变量会让cache一致性变得很糟(！！！)，使得性能下降。读写信号量还有一个致命缺点, 只允许多个读者同时存在, 但读者和写者不能同时存在.
+
+RCU实现目标是, 读者线程没有同步开销(不需要额外的锁, 不需要使用原子操作指令和内存屏障); 同步任务交给写者线程, 写者线程等所有读者线程完成把旧数据销毁, 多个写者则需要额外保护机制.
+
+原理: RCU记录所有指向共享数据的指针的使用者, 当修改该共享数据时，首先创建一个副本，在副本中修改。所有读访问线程都离开读临界区之后，指针指向新的修改后副本的指针，并且删除旧数据。
+
+## 7.2 操作接口
+
+接口如下:
+
+- rcu\_read\_lock()/rcu\_read\_unlock(): 组成一个**RCU读临界**。
+- rcu\_dereference(): 用于获取**被RCU保护的指针**(RCU protected pointer)，**读者线程**要访问**RCU保护的共享数据**，需要使用**该函数创建一个新指针**，并且**指向RCU被保护的指针**。
+- rcu\_assign\_pointer(): 通常用在**写者线程**。在**写者线程**完成新数据的**修改**后，调用该接口可以让**被RCU保护的指针**指向**新创建的数据**，用RCU的术语是发布(Publish) 了更新后的数据。
+- synchronize\_rcu(): 同步等待**所有现存的读访问完成**。
+- call\_rcu(): 注册一个**回调函数(！！！**)，当**所有**现存的**读访问完成**后，调用这个回调函数**销毁旧数据**。
+
+## 7.3 基本概念
+
+Grace Period, 宽限期: **GP开始**到**所有读者临界区的CPU离开**算一个GP, GP结束调用回调函数
+
+Quiescent State, 静止状态: 一个CPU处于读者临界区, 说明活跃, 离开读者临界区, 静止态
+
+经典RCU使用全局cpumask位图, 每个比特一个CPU. 每个CPU在GP开始设置对应比特, 结束清相应比特. 多CPU会竞争使用, 需要使用spinlock, CPU越多竞争越惨烈.
+
+Tree RCU解决cpumask位图竞争问题.
+
+![config](./images/2.png)
+
+以4核处理器为例，假设Tree RCU把**两个CPU**分成**1个rcu\_node节点**，这样**4个CPU**被分配到**两个rcu\_node**节点上，另外还有**1个根rcu\_node**节点来**管理这两个rcu\_node节点**。如图4.8所示，**节点1**管理**cpuO**和**cpul**，节点2管理cpu2和cpu3，而节点0是根节点，管理节点1和节点2。**每个节点**只需要**两个比特位的位图(！！！**)就可以**管理各自的CPU**或者节点，**每个节点(！！！**)都有**各自的spinlock锁(！！！**)来**保护相应的位图**。
+
+注意: **CPU不算层次level！！！**
+
+假设**4个CPU**都经历过**一个QS状态**，那么**4个CPU**首先在**Level 0层级**的**节点1**和**节点2**上**修改位图**。对于**节点1**或者**节点2**来说，**只有两个CPU来竞争锁**，这比经典RCU上的锁争用要减少一半。当**Level 0**上**节点1**和**节点2**上**位图都被清除干净后(！！！**)，才会清除**上一级节点的位图**，并且**只有最后清除节点的CPU(！！！**)才有机会去**尝试清除上一级节点的位图(！！！**)。因此对于节点0来说，还是两个CPU来争用锁。整个过程都是只有两个CPU去争用一个锁，比经典RCU实现要减少一半。
+
+## 7.4 Linux实现
+
+### 7.4.1 相关数据结构定义
+
+Tree RCU实现, 定义了3个很重要的数据结构，分别是struct rcu\_data、struct rcu\_node和struct rcu\_state，另外还维护了一个比较隐晦的状态机(！！！).
+
+- struct rcu\_data数据结构定义成Per\-CPU变量. gpnum和completed用于GP状态机的运行状态, 初始两个都等于\-300, 新建一个GP, gpnum加1; GP完成, completed加1. passed\_quiesce(bool): 当时钟tick检测到rcu\_data对应的CPU完成一次Quiescent State, 设这个为true. qs\_pending(bool): CPU正等待QS.
+- struct rcu\_node是Tree RCU中的组成节点，它有根节点(Root Node)和叶节点之分。如果Tree RCU只有一层，那么根节点下面直接管理着一个或多个rcu\_data;如果Tree RCU有多层结构，那么根节点管理着多个叶节点，**最底层的叶节点**管理者**一个或多个rcu\_data**。
+- RCU系统支持多个不同类型的RCU状态，使用struct rcu\_state数据结构来描述这些状态。每种RCU类型都有独立的层次结构(！！！)，即根节点和rcu\_data数据结构。也有gpnum和completed.
+
+Tree通过三个维度确定层次关系: **每个叶子的CPU数量(CONFIG\_RCU\_FANOUT\_LEAF**), 每层的最多叶子数量(CONFIG\_RCU\_FANOUT), 最多层数(MAX\_RCU\_LVLS宏定义, 是4, CPU不算level层次！！！)
+
+![config](./images/5.png)
+
+在**32核处理器**中，层次结构分成两层，**Level 0**包括**两个struct rcu\_node(！！！**)，其中**每个struct rcu\_node**管理**16个struct rcu\_data(！！！**)数据结构，分别表示**16个CPU的独立struct rcu\_data**数据结构; 在**Level 1**层级，有**一个struct rcu\_node(！！！**)节点**管理**着**Level 0层级**的**两个rcu\_node**节点，**Level 1**层级中的**rcu\_node**节点称为**根节点**，**Level 0**层级的**两个rcu\_node**节点是**叶节点**。
+
+### 7.4.2 内核启动进行RCU初始化
+
+![config](./images/3.png)
+
+(1) 初始化3个rcu\_state, rcu\_sched\_state(普通进程上下文的RCU)、rcu\_bh\_state(软中断上下文)和rcu\_preempt\_state(系统配置了CONFIG\_PREEMPT\_RCU, 默认使用这个)
+
+(2) 注册一个SoftIRQ回调函数
+
+(3) 初始化每个rcu\_state的层次结构和相应的Per\-CPU变量rcu\_data
+
+(4) 为每个rcu\_state初始化一个内核线程, 以rcu\_state命名
+
+### 7.4.3 开启一个GP
+
+1. **写者程序注册RCU回调函数**:
+
+(1) 参数: rcu_head(每个RCU保护的数据都会内嵌一个), 回调函数指针(GP结束<读者执行完>, 被调用销毁)
+
+(2) 将rcu\_head加入到本地rcu\_data的nxttail链表
+
+2. 每次时钟中断处理函数tick\_periodic(), 检查本地CPU的rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话**触发一个软中断raise\_softirq**().
+
+3. **软中断处理函数**, 针对**每一个rcu\_state(！！！**): 检查rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话, 调整链表, 设置rsp\->gp\_flags标志位为RCU\_GP\_FLAG\_INIT, rcu\_gp\_kthread\_wake()唤醒**rcu\_state对应的内核线程(！！！**)
+
+### 7.4.4 初始化一个GP
+
+RCU内核线程真正初始化一个GP
+
+### 7.4.5 检测QS
+
+时钟中断处理函数判断当前CPU是否经过了一个quiescent state
+
+### 7.4.6 回调函数
+
+整个GP结束, RCU调用回调函数做一些销毁动作, 还是在RCU软中断中触发.
+
+从代码中的**trace功能定义**的状态来看，**一个GP需要经历的状态转换**为: “**newreq \-\> start \-\> cpustart \-\> fqswait \-\> cpuend \-\>end**”。
+
+总结Tree RCU的实现中有如下几点需要大家再仔细体会。
+
+- Tree RCU为了避免**修改CPU位图带来的锁争用**，巧妙设置了树形的层次结构，**rcu\_data**、**rcu\_node**和**rcu\_state**这 3 个数据结构组成一棵完美的树。
+- Tree RCU的实现维护了一个**状态机**，这个状态机若隐若现，只有把**trace功能打开**了才能感觉到该状态机的存在，trace函数是trace\_rcu\_grace\_period()。
+- 维护了一些以rcu\_data\-\>nxttail\[\]二级指针为首的链表，该链表的实现很巧妙地运用了二级指针的指向功能。
+- rcu\_data、rcu\_node和rcu\_state这3个数据结构中的gpnum、completed、grpmask、passed\_quiesce、qs\_pending、qsmask等成员，正是这些成员的值的变化推动了Tree RCU状态机的运转。
+
+如图4.17所示是Tree RCU状态机的运转情况和一些重要数据的变化情况。
+
+![config](./images/4.png)
