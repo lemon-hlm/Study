@@ -364,23 +364,25 @@ Tree通过三个维度确定层次关系: **每个叶子的CPU数量(CONFIG\_RCU
 
 (3) 初始化每个rcu\_state的层次结构和相应的Per\-CPU变量rcu\_data
 
-(4) 为每个rcu\_state初始化一个内核线程, 以rcu\_state命名
+(4) 为**每个rcu\_state初始化一个内核线程**, 以rcu\_state命名
 
 ### 7.4.3 开启一个GP
 
 1. **写者程序注册RCU回调函数**:
 
+**RCU写者程序(！！！**)通常需要调用**call\_rcu**()、**call\_rcu\_bh**()或**call\_rcu\_sched**()等函数来**通知RCU**系统**注册一个RCU回调函数(！！！**)。对应上面的三种state.
+
 - 参数: rcu_head(每个RCU保护的数据都会内嵌一个), 回调函数指针(GP结束<读者执行完>, 被调用销毁)
 
 - 将rcu\_head加入到本地rcu\_data的nxttail链表
 
-2. 每次**时钟中断处理函数tick\_periodic**(), 检查本地CPU的rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话**触发一个软中断raise\_softirq**().
+2. 总结: 每次**时钟中断**处理函数**tick\_periodic**(), 检查**本地CPU**上**所有的rcu\_state(！！！**)对应的**rcu\_data**成员**nxttail链表有没有写者注册的回调函数**, 有的话**触发一个软中断raise\_softirq**().
 
 3. **软中断处理函数**, 针对**每一个rcu\_state(！！！**): 检查rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话, 调整链表, 设置rsp\->gp\_flags标志位为RCU\_GP\_FLAG\_INIT, rcu\_gp\_kthread\_wake()唤醒**rcu\_state对应的内核线程(！！！**)
 
 ### 7.4.4 初始化一个GP
 
-RCU内核线程真正初始化一个GP
+RCU内核线程真正初始化一个GP, 这个线程是rcu\_state的
 
 ### 7.4.5 检测QS
 
