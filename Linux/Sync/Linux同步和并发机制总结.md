@@ -1,5 +1,26 @@
 [TOC]
 
+- 1 原子操作
+- 2 内存屏障
+- 3 spinlock
+- 4 信号量semaphore
+- 5 Mutex和MCS锁
+    - 5.1 MCS锁
+    - 5.2 Mutex锁
+- 6 读写锁
+- 7 RCU
+    - 7.1 背景和原理
+    - 7.2 操作接口
+    - 7.3 基本概念
+    - 7.4 Linux实现
+        - 7.4.1 相关数据结构定义
+        - 7.4.2 内核启动进行RCU初始化
+        - 7.4.3 开启一个GP
+        - 7.4.4 初始化一个GP
+        - 7.4.5 检测QS
+        - 7.4.6 GP结束
+        - 7.4.7 回调函数
+
 # 1 原子操作
 
 原子操作保证**指令以原子的方式执行**(不是代码编写, 而是由于CPU的行为导致, 先加载变量到本地寄存器再操作再写内存). **x86**的**atomic操作**通常通过**原子指令**或**lock前缀**实现.
@@ -354,6 +375,10 @@ Tree通过三个维度确定层次关系: **每个叶子的CPU数量(CONFIG\_RCU
 
 在**32核处理器**中，层次结构分成两层，**Level 0**包括**两个struct rcu\_node(！！！**)，其中**每个struct rcu\_node**管理**16个struct rcu\_data(！！！**)数据结构，分别表示**16个CPU的独立struct rcu\_data**数据结构; 在**Level 1**层级，有**一个struct rcu\_node(！！！**)节点**管理**着**Level 0层级**的**两个rcu\_node**节点，**Level 1**层级中的**rcu\_node**节点称为**根节点**，**Level 0**层级的**两个rcu\_node**节点是**叶节点**。
 
+如图4.17所示是Tree RCU状态机的运转情况和一些重要数据的变化情况。
+
+![config](./images/4.png)
+
 ### 7.4.2 内核启动进行RCU初始化
 
 ![config](./images/3.png)
@@ -364,7 +389,7 @@ Tree通过三个维度确定层次关系: **每个叶子的CPU数量(CONFIG\_RCU
 
 (3) 初始化每个rcu\_state的层次结构和相应的Per\-CPU变量rcu\_data
 
-(4) 为**每个rcu\_state初始化一个内核线程**, 以rcu\_state命名
+(4) 为**每个rcu\_state初始化一个内核线程**, 以rcu\_state名字命名, 执行函数是rcu\_gp\_kthread(), 设置当前rcu\_state的GP状态是"**reqwait**", 睡眠等待, 直到**rsp\-\>gp\_flags**设置为**RCU\_GP\_FLAG\_INIT**, 即收到**初始化一个GP的请求**, 被唤醒后, 就会调用rcu\_gp\_init()去初始化一个GP, 详见下面
 
 ### 7.4.3 开启一个GP
 
@@ -378,19 +403,40 @@ Tree通过三个维度确定层次关系: **每个叶子的CPU数量(CONFIG\_RCU
 
 2. 总结: 每次**时钟中断**处理函数**tick\_periodic**(), 检查**本地CPU**上**所有的rcu\_state(！！！**)对应的**rcu\_data**成员**nxttail链表有没有写者注册的回调函数**, 有的话**触发一个软中断raise\_softirq**().
 
-3. **软中断处理函数**, 针对**每一个rcu\_state(！！！**): 检查rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话, 调整链表, 设置rsp\->gp\_flags标志位为RCU\_GP\_FLAG\_INIT, rcu\_gp\_kthread\_wake()唤醒**rcu\_state对应的内核线程(！！！**)
+3. **软中断处理函数**, 针对**每一个rcu\_state(！！！**): 检查rcu\_data成员nxttail链表**有没有写者注册的回调函数**, 有的话, 调整链表, 设置**rsp\->gp\_flags**标志位为**RCU\_GP\_FLAG\_INIT**, rcu\_gp\_kthread\_wake()唤醒**rcu\_state对应的内核线程(！！！**), 现在的状态变成了“**newreq**”，表示有**一个新的GP请求**, **rcu\_gp\_kthread\_wake**()唤醒**rcu\_state对应的内核线程(！！！**)
 
 ### 7.4.4 初始化一个GP
 
-RCU内核线程真正初始化一个GP, 这个线程是rcu\_state的
+RCU内核线程就会继续执行, 继续上面初始化后的动作, 执行里面的**rcu\_gp\_init**(), 去真正初始化一个GP, 这个线程是rcu\_state的
+
+(1) 当前rcu\_state的rsp\-\>completed和rsp\-\>gpnum不相等, 说明当前已经有一个GP在运行, 不能开启一个新的, 返回
+
+(2) 将rsp\-\>gpnum加1
+
+(3) 遍历所有node, 将所有node的gpnum赋值为rsp\-\>gpnum
+
+(4) 对于当前CPU对应的节点rcu\_node, 
+
+- 若rdp\-\>completed等于rnp\-\>completed(当前CPU的completed等于对应节点的completed), 说明当前CPU完成一次QS; 
+- 不相等, 说明要开启一个GP, 将**所有节点rcu\_node\-\>gpnum**赋值为**rsp\-\>gpnum**, rdp\-\>passed\_quiesce值初始化为0, rdp\-\>qs\_pending初始化为1, 现在状态变成"**newreq\-\>start\-\>cpustart**".
+
+(5) 初始化GP后, 进入fswait状态, 继续睡眠等待
 
 ### 7.4.5 检测QS
 
-时钟中断处理函数判断当前CPU是否经过了一个quiescent state
+时钟中断处理函数判断当前CPU是否经过了一个quiescent state, 即退出了RCU临界区, 退出后自下往上清理Tree RCU的qsmask位图, 直到根节点rcu\_node\-\>qsmask位图清理后, 唤醒RCU内核线程
 
-### 7.4.6 回调函数
+### 7.4.6 GP结束
 
-整个GP结束, RCU调用回调函数做一些销毁动作, 还是在RCU软中断中触发.
+接着上面的RCU内核线程执行, 由于**Tree RCU根节点**的**rnp\-\>qsmask被清除干净**了.
+
+(1) 将**所有节点(！！！CPU的不是节点)rcu\_node**\->completed都设置成rsp\-\>gpnum, 当前CPU的rdp\-\>completed赋值为rnp\-\>completed, GP状态"cpuend"
+
+(2) **rsp\-\>completed**值也设置成与**rsp\-\>gpnum一样**, 把状态标记为“end”，最后把**rsp\-\>fqs\_state**的状态设置为**初始值RCU\_GP\_IDLE**, 一个GP的生命周期真正完成
+
+### 7.4.7 回调函数
+
+整个GP结束, RCU调用回调函数做一些销毁动作, 还是在**RCU软中断中触发**.
 
 从代码中的**trace功能定义**的状态来看，**一个GP需要经历的状态转换**为: “**newreq \-\> start \-\> cpustart \-\> fqswait \-\> cpuend \-\>end**”。
 
@@ -400,7 +446,3 @@ RCU内核线程真正初始化一个GP, 这个线程是rcu\_state的
 - Tree RCU的实现维护了一个**状态机**，这个状态机若隐若现，只有把**trace功能打开**了才能感觉到该状态机的存在，trace函数是trace\_rcu\_grace\_period()。
 - 维护了一些以rcu\_data\-\>nxttail\[\]二级指针为首的链表，该链表的实现很巧妙地运用了二级指针的指向功能。
 - rcu\_data、rcu\_node和rcu\_state这3个数据结构中的gpnum、completed、grpmask、passed\_quiesce、qs\_pending、qsmask等成员，正是这些成员的值的变化推动了Tree RCU状态机的运转。
-
-如图4.17所示是Tree RCU状态机的运转情况和一些重要数据的变化情况。
-
-![config](./images/4.png)
