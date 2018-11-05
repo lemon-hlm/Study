@@ -1,5 +1,7 @@
 [TOC]
 
+https://www.cnblogs.com/yuanming/p/6904474.html
+
 PCI总线作为处理器系统的局部总线，主要目的是为了连接外部设备，而不是作为处理器的系统总线连接Cache和主存储器 
 
 PXI 规范是CompactPCI规范的扩展 , 面向仪器系统的PCI扩展
@@ -226,7 +228,92 @@ intel的ICH集成了多个x1的pcie链路，MCH集成了x16的pcie链路用于�
 
 powerPC支持 x1,x2,x4,x8    
 
- PCIE不分多少数据位，PCI-E总线更类似串行线，一次通信走1个Bit。比较快主要是频率高，V3.0总线频率达4Ghz,单lane的峰值可达8GT/s=8Gb/s
+PCIE不分多少数据位，PCI\-E总线更类似串行线，**一次通信走1个Bit**。比较快主要是频率高，V3.0总线频率达4Ghz,单lane的峰值可达8GT/s=8Gb/s
+
+表4\‑1 **PCIe总线规范**与**总线频率**和**编码**的关系
+
+<table>
+    <tr>
+        <th rowspan="2">PCIe总线规范</th>
+        <th rowspan="2">总线频率</th>
+        <th rowspan="2">单Lane的峰值带宽</th>
+        <th rowspan="2">编码方式</th>
+        <th rowspan="1", colspan="4">吞吐量
+            <tr>
+                <th>x1</th>
+                <th>x4</th>
+                <th>x8</th>
+                <th>x16</th>
+            </tr>
+        </th>
+    </tr>
+    <tr>
+        <th>1.x</th>
+        <th>1.25GHz</th>
+        <th>2.5GT/s</th>
+        <th>8/10b编码</th>
+        <th>250MB/s</th>
+        <th>1GB/s</th>
+        <th>2GB/s</th>
+        <th>4GB/s</th>
+    </tr>
+    <tr>
+        <th>2.x</th>
+        <th>2.5GHz</th>
+        <th>5GT/s</th>
+        <th>8/10b编码</th>
+        <th>500MB/s</th>
+        <th>2GB/s</th>
+        <th>4GB/s</th>
+        <th>8GB/s</th>
+    </tr>
+    <tr>
+        <th>3.x</th>
+        <th>4GHz</th>
+        <th>8GT/s</th>
+        <th>128/130b编码</th>
+        <th>984.6MB/s</th>
+        <th>3.938GB/s</th>
+        <th>7.877GB/s</th>
+        <th>15.754GB/s</th>
+    </tr>
+    <tr>
+        <th>4.x</th>
+        <th>8GHz</th>
+        <th>16GT/s</th>
+        <th>128/130b编码</th>
+        <th>1.969GB/s</th>
+        <th>7.877GB/s</th>
+        <th>15.754GB/s</th>
+        <th>31.508GB/s</th>
+    </tr>
+    <tr>
+        <th>3.x</th>
+        <th>16GHz</th>
+        <th>32 or 25GT/s</th>
+        <th>128/130b编码</th>
+        <th>3.9 or 3.08GB/s</th>
+        <th>15.8 or 12.3GB/s</th>
+        <th>31.5 or 24.6GB/s</th>
+        <th>63.0 or 49.2GB/s</th>
+    </tr>
+</table>
+
+目前最新量产使用的是PCIe 3.x
+
+注: 这里的**总线频率**指的是**差分信号**按照**逻辑"0**"和"**1**"**连续变化时的频率(！！！**)
+
+1GHz是10\^9(10的9次方), 每秒10的9次方
+
+**PCIe 3.0**的**总线频率4GHz**, 即**每秒变化4 x (10的9次方)次**; **一个数据通路(Lane**)有**两组差分信号**, 两两分组, **每组一次1位**, 也就是说**一次可以传输2 bit**, 也就是说每条数据通路(Lane)每秒传输8 x (10的9次方)次, 这就是上面的**单Lane的峰值带宽(！！！次数概念！！！**); 一个数据通路(Lane)**每秒传输8 x (10的9次方)个bit**, 即**每一条Lane 上支持每秒钟内传输 8G个bit**; 由于编码是128/130b, 所以**每一条Lane支持 8 \* 128 / 130 = 7876923080 bps = 984615385 B/s ≈ 984.6MB/s**. 也就是上面的吞吐量
+
+GT/s是Giga Transmissionper second （千兆传输/秒），即**每一秒内传输的次数**。重点在于描述物理层通信协议的速率。
+
+Gbps —— Giga Bits Per Second （千兆位/秒）。
+
+GT/s 与Gbps 之间不存在成比例的换算关系。GT/s着重描述端口的速率属性，可以不和链路宽度等关联，这样来描述“可以进行链路宽度扩展”的高速串行接口更为合适一些。 需要**结合具体的物理层通信协议**来分析。
+
+例如: **PCI\-e2.0** 协议支持**5.0 GT/s**, 即**每一条Lane 上支持每秒钟内传输 5G个bit(5Gbps**)；但这**并不意味着 PCIe 2.0协议的每一条Lane支持 5Gbps 的速率(！！！**)。为什么这么说呢？ 因为PCIe 2.0 的物理层协议中使用的是 **8b/10b的编码机制**。 即**每传输8个bit，需要发送10个bit**；这**多出的2个bit**并**不是对上层有意义的信息**。 那么，**PCIe 2.0**协议的**每一条Lane支持 5 \* 8 / 10 = 4Gbps 的速率(！！！**)。 以一个PCIe 2.0 x8的通道为例，x8的可用带宽为 4 \* 8 = 32 Gbps。
  
 4) PCIE使用的信号
 
