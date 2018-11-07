@@ -338,3 +338,286 @@ Linux内核中有几个宏来描述和判断这些情况：
 - in\_serving\_softirq()判断当前是否正在**软中断处理(！！！**)中，包括前文提到的**三种情况**。
 - in\_interrupt()则包括所有的**硬件中断上下文**、**软中断上下文**和**关BH临界区**。
 
+# 3 小结
+
+## 3.1 背景和原理
+
+工作队列的基本原理是把work(需要推迟执行的函数）交由一个**内核线程**来执行，它总是在**进程上下文**中执行。工作队列的优点是利用进程上下文来执行中断下半部操作，因此工作队列允许**重新调度**和**睡眠**，是**异步执行的进程上下文**，另外它还能解决**软中断**和**tasklet**执行**时间过长**导致系统**实时性下降**等问题。
+
+早起workqueue比较简单, 由多线程（Multi threaded，每个CPU默认一个工作线程）和单线程（Single threaded, 用户可以自行创建工作线程）组成. 容易导致①内核线程数量太多 ②并发性差(工作线程和CPU是绑定的) ③死锁(同一个队列上的数据有依赖容易死锁)
+
+concurrency\-managed workqueues(CMWQ): BOUND类型(Per\-CPU, 每个CPU一个)和UNBOUND类型, **每种**都有**两个工作线程池(worker\-pool**): 普通优先级的工作(work)使用和高优先级的工作(work)使用. 工作线程池(worker\-pool)中线程数量是动态管理的. 工作线程睡眠时, 检查是否需要唤醒更多工作线程, 有需要则唤醒同一个工作线程池中idle状态的工作线程.
+
+## 3.2 数据结构
+
+工作任务struct work\_struct
+
+```c
+[include/linux/workqueue.h]
+struct work_struct {
+    //低比特位是标志位, 剩余存放上一次运行的worker_pool的ID或pool_workqueue的指针(由WORK_STRUCT_PWQ标志位来决定)
+	atomic_long_t data;
+	// 把work挂到其他队列上
+	struct list_head entry;
+	// 工作任务处理函数
+	work_func_t func;
+};
+```
+
+工作线程struct worker
+
+```c
+[kernel/workqueue_internal.h]
+struct worker {
+	/* on idle list while idle, on busy hash table while busy */
+	union {
+		struct list_head	entry;	/* L: while idle */
+		struct hlist_node	hentry;	/* L: while busy */
+	};
+    // 正在被处理的work
+	struct work_struct	    *current_work;	/* L: work being processed */
+	// 正在执行的work回调函数
+	work_func_t		        current_func;	/* L: current_work's fn */
+	// 当前work所属的pool_workqueue
+	struct pool_workqueue	*current_pwq;   /* L: current_work's pwq */
+	// 所有被调度并正准备执行的work都挂入该链表
+	struct list_head	    scheduled;	    /* L: scheduled works */
+    // 挂入到worker_pool->workers链表
+    struct list_head	    node;		    /* A: anchored at pool->workers */
+						                    /* A: runs through worker->node */
+	// 工作线程的task_struct
+	struct task_struct	    *task;		    /* I: worker task */
+	// 该工作线程所属的worker_pool
+	struct worker_pool	    *pool;		    /* I: the associated pool */
+	// 该工作线程的ID号
+	int			            id;		        /* I: worker id */
+    ...
+};
+```
+
+工作线程池struct worker\_pool
+
+```c
+[kernel/workqueue.c]
+struct worker_pool {
+    // 保护worker-pool的自旋锁
+	spinlock_t		lock;		/* the pool lock */
+	// BOUND类型的workqueue，cpu表示绑定的CPU ID; UNBOUND类型，该值为-1
+	int			    cpu;		/* I: the associated cpu */
+	// UNBOUND类型的workqueue，表示该worker-pool所属内存节点的ID编号
+	int			    node;		/* I: the associated node ID */
+	// ID号
+	int			    id;		    /* I: pool ID */
+	unsigned int	flags;		/* X: flags */
+    // pending状态的work会挂入该链表
+	struct list_head	worklist;	/* L: list of pending works */
+	// 工作线程的数量
+	int			        nr_workers;	/* L: total number of workers */
+	// idle状态的工作线程的数量
+	int			        nr_idle;	/* L: currently idle ones */
+    // idle状态的工作线程挂入该链表
+	struct list_head	idle_list;	/* X: list of idle workers */
+	// 被管理的工作线程会挂入该链表
+	struct list_head	workers;	/* A: attached workers */
+	// 工作线程的属性
+	struct workqueue_attrs	*attrs;		/* I: worker attributes */
+	// 正在运行中的worker数量
+	atomic_t		nr_running ____cacheline_aligned_in_smp;
+	// rcu锁
+	struct rcu_head		rcu;
+	...
+} ____cacheline_aligned_in_smp;
+```
+
+连接**workqueue(工作队列**)和**worker\_pool(工作线程池**)的桥梁**struct pool\_workqueue**
+
+```c
+[kernel/workqueue.c]
+struct pool_workqueue {
+    // worker_pool指针
+	struct worker_pool	    *pool;		/* I: the associated pool */
+	// 工作队列
+	struct workqueue_struct *wq;		/* I: the owning workqueue */
+	// 活跃的work数量
+	int			            nr_active;	/* L: nr of active works */
+	// 活跃的work最大数量
+	int			            max_active;	/* L: max active works */
+	// 被延迟执行的works挂入该链表
+	struct list_head	    delayed_works;	/* L: delayed works */
+	struct rcu_head		    rcu;
+	...
+} __aligned(1 << WORK_STRUCT_FLAG_BITS);
+```
+
+工作队列struct workqueue\_struct
+
+```c
+[kernel/workqueue.c]
+struct workqueue_struct {
+    // 所有的pool-workqueue数据结构都挂入链表
+	struct list_head	pwqs;		/* WR: all pwqs of this wq */
+	// 链表节点。当前workqueue挂入全局的链表workqueues
+	struct list_head	list;		/* PL: list of all workqueues */
+    // 所有rescue状态下的pool-workqueue数据结构挂入该链表
+	struct list_head	maydays;	/* MD: pwqs requesting rescue */
+	// rescue内核线程. 创建workqueue时设置WQ_MEM_RECLAIM, 那么内存紧张而创建新的工作线程失败会被该线程接管
+	struct worker		*rescuer;	/* I: rescue worker */
+    // UNBOUND类型属性
+	struct workqueue_attrs	*unbound_attrs;	/* WQ: only for unbound wqs */
+	// UNBOUND类型的pool_workqueue
+	struct pool_workqueue	*dfl_pwq;	/* WQ: only for unbound wqs */
+    // workqueue的名字
+	char			name[WQ_NAME_LEN]; /* I: workqueue name */
+
+	/* hot fields used during command issue, aligned to cacheline */
+	unsigned int		flags ____cacheline_aligned; /* WQ: WQ_* flags */
+	//Per-CPU类型的pool_workqueue
+	struct pool_workqueue __percpu *cpu_pwqs; /* I: per-cpu pwqs */
+	...
+};
+```
+
+关系图:
+
+**一个work挂入workqueue**中，最终还要**通过worker\-pool**中的**工作线程来处理其回调函数**，worker-pool是**系统共享的(！！！**)，因此**workqueue**需要查找到一个**合适的worker\-pool**，然后从worker\-pool中分派一个**合适的工作线程**，pool\_workqueue数据结构在其中起到**桥梁**作用。这有些类似IT类公司的人力资源池的概念，具体关系如图5.7所示。
+
+![config](./images/2.png)
+
+![config](./images/3.gif)
+
+![config](./images/4.png)
+
+- **work\_struct**结构体代表的是**一个任务**，它指向一个待异步执行的函数，不管驱动还是子系统什么时候要执行这个函数，都必须把**work**加入到一个**workqueue**。
+
+- **worker**结构体代表一个**工作者线程（worker thread**），它主要**一个接一个的执行挂入到队列中的work**，如果没有work了，那么工作者线程就挂起，这些工作者线程被worker\-pool管理。
+
+对于**驱动和子系统**的开发人员来说，接触到的**只有work**，而背后的处理机制是管理worker\-pool和处理挂入的work。
+
+- **worker\_pool**结构体用来**管理worker**，对于**每一种worker pool**都分**两种情况**：一种是处理**普通work**，另一种是处理**高优先级的work**。
+
+- **workqueue\_struct**结构体代表的是**工作队列**，工作队列分**unbound workqueue**和**bound workqueue**。bound workqueue就是**绑定到cpu**上的，**挂入到此队列中的work**只会在**相对应的cpu**上运行。**unbound workqueue不绑定到特定的cpu**，而且**后台线程池的数量也是动态**的，具体**workqueue关联到哪个worker pool**，这是由**workqueue\_attrs决定**的。
+
+系统初始化阶段(init\_workqueue()): 为**所有CPU(包括离线**的)创建**两个工作线程池worker\_pool**(普通优先级和高优先级); 为每个在线CPU的每个工作线程池(每个CPU有两个)创建一个工作线程(create\_worker); 创建UNBOUND类型和ordered类型的workqueue属性, 分别两个, 对应普通优先级和高优先级, 供后续使用; alloc\_workqueue()创建几个默认的workqueue
+
+- **普通优先级BOUND类型**的**工作队列system\_wq**, 名称为“**events**”，可以理解为**默认工作队列**。
+- **高优先级BOUND类型**的工作队列**system\_highpri\_wq** ，名称为“**events\_highpri**”。
+- **UNBOUND类型**的工作队列**system\_unbound\_wq**，名称为“**system\_unbound\_wq**”。
+- **Freezable类型**的工作队列**system\_freezable\_wq**，名称为“**events\_freezable**”。
+- **省电类型**的工作队列**system\_freezable\_wq**，名称为 “**events\_power\_efficient**”。
+
+创建工作线程worker(参数是worker\_pool): 获取一个ID; 工作线程池对应的内存节点分配一个worker; 在工作线程池对应的node创建一个内核线程, 名字("**kworker/u \+ CPU\_ID \+ : \+ worker\_idH**", 高优先级的才有H, UNBOUND类型的才有u); 设置线程(worker->task->flags)的PF\_NO\_SETAFFINITY标志位(防止修改CPU亲和性); 工作线程池没有绑定到CPU上, 那么设置worker标志位不绑定CPU; 将worker加到工作线程池的workers链表; 使worker进入idle状态; 唤醒worker的内核线程; 返回该worker
+
+**创建工作队列workqueue**: API很多, 3个参数name, flags和max\_active.
+
+(1) **分配一个workqueue\_struct**并初始化, 对于UNBOUND类型, 创建一个UNBOUND类型的workqueue属性
+
+(2) **分配pool\_workqueue**并初始化alloc\_and\_link\_pwqs()
+    
+BOUND类型的workqueue: 
+
+- 给**每个CPU**分配一个Per\-CPU的**pool\_workqueue**, 
+- 遍历每个CPU, 通过**这个pwq**将系统静态定义的Per\-CPU类型的**高优先级的worker\_pool**(也就是init\_workqueues()初始化的)和**workqueue**连接起来, 并将这个pool\_workqueue添加到传入的workqueue\-\>pwqs链表.
+
+UNBOUND类型和ORDERED类型的workqueue: 都是调用apply\_workqueue\_attrs实现, 不同在于传入的属性一个是ordered\_wq\_attrs[highpri], 一个是unbound\_std\_wq\_attrs[highpri], 这两个不同在于属性里面的no\_numa在ordered中是true, 这两个属性系统初始化阶段完成的. 
+
+- 通过系统**全局哈希表unbound\_pool\_hash**(管理所有UNBOUND类型的work\_pool)根据属性查找**worker\_pool**, 找到将其引用计数加1, 并返回, 没有的话重新分配并初始化一个(创建pool, 为pool创建一个**工作线程worker**<会唤醒线程>), 将新pool加入哈希表
+- 分配一个pool\_workqueue
+- 初始化该pwq, 将worker\_pool和workqueue\_struct连接起来, 为pool\_workqueue初始化一个**工作work**(通过INIT\_WORK()), 回调函数是pwq\_unbound\_release\_workfn(), 该work执行: 从work中找到相应的pwq, 该work只对UNBOUND类型的workqueue有效, 如果work\-\>pwq\-\>wq\-\>pwqs(所有pool\_workqueue都在这个链表)中当前pool\_workqueue是最后一个, 释放pool\_workqueue相关结构
+
+**初始化一个work**: 宏INIT\_WORK(work, func)
+
+**调度一个work**: schedule\_work(work\_struct), 将work挂入系统默认的BOUND类型的workqueue工作队列system\_wq, queue\_work(workqueue, work)
+
+(1) 关中断
+
+(2) 设置work标志位WORK\_STRUCT\_PENDING\_BIT, 已经有说明正在pending, 已经在队列中, 不用重复添加
+
+(3) 找一个合适的pool\_workqueue. 优先本地CPU或本地CPU的node节点对应的pwq, 如果该work**上次执行的worker\_pool**和刚选择的pwq\-\>pool不等, 并且**该work**正在其**上次执行的工作线程池中运行**，而且运行**这个work的worker对应的pwq**对应的workqueue等于调度**传入的workqueue**(worker\-\>current\_pwq\-\>wq == wq), 则优先选择这个正在运行的worker\-\>current\_pwq. 利用其**缓存热度**.
+
+(4) 判断当前pwq活跃的work数量, 少于最高限值, 加入pwq\-\>pool\-\>worklist(pool的pending链表), 否则加入pwq\-\>delayed\_works(pwq的被延迟执行的works链表)
+
+(5) 当前pwq\-\>pool工作线程池存在pending状态的work并且pool中正运行的worker数量为0的话, 找到pool中第一个idle的worker并唤醒worker\-\>task
+
+(6) 开中断
+
+工作线程处理函数worker\_thread():
+
+```c
+worker_thread()
+{
+recheck:
+    if(不需要更多的工作线程?)
+        goto 睡眠;
+        
+    if(需要创建更多的工作线程? && 创建线程)
+        goto recheck;
+        
+    do{
+        处理工作;
+    }(还有工作待完成 && 活跃的工作线程 <= 1) // 这儿就是keep_working(pool)
+    
+睡眠:
+    schedule();
+}
+```
+
+- 动态地创建和管理一个工作线程池中的工作线程。假如发现有PENDING的work且当前工作池中没有正在运行的工作线程（worker\_pool\-\>nr\_running = 0)，那就唤醒idle状态的线程，否则就动态创建一个工作线程。
+- 如果发现一个work己经在同一个工作池的另外一个工作线程执行了，那就不处理该work。
+- 动态管理活跃工作线程数量，见keep\_working()函数。如果pool\-\>worklist中还有工作需要处理且工作线程池中活跃的线程小于等于1，那么保持当前工作线程继续工作，此功能可以防止工作线程泛滥。也就是限定活跃的工作线程数量小于等于1.
+
+和调度器交互:
+
+CMWQ机制会动态地调整一个线程池中工作线程的执行情况，不会因为某一个work回调函数执行了阻塞操作而影响到整个线程池中其他work的执行。
+
+某个work的回调函数func()中执行了睡眠操作(设置当前进程state为TASK\_INTERRUPTIBLE, 然后执行schedule()切换), 在**schedule**()中, 判断**进程的flags是否有PF\_WQ\_WORKER(属于worker线程**), 有的话:
+
+(1) 将**当前worker的worker\_pool中nr\_running引用计数减1**, 如果为0则说明**当前线程池没有活跃的工作线程**, 而**当前线程池的等待队列worklist**有work, 那么从**pool\-\>idle\_list**链表**拿一个idle的工作线程**
+
+(2) 唤醒该工作线程, 增加worker\_pool中nr\_running引用计数
+
+- **工作线程进入执行**时会增加nr\_running 计数，见**worker\_thread**()\-〉worker\_clr\_flags()函数。
+- 工作线程**退出执行**时会减少nr\_running 计数，见worker\_thread()\-〉worker\_set\_flags()函数。
+- **工作线程进入睡眠**时会减少nr\_running计数，见\_\_**schedule**()函数。
+- 工作线程**被唤醒时**会增加nr\_running计数，见ttwu\_activate()函数。
+
+在驱动开发中使用workqueue是比较简单的，特别是**使用系统默认的工作队列system\_wq**, 步骤如下。
+
+- 使用**INIT\_WORK**()宏声明一个work和该work的回调函数。
+- **调度一个work**: **schedule\_work**()。
+- **取消一个work**: **cancel\_work\_sync**()
+ 
+此外，有的驱动程序还**自己创建一个workqueue**，特别是**网络子系统**、**块设备子系统**等。
+
+- 使用**alloc\_workqueue**()创建**新的workqueue**。
+- 使用**INIT\_WORK**()宏声明一个**work**和**该work的回调函数**。
+- 在**新workqueue**上**调度一个work**: **queue\_work**()
+- **flush workqueue**上**所有work**: flush\_workqueue()
+
+Linux内核还提供一个**workqueue机制**和**timer机制**结合的**延时机制delayed\_work**
+
+要**理解CMWQ机制**，首先要明白旧版本的workqueue机制遇到了哪些问题，其次要清楚CMWQ机制中几个重要数据结构的关系. **CMWQ机制**把**workqueue**划分为**BOUND类型**和**UNBOUND类型**。
+
+如图5.8所示是**BOUND类型workqueue机制**的架构图，对于**BOUND类型的workqueue**归纳如下。
+
+- **每个**新建的workqueue，都有一个struct **workqueue\_struct**数据结构来描述。
+- 对于**每个新建的(！！！)workqueue**，**每个CPU**有**一个pool\_workqueue(！！！**)数据结构来**连接workqueue**和**worker\_pool**.
+- **每个CPU只有两个worker\_pool**数据结构来描述**工作池**，一个用于**普通优先级工作线程**，另一个用于**高优先级工作线程**。
+- **worker\_pool**中可以有**多个工作线程**，动态管理工作线程。
+- **worker\_pool**和**workqueue**是**1:N(！！！**)的关系，即**一个worker\_pool**可以对应**多个workqueue**.
+- pool\_workqueue是worker\_pool和workqueue之间的桥梁枢纽。
+- **worker\_pool(！！！**)和**worker工作线程(！！！**)也是**1:N(！！！**)的关系。
+
+![config](./images/5.png)
+
+**BOUND类型的work**是在**哪个CPU**上运行的呢？有几个API接口可以把**一个work**添加到**workqueue**上运行，其中**schedule\_work**()函数**倾向于使用本地CPU**，这样有利于利用**CPU的局部性原理**提高效率，而**queue\_work\_on**()函数可以**指定CPU**的。
+
+对于**UNBOUND类型的workqueue**来说，其**工作线程没有绑定到某个固定的CPU**上。对于**UMA**机器，它可以在**全系统的CPU**内运行；对于**NUMA**机器，**每一个node**节点**创建一个worker\_pool**。
+
+在**驱动开发**中，**UNBOUND类型**的**workqueue不太常用**，举一个典型的例子，Linux内核中有一个**优化启动时间(boot time**)的新接口Asynchronous functioncalls，实现是在kernel/asyn.c文件中。对于一些**不依赖硬件时序**且不需要串行执行的初始化部分，可以采用这个接口，现在电源管理子系统中有一个选项可以把一部分外设在suspend/resume过程中的操作用异步的方式来实现，从而优化其suspend/resume时间，详见kemel/power/main.c 中关于“pm\_async\_enabled” 的实现。
+
+对于**长时间占用CPU资源**的一些负载(标记**WQ\_CPU\_INTENSIVE**), Linux内核倾向于**使用UNBOUND类型的workqueue**, 这样可以利用**系统进程调度器**来优化选择在哪个CPU上运行，例如**drivers/md/raid5.c**驱动。
+
+如下动态管理技术值得读者仔细品味。
+
+- 动态管理**工作线程数量**，包括**动态创建工作线程**和**动态管理活跃工作线程**等。
+- 动态**唤醒工作线程**。
