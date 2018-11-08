@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 非bootmem下的memblock内存管理
 - 2 memblock的数据结构
     - 2.1 struct memblock结构

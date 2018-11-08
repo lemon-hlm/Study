@@ -1,15 +1,13 @@
 # 办公工具使用
-- Everything：本地文件搜索
+
+- 本地文件搜索: Everything, Listray(更好)
 - Xshell、Xftp：终端仿真与文件传输
 - Sublime text 3：文本编辑器
 - Beyond Compare：代码、文件比较合并
-- Github：代码托管
-- Git：版本控制
 - Zsh：比bash shell更好
 - Jetbrains系列软件：各种语言IDE
 - gdb：代码调试
 - dnGREP：文件内容搜索
-- Source Insight：代码阅读软件
 - GoAgent：翻墙
 - Ditto：剪切板增强
 - Cmd Markdown/markdownpad：markdown编辑、上传、导出，markdown在windows下较好
@@ -33,7 +31,7 @@
 - PDF word PPT互相免费转换：https://smallpdf.com/
 - 搜歌，听歌chrome工具：https://github.com/Gerry-Lee/listen1_chrome_extension
 - 下载器：可以下载各种网盘内容，http://jdownloader.org/
-- 全能截图工具：Snipaste
+- 全能截图工具：Snipaste, fastStone Capture, PickPick
 - 英文书籍下载网站：http://www.steporebook.com/
 - 本地视频播放器：potplayer、VLC
 - IrfanView：看图软件，https://www.irfanview.com/
@@ -41,3 +39,9 @@
 - 各种软件等下载以及资源教程: http://www.dayanzai.me/
 - 安卓模拟器: 夜神, 能够复制文本出模拟器
 - OBS: 视频录制工具
+- Mouse without Borders(微软无界键鼠): Windows一套键鼠控制多台电脑
+- synergy: 一套键鼠控制多台电脑, 可使用在Linux下
+- 简道云: 应用式数据管理工具
+- GIF图录制工具: Screen to GIF
+- 袋鼠输入: 手机遥控PPT/电脑视频/关机
+- SpaceSniffer: 系统硬盘空间清理工具
