@@ -45,3 +45,6 @@
 - GIF图录制工具: Screen to GIF
 - 袋鼠输入: 手机遥控PPT/电脑视频/关机
 - SpaceSniffer: 系统硬盘空间清理工具
+- https://www.so180.cn/: google镜像
+- Windows好用的软件: https://www.zhihu.com/question/21175572
+- WGestures: 鼠标手势
