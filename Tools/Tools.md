@@ -48,3 +48,4 @@
 - https://www.so180.cn/: google镜像
 - Windows好用的软件: https://www.zhihu.com/question/21175572
 - WGestures: 鼠标手势
+- VIM和markdown结合工具: 跨平台, https://segmentfault.com/a/1190000008220381
