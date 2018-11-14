@@ -1,3 +1,5 @@
+[TOC]
+
 1. 前景回顾
 
     1.1 UMA和NUMA两种模型
@@ -209,8 +211,8 @@ typedef struct pglist_data {
     struct zone node_zones[MAX_NR_ZONES];
     /*  指点了备用结点及其内存域的列表，以便在当前结点没有可用空间时，在备用结点分配内存   */
     struct zonelist node_zonelists[MAX_ZONELISTS];
-    int nr_zones;									/*  保存结点中不同内存域的数目    */
-
+    /*  保存结点中不同内存域的数目    */
+    int nr_zones;
 } pg_data_t;
 ```
 
@@ -231,9 +233,12 @@ typedef struct pglist_data
 	/* 起始页面帧号，指出该节点在全局mem_map中的偏移
     系统中所有的页帧是依次编号的，每个页帧的号码都是全局唯一的（不只是结点内唯一）  */
     unsigned long node_start_pfn;
-    unsigned long node_present_pages; /* total number of physical pages 结点中页帧的数目 */
-    unsigned long node_spanned_pages; /* total size of physical page range, including holes  该结点以页帧为单位计算的长度，包含内存空洞 */
-    int node_id;		/*  全局结点ID，系统中的NUMA结点都从0开始编号  */
+    /* total number of physical pages 结点中页帧的数目 */
+    unsigned long node_present_pages; 
+    /*  该结点以页帧为单位计算的长度，包含内存空洞 */
+    unsigned long node_spanned_pages; /* total size of physical page range, including holes  */
+    /*  全局结点ID，系统中的NUMA结点都从0开始编号  */
+    int node_id;		
 } pg_data_t;
 ```
 
@@ -248,10 +253,11 @@ node\_present\_pages指定了结点中页帧的数目,而node\_spanned\_pages则
 ```cpp
 typedef struct pglist_data
 {
-    wait_queue_head_t kswapd_wait;		/*  交换守护进程的等待队列，
-    在将页帧换出结点时会用到。后面的文章会详细讨论。    */
+    /*  交换守护进程的等待队列 */
+    wait_queue_head_t kswapd_wait;
     wait_queue_head_t pfmemalloc_wait;
-    struct task_struct *kswapd;     /* Protected by  mem_hotplug_begin/end() 指向负责该结点的交换守护进程的task_struct。   */
+    /* 指向负责该结点的交换守护进程的task_struct, 在将页帧换出结点时会唤醒该进程 */
+    struct task_struct *kswapd;     /* Protected by  mem_hotplug_begin/end() */
 };
 ```
 

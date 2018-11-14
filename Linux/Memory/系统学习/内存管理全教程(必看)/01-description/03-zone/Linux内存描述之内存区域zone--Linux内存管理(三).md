@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 前景回顾
 
     - 1.1 UMA和NUMA两种模型
@@ -149,14 +151,10 @@ enum zone_type
 #ifdef CONFIG_ZONE_DMA
     ZONE_DMA,
 #endif
-
 #ifdef CONFIG_ZONE_DMA32
-
     ZONE_DMA32,
 #endif
-
     ZONE_NORMAL,
-
 #ifdef CONFIG_HIGHMEM
     ZONE_HIGHMEM,
 #endif
@@ -165,11 +163,16 @@ enum zone_type
     ZONE_DEVICE,
 #endif
     __MAX_NR_ZONES
-
 };
-
 ```
-不同的管理区的用途是不一样的，ZONE\_DMA类型的内存区域在物理内存的低端，主要是ISA设备只能用低端的地址做DMA操作。ZONE\_NORMAL类型的内存区域直接被内核映射到线性地址空间上面的区域（line address space），ZONE\_HIGHMEM将保留给系统使用，是系统中预留的可用内存空间，不能被内核直接映射。
+
+不同的管理区的用途是不一样的，
+
+ZONE\_DMA类型的内存区域在物理内存的低端，主要是ISA设备只能用低端的地址做DMA操作。
+
+ZONE\_NORMAL类型的内存区域**直接被内核映射到线性地址空间上面的区域（line address space**），
+
+ZONE\_HIGHMEM将保留给系统使用，是系统中预留的可用内存空间，不能被内核直接映射。
 
 ## 3.2 不同的内存区域的作用
 
@@ -211,9 +214,9 @@ unbinding the driver of the device.
 
 | 类型 | 区域 |
 | :------- | :------ |
-| ZONE_DMA | 0~15MB |
-| ZONE_NORMAL | 16MB~895MB |
-| ZONE_HIGHMEM | 896MB~物理内存结束 |
+| ZONE_DMA | 0\~15MB |
+| ZONE_NORMAL | 16MB\~895MB |
+| ZONE_HIGHMEM | 896MB\~物理内存结束 |
 
 而由于**32位系统**中,Linux内核**虚拟地址空间只有1G**(**虚拟地址空间！！！**),而0~895M这个**896MB**被用于DMA和直接映射(**这个既说的是物理内存空间，也说的是虚拟地址空间！！！**),**剩余的物理内存**(**物理内存！！！**)被成为高端内存. 
 
@@ -489,9 +492,9 @@ struct zone
 
 ## 4.2 ZONE\_PADDING将数据保存在高速缓冲行
 
-该结构比较特殊的地方是它由ZONE\_PADDING分隔的几个部分.这是因为对zone结构的访问非常频繁. 在多处理器系统中,通常会有**不同的CPU**试图**同时访问结构成员**. 因此使用锁可以防止他们彼此干扰,避免错误和不一致的问题.由于内核堆该结构的访问非常频繁, 因此会经常性地获取该结构的**两个自旋锁zone->lock和zone->lru_lock**
+该结构比较特殊的地方是它由ZONE\_PADDING分隔的几个部分.这是因为对zone结构的访问非常频繁. 在**多处理器系统**中,通常会有**不同的CPU**试图**同时访问结构成员**. 因此使用锁可以防止他们彼此干扰,避免错误和不一致的问题.由于内核堆该结构的访问非常频繁, 因此会经常性地获取该结构的**两个自旋锁zone->lock和zone->lru_lock**
 
->由于 `struct zone` 结构经常被访问到, 因此这个数据结构要求以 `L1 Cache` 对齐. 另外, 这里的 `ZONE_PADDING( )` 让 `zone->lock` 和 `zone_lru_lock` 这两个很热门的锁可以分布在不同的 `Cahe Line` 中. 一个内存 `node` 节点最多也就几个 `zone`, 因此 `zone` 数据结构**不需要**像 `struct page` 一样**关心数据结构的大小**, 因此这里的 `ZONE_PADDING( )` 可以理解为**用空间换取时间**(性能). 在内存管理开发过程中, 内核开发者逐渐发现有一些自选锁竞争会非常厉害, 很难获取. 像 `zone->lock` 和 `zone->lru_lock` 这两个锁有时需要同时获取锁. 因此保证他们使用不同的 `Cache Line` 是内核常用的一种优化技巧.
+>由于 `struct zone` 结构经常被访问到, 因此这个数据结构要求以 `L1 Cache` 对齐. 另外, 这里的ZONE\_PADDING()让zone->lock和zone\_lru\_lock这两个很热门的锁可以分布在不同的Cahe Line中. 一个内存 `node` 节点最多也就几个 `zone`, 因此zone数据结构**不需要**像struct page一样**关心数据结构的大小**, 因此这里的 `ZONE_PADDING( )` 可以理解为**用空间换取时间**(性能). 在内存管理开发过程中, 内核开发者逐渐发现有一些自选锁竞争会非常厉害, 很难获取. 像 `zone->lock` 和 `zone->lru_lock` 这两个锁有时需要同时获取锁. 因此保证他们使用不同的 `Cache Line` 是内核常用的一种优化技巧.
 
 那么数据保存在CPU高速缓存中, 那么会处理得更快速. 高速缓冲分为行, 每一行负责不同的内存区. 内核使用ZONE\_PADDING宏生成"填充"字段添加到结构中, 以确保**每个自旋锁**处于**自身的缓存行**中
 
@@ -516,7 +519,7 @@ ZONE\_PADDING宏定义在[include/linux/mmzone.h?v4.7, line 105](http://lxr.free
  #endif
 ```
 
-内核还用了\_\_\_\_cacheline\_internodealigned\_in\_smp,来实现**最优的高速缓存行对其方式**.
+内核还用了\_\_\_\_cacheline\_internodealigned\_in\_smp,来实现**最优的高速缓存行对齐方式**.
 
 该宏定义在[include/linux/cache.h](http://lxr.free-electrons.com/source/include/linux/cache.h?v=4.7#L68)
 
@@ -535,7 +538,7 @@ ZONE\_PADDING宏定义在[include/linux/mmzone.h?v4.7, line 105](http://lxr.free
 
 Zone的管理调度的一些参数watermarks水印,**水存量很小(MIN)增加进水量**，**水存量达到一个标准(LOW**)**减小进水量**，当**快要满(HIGH**)的时候，**可能就关闭了进水口**
 
-WMARK\_LOW, WMARK\_LOW, WMARK\_HIGH就是这个标准
+**WMARK\_LOW**, **WMARK\_LOW**, **WMARK\_HIGH**就是这个标准
 
 ```cpp
 enum zone_watermarks
@@ -545,7 +548,6 @@ enum zone_watermarks
         WMARK_HIGH,
         NR_WMARK
 };
-
 
 #define min_wmark_pages(z) (z->watermark[WMARK_MIN])
 #define low_wmark_pages(z) (z->watermark[WMARK_LOW])
@@ -572,14 +574,14 @@ typedef struct zone_struct {
 每个zone有三个水平标准：watermark[WMARK\_MIN], watermark[WMARK\_LOW],  watermark[WMARK\_HIGH]，帮助确定**zone中内存分配使用**的压力状态
 
 | 标准 | 描述 |
-|:----:|:---:|
+|:----:|:---|
 | watermark[WMARK\_MIN] | 当空闲页面的数量达到page\_min所标定的数量的时候， 说明页面数非常紧张, **分配页面的动作**和**kswapd线程同步运行**.<br>WMARK\_MIN所表示的page的数量值，是在内存初始化的过程中调用[**free\_area\_init\_core**](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L5932)中计算的。这个数值是根据zone中的page的数量除以一个大于1的系数来确定的。通常是这样初始化的**ZoneSizeInPages/12** |
 | watermark[WMARK\_LOW] | 当空闲页面的数量达到WMARK\_LOW所标定的数量的时候，说明页面刚开始紧张, 则**kswapd线程将被唤醒**，并开始释放回收页面 |
 | watermark[WMARK\_HIGH] | 当空闲页面的数量达到page\_high所标定的数量的时候， 说明内存页面数充足, 不需要回收, kswapd线程将重新休眠，**通常这个数值是page_min的3倍** |
 
 - 如果空闲页多于pages\_high = watermark[WMARK\_HIGH], 则说明内存页面充足, 内存域的状态是理想的.
 
-- 如果空闲页的数目低于pages\_low = watermark[WMARK\_LOW], 则说明内存页面开始紧张, 内核开始将页患处到硬盘.
+- 如果空闲页的数目低于pages\_low = watermark[WMARK\_LOW], 则说明内存页面开始紧张, 内核开始将页换出到硬盘.
 
 - 如果空闲页的数目低于pages\_min = watermark[WMARK\_MIN], 则内存页面非常紧张, 页回收工作的压力就比较大
 
@@ -605,19 +607,14 @@ struct zone
 ```cpp
 enum zone_flags
 {
-    ZONE_RECLAIM_LOCKED,         /* prevents concurrent reclaim */
-    ZONE_OOM_LOCKED,               /* zone is in OOM killer zonelist 内存域可被回收*/
-    ZONE_CONGESTED,                 /* zone has many dirty pages backed by
-                                                    * a congested BDI
-                                                    */
-    ZONE_DIRTY,                           /* reclaim scanning has recently found
-                                                   * many dirty file pages at the tail
-                                                   * of the LRU.
-                                                   */
-    ZONE_WRITEBACK,                 /* reclaim scanning has recently found
-                                                   * many pages under writeback
-                                                   */
-    ZONE_FAIR_DEPLETED,           /* fair zone policy batch depleted */
+    ZONE_RECLAIM_LOCKED, /* prevents concurrent reclaim */
+    ZONE_OOM_LOCKED, /* zone is in OOM killer zonelist 内存域可被回收*/
+    ZONE_CONGESTED, /* zone has many dirty pages backed by a congested BDI */
+    ZONE_DIRTY, /* reclaim scanning has recently found many dirty file pages at the tail of the LRU. */
+    ZONE_WRITEBACK, /* reclaim scanning has recently found
+                   * many pages under writeback
+                   */
+    ZONE_FAIR_DEPLETED, /* fair zone policy batch depleted */
 };
 ```
 
@@ -643,7 +640,7 @@ struct zone
 }
 ```
 
-vm\_stat的统计信息由`enum zone_stat_item`枚举变量标识, 定义在[include/linux/mmzone.h?v=4.7, line 110](http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=4.7#L110)
+vm\_stat的统计信息由enum zone\_stat\_item枚举变量标识, 定义在[include/linux/mmzone.h?v=4.7, line 110](http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=4.7#L110)
 
 ```cpp
 enum zone_stat_item
@@ -701,7 +698,7 @@ enum zone_stat_item
 
 ## 4.6 zone等待队列表(zone wait queue table)
 
-struct zone中实现了一个**等待队列**,可用于等待某一页的进程,内核**将进程排成一个列队**,等待某些条件. 在条件变成真时, 内核会通知进程恢复工作.
+struct zone中实现了一个**等待队列**,可用于**等待某一页的进程**,内核**将进程排成一个列队**,等待某些条件. 在条件变成真时, 内核会通知进程恢复工作.
 
 ```cpp
 struct zone
@@ -728,7 +725,7 @@ struct zone
 
 ![config](images/5.jpg)
 
-**等待队列的哈希表的分配和建立**在`free_area_init_core`函数中进行。哈希表的表项的数量在wait\_table\_size() 函数中计算，并且保持在**zone->wait\_table\_size成员**中。最大**4096个等待队列**。最小是NoPages / PAGES\_PER\_WAITQUEUE的2次方，NoPages是zone管理的**page的数量**，PAGES\_PER\_WAITQUEUE被定**义256**
+**等待队列的哈希表的分配和建立**在free\_area\_init\_core函数中进行。哈希表的表项的数量在wait\_table\_size() 函数中计算，并且保持在**zone\->wait\_table\_size成员**中。最大**4096个等待队列**。最小是NoPages / PAGES\_PER\_WAITQUEUE的2次方，NoPages是zone管理的**page的数量**，PAGES\_PER\_WAITQUEUE被定义**256**
 
 下面这个公式可以用于计算这个值：
 
