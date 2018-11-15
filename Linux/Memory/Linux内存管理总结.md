@@ -111,6 +111,8 @@ typedef struct pglist_data {
 } pg_data_t;
 ```
 
+注意, **当前节点内存域和备用节点内存域用的数据结构不同！！！**
+
 ### 4.1.2 结点的内存页面
 
 ```cpp
@@ -296,14 +298,167 @@ struct zone
 | wait\_table\_hash\_nr\_entries | **哈希表**中的**等待队列的数量** |
 | wait\_table\_bits | **等待队列散列表数组大小**, wait\_table\_size == (1 << wait\_table\_bits)  |
 
+当对**一个page做I/O操作**的时候，I/O操作需要**被锁住**，防止不正确的数据被访问。
 
+**进程在访问page前**，**wait\_on\_page\_locked函数**，使进程**加入一个等待队列**
 
+访问完成后，**unlock\_page函数解锁**其他进程对page的访问。其他正在**等待队列**中的进程**被唤醒**。
 
-- 最后**页帧(page frame**)代表了系统内存的最小单位, 堆内存中的每个页都会创建一个struct page的一个实例. 传统上，把内存视为连续的字节，即内存为字节数组，内存单元的编号(地址)可作为字节数组的索引. 分页管理时，将若干字节视为一页，比如4K byte. 此时，内存变成了连续的页，即内存为页数组，每一页物理内存叫页帧，以页为单位对内存进行编号，该编号可作为页数组的索引，又称为页帧号.
+- **每个page**都**可以有一个等待队列**，但是太多的**分离的等待队列**使得花费**太多的内存访问周期**。替代的解决方法，就是将**所有的队列**放在**struct zone数据结构**中
 
-在一个**单独的节点**内，**任一给定CPU**访问页面**所需的时间都是相同**的。然而，对**不同的CPU**，这个时间可能就不同。对每个CPU而言，内核都试图把耗时节点的访问次数减到最少这就要小心地选择CPU最常引用的内核数据结构的存放位置.
+- 也可以有一种可能，就是**struct zone中只有一个队列**，但是这就意味着，当**一个page unlock**的时候，访问这个zone里**内存page的所有休眠的进程**(**所有的，而不管是不是访问这个page的进程！！！**)将都**被唤醒**，这样就会出现拥堵（thundering herd）的问题。建立**一个哈希表**管理**多个等待队列**，能解决这个问题，zone->wait\_table就是这个哈希表。哈希表的方法**可能**还是会**造成一些进程不必要的唤醒**。但是这种事情发生的机率不是很频繁的。下面这个图就是进程及等待队列的运行关系：
 
+![config](images/9.jpg)
 
+**等待队列的哈希表的分配和建立**在**free\_area\_init\_core**函数中进行。哈希表的表项的数量在wait\_table\_size() 函数中计算，并且保持在**zone\->wait\_table\_size成员**中。最大**4096个等待队列**。最小是NoPages / PAGES\_PER\_WAITQUEUE的2次方，NoPages是zone管理的**page的数量**，PAGES\_PER\_WAITQUEUE被定义**256**
 
-# 2 物理内存初始化
+### 4.2.5 冷热页与Per\-CPU上的页面高速缓存
+
+内核经常**请求和释放单个页框**.为了提升性能,**每个内存管理区**(**zone级别定义！！！**)都定义了一个每CPU(Per\-CPU)的**页面高速缓存**.所有"每CPU高速缓存"包含一些**预先分配的页框**
+
+struct zone的**pageset**成员用于实现**冷热分配器(hot\-cold allocator**)
+
+```cpp
+struct zone
+{
+    struct per_cpu_pageset __percpu *pageset;
+};
+```
+尽管**内存域**可能属于一个**特定的NUMA结点**,因而**关联**到某个**特定的CPU**。但**其他CPU**的**高速缓存**仍然可以包含**该内存域中的页面**（也就是说**CPU的高速缓存可以包含其他CPU的内存域的页！！！**）. 最终的效果是, **每个处理器**都可以访问系统中的**所有页**,尽管速度不同.因而,**特定于内存域的数据结构**不仅要考虑到**所属NUMA结点相关的CPU**, 还必须照顾到系统中**其他的CPU**.
+
+pageset是一个指针, 其容量与系统能够容纳的**CPU的数目的最大值相同**.
+
+### 4.2.6 zonelist内存域存储层次
+
+#### 4.2.6.1 内存域之间的层级结构
+
+**当前结点**与系统中**其他结点**的**内存域**之间存在一种等级次序
+
+我们考虑一个例子, 其中内核想要**分配高端内存**. 
+
+1.	它首先企图在**当前结点的高端内存域**找到一个大小适当的空闲段.如果**失败**,则查看**该结点**的**普通内存域**. 如果还失败, 则试图在**该结点**的**DMA内存域**执行分配.
+
+2.	如果在**3个本地内存域**都无法找到空闲内存, 则查看**其他结点**. 在这种情况下, **备选结点**应该**尽可能靠近主结点**, 以最小化由于访问非本地内存引起的性能损失.
+
+内核定义了内存的一个**层次结构**, 首先试图分配"廉价的"内存. 如果失败, 则根据访问速度和容量, 逐渐尝试分配"更昂贵的"内存.
+
+**高端内存是最廉价的**, 因为内核**没有**任何部分**依赖**于从该内存域分配的内存. 如果**高端内存域用尽**, 对内核**没有任何副作用**, 这也是优先分配高端内存的原因.
+
+**其次是普通内存域**, 这种情况有所不同. **许多内核数据结构必须保存在该内存域**, 而不能放置到高端内存域.
+
+因此如果普通内存完全用尽, 那么内核会面临紧急情况. 所以只要高端内存域的内存没有用尽, 都不会从普通内存域分配内存.
+
+**最昂贵的是DMA内存域**, 因为它用于外设和系统之间的数据传输. 因此从该内存域分配内存是最后一招.
+
+#### 4.2.6.2 备用节点内存域zonelist结构
+
+内核还针对**当前内存结点**的**备选结点**,定义了一个**等级次序**.这有助于在**当前结点所有内存域**的内存都**用尽**时, 确定一个**备选结点**
+
+内核使用pg\_data\_t中的**zonelist数组**, 来**表示所描述的层次结构**.
+
+```cpp
+typedef struct pglist_data {
+	struct zonelist node_zonelists[MAX_ZONELISTS];
+	/*  ......  */
+}pg_data_t;
+```
+
+node\_zonelists**数组**对每种可能的**内存域类型**, 都配置了一个**独立的数组项**.
+
+```cpp
+enum
+{
+    ZONELIST_FALLBACK,      /* zonelist with fallback */
+#ifdef CONFIG_NUMA
+    ZONELIST_NOFALLBACK,
+#endif
+    MAX_ZONELISTS
+};
+```
+
+**UMA结构**下, 数组大小**MAX\_ZONELISTS = 1**, NUMA下需要多余的**ZONELIST\_NOFALLBACK**用以表示**当前结点**的信息
+
+由于该**备用列表**必须包括**所有结点**的**所有内存域(！！！**)，因此**由MAX\_NUMNODES * MAX\_NZ\_ZONES项**组成，外加一个**用于标记列表结束的空指针**
+
+```cpp
+struct zonelist {
+    struct zoneref _zonerefs[MAX_ZONES_PER_ZONELIST + 1];
+};
+
+struct zoneref {
+    struct zone *zone;      /* Pointer to actual zone */
+    int zone_idx;       /* zone_idx(zoneref->zone) */
+};
+```
+
+#### 4.2.6.3 内存域的排列方式
+
+NUMA系统中存在**多个节点**, **每个结点**中可以包含**多个zone**.
+
+- Legacy方式, **每个节点只排列自己的zone**；
+
+![Legacy方式](./images/10.jpg)
+
+- Node方式, 按**节点顺序**依次排列，先排列本地节点的所有zone，再排列其它节点的所有zone。
+
+![Node方式](./images/11.jpg)
+
+- Zone方式, 按**zone类型**从高到低依次排列各节点的相同类型zone
+
+![Zone方式](./images/12.jpg)
+
+可通过启动参数"**numa\_zonelist\_order**"来配置**zonelist order**，内核定义了3种配置
+
+```cpp
+#define ZONELIST_ORDER_DEFAULT  0 /* 智能选择Node或Zone方式 */
+#define ZONELIST_ORDER_NODE     1 /* 对应Node方式 */
+#define ZONELIST_ORDER_ZONE     2 /* 对应Zone方式 */
+```
+
+## 4.3 Page
+
+**页帧(page frame**)代表了系统内存的最小单位, 对内存中的**每个页**都会创建一个struct page的一个实例. 内核必须要**保证page结构体足够的小**. 每一页物理内存叫页帧，以页为单位对内存进行编号，该编号可作为页数组的索引，又称为页帧号.
+
+### 4.3.1 mapping & index
+
+**mapping**指定了**页帧**（**物理页！！！**）所在的**地址空间**,**index**是**页帧**在映射的**虚拟空间内部**的偏移量.**地址空间**是一个非常一般的概念.例如,可以用在**向内存读取文件**时. 地址空间用于将**文件的内容**与装载**数据的内存区关联起来**.
+
+mapping不仅能够保存一个指针,而且还能包含一些额外的信息,用于判断页是否属于**未关联到地址空间**的**某个匿名内存区**.
+
+page\->mapping本身是一个**指针**，指针地址的**低几个bit**因为**对齐的原因**都是**无用的bit**，内核就根据这个特性利用这几个bit来让page->mapping实现更多的含义。**一个指针多个用途**，这个也是内核为了**减少page结构大小**的办法之一。目前用到**最低2个bit位**。
+
+```c
+#define PAGE_MAPPING_ANON	0x1
+#define PAGE_MAPPING_MOVABLE	0x2
+#define PAGE_MAPPING_KSM	(PAGE_MAPPING_ANON | PAGE_MAPPING_MOVABLE)
+#define PAGE_MAPPING_FLAGS	(PAGE_MAPPING_ANON | PAGE_MAPPING_MOVABLE)
+```
+
+1. 如果page->mapping == NULL，说明该**page**属于**交换高速缓存页**（**swap cache**）；当需要使用地址空间时会指定**交换分区的地址空间**swapper\_space。
+
+2. 如果page->mapping != NULL，第0位bit[0] = 0，说明该page属于**页缓存**或**文件映射**，mapping指向**文件的地址空间**address\_space。
+
+3. 如果page->mapping != NULL，第0位bit[0] != 0，说明该page为**匿名映射**，mapping指向**struct anon\_vma对象**。
+
+### 4.3.2 lru链表头
+
+最近、最久未使用**struct slab结构指针**变量
+
+lru：链表头，主要有3个用途：
+
+1.	则**page处于伙伴系统**中时，用于链接**相同阶的伙伴**（只使用伙伴中的**第一个page的lru**即可达到目的）。
+
+2.	**设置PG\_slab**, 则**page属于slab**，page\->lru.next指向page驻留的的缓存的管理结构，page->lru.prec指向保存该page的slab的管理结构。
+
+3.	page被**用户态使用**或被当做**页缓存使用**时，用于将该**page**连入zone中**相应的lru链表**，供**内存回收**时使用。
+
+### 4.3.3 内存页标识pageflags
+
+### 4.3.4 全局页面数组mem\_map
+
+mem\_map是一个**struct page的数组**，管理着系统中**所有的物理内存页面**。在系统启动的过程中，创建和分配mem\_map的内存区域.
+
+UMA体系结构中，**free\_area\_init**函数在系统唯一的struct node对象**contig\_page\_data**中**node\_mem\_map**成员赋值给全局的mem\_map变量
+
+# 5 物理内存初始化
 

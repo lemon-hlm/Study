@@ -397,6 +397,10 @@ intel的一款笔记本平台
 
 pci 0 上的MCH和ICH，是FSB总线的延伸，虚拟的PCI设备，只是使用PCI的管理方法
 
+Intel后续的处理器, 使用QPI总线(又称Multi\-FSB总线)代替了FSB, 南桥使用PCH(Platform Controller Hub)集成南桥代替了ICH. 
+
+Intel在**CPU内部保留了QPI总线**，用于**CPU内部的数据传输**。而在**与外部接口设备进行连接**的时候，需要有一条简洁快速的通道，就是**DMI总线**。这样，这两个总线的传输任务就分工明确了，QPI主管内，DMI主管外。也就是说DMI往下就不是CPU内部了, 尽管PCH和MCH都属于RC的一部分.
+
 ## 5.1 pci0的device0设备，管理PCI总线地址和存储器地址
 
 device0被认为是HOST主桥

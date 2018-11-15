@@ -299,7 +299,7 @@ struct page {
 
 mapping不仅能够保存一个指针,而且还能包含一些额外的信息,用于判断页是否属于**未关联到地址空间**的**某个匿名内存区**.
 
-page->mapping本身是一个**指针**，指针地址的**低几个bit**因为对齐的原因都是无用的bit，内核就根据这个特性利用这几个bit来让page->mapping实现更多的含义。**一个指针多个用途**，这个也是内核为了**减少page结构大小**的办法之一。目前用到**最低2个bit位**。定义在include/linux/page-flags.h#L390。
+page\->mapping本身是一个**指针**，指针地址的**低几个bit**因为**对齐的原因**都是**无用的bit**，内核就根据这个特性利用这几个bit来让page->mapping实现更多的含义。**一个指针多个用途**，这个也是内核为了**减少page结构大小**的办法之一。目前用到**最低2个bit位**。定义在include/linux/page-flags.h#L390。
 
 ```
 /*
@@ -406,7 +406,7 @@ lru：链表头，主要有3个用途：
 
 1.	则**page处于伙伴系统**中时，用于链接**相同阶的伙伴**（只使用伙伴中的**第一个page的lru**即可达到目的）。
 
-2.	设置PG\_slab, 则**page属于slab**，page->lru.next指向page驻留的的缓存的管理结构，page->lru.prec指向保存该page的slab的管理结构。
+2.	**设置PG\_slab**, 则**page属于slab**，page\->lru.next指向page驻留的的缓存的管理结构，page->lru.prec指向保存该page的slab的管理结构。
 
 3.	page被**用户态使用**或被当做**页缓存使用**时，用于将该**page**连入zone中**相应的lru链表**，供**内存回收**时使用。
 
@@ -681,13 +681,13 @@ static inline void wait_on_page_locked(struct page *page)
 static inline void wait_on_page_writeback(struct page *page)
 ```
 
-假定内核的一部分在等待一个被锁定的页面, 直至页面被解锁. wait_on_page_locked提供了该功能. 在页面被锁定的情况下, 调用该函数, 内核将进入睡眠. 而在页面解锁后, 睡眠进程会被自动唤醒并继续工作
+假定内核的一部分在等待一个被锁定的页面, 直至页面被解锁. wait\_on\_page\_locked提供了该功能. 在页面被锁定的情况下, 调用该函数, 内核将进入睡眠. 而在页面解锁后, 睡眠进程会被自动唤醒并继续工作
 
-wait_on_page_writeback的工作方式类似, 该函数会等待与页面相关的所有待决回写操作结束, 将页面包含的数据同步到块设备为止.
+wait\_on\_page\_writeback的工作方式类似, 该函数会等待与页面相关的所有待决回写操作结束, 将页面包含的数据同步到块设备为止.
 
 # 4 全局页面数组mem\_map
 
-`mem_map`是一个**struct page的数组**，管理着系统中**所有的物理内存页面**。在系统启动的过程中，创建和分配mem\_map的内存区域, mem\_map定义在mm/memory.c
+mem\_map是一个**struct page的数组**，管理着系统中**所有的物理内存页面**。在系统启动的过程中，创建和分配mem\_map的内存区域, mem\_map定义在mm/memory.c
 
 ```cpp
 #ifndef CONFIG_NEED_MULTIPLE_NODES
