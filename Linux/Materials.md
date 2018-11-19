@@ -44,6 +44,8 @@ http://abcdxyzk.github.io/blog/cats/kernel/
 
 https://www.cnblogs.com/tolimit/category/697314.html
 
+https://blog.csdn.net/yayong/article/category/6083072
+
 - 书籍资料：
 
 赵炯书籍网站：http://www.oldlinux.org/

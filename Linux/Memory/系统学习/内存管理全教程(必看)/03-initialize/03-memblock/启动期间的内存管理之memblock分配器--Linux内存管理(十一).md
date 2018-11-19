@@ -237,7 +237,7 @@ struct memblock memblock __initdata_memblock = {
 #endif
 ```
 
-如果启用`CONFIG_ARCH_DISCARD_MEMBLOCK`宏配置选项，memblock代码会被放**到\.init代码段**,在内核启动完成后memblock代码会从.init代码段释放。
+如果启用CONFIG\_ARCH\_DISCARD\_MEMBLOCK宏配置选项，memblock代码会被放**到\.init代码段**,在内核启动完成后memblock代码会从.init代码段释放。
 
 **3个memblock\_type的初始化**
 
@@ -1000,7 +1000,7 @@ bootmem的**核心函数\_\_alloc\_memory\_core()**的实现机制我们前一�
 
 要**理解memblock是如何工作和实现**的, 我们首先看一下**它的用法**.
 
-在Linux内核中有几处用到了memblock,例如**arch/x86/kernel/e820.c**中的函数**memblock\_x86\_fill**,该函数**遍历**由`e820`提供的**内存映射表**并且通过**memblock\_add**函数把**内核预留的内存区域**添加到memblock。既然我们首先遇到了memblock\_add函数，那就从它开始吧。
+在Linux内核中有几处用到了memblock,例如**arch/x86/kernel/e820.c**中的函数**memblock\_x86\_fill**,该函数**遍历**由e820提供的**内存映射表**并且通过**memblock\_add**函数把**内核预留的内存区域**添加到memblock。既然我们首先遇到了memblock\_add函数，那就从它开始吧。
 
 在内核初始化初期,**物理内存**会通过**int 0x15**来被探测和整理,存放到**e820**中.而**初始化**就发生在**这个以后**.参见[arch/x86/kernel/setup.c?v=4.7, line 1096](http://lxr.free-electrons.com/source/arch/x86/kernel/setup.c?v=4.7#L1096)
 

@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 今日内容(第二阶段(二)–初始化备用内存域列表zonelists)
 - 2 后备内存域列表zonelists
     - 2.1 回到start\_kernel函数(已经完成的工作)
