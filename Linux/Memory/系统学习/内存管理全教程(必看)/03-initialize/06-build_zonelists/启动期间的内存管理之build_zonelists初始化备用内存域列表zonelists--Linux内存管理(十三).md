@@ -214,6 +214,8 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 
 ## 3.1 zonelist
 
+新的内核已经去掉了
+
 前面我们讲解内存管理域时候讲解到,系统中的**所有管理域**都存储在一个**多维的数组zone\_table**.内核在初始化内存管理区时,必须要建立管理区表zone\_table. 参见[mm/page_alloc.c?v=2.4.37, line 38](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=2.4.37#L38)
 
 
@@ -454,7 +456,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 
 ## 4.1 system\_state系统状态标识
 
-其中`system_state`变量是一个**系统全局定义**的用来表示**系统当前运行状态**的枚举变量, 其定义在[include/linux/kernel.h?v=4.7, line 487](http://lxr.free-electrons.com/source/include/linux/kernel.h?v=4.7#L487)
+其中**system\_state**变量是一个**系统全局定义**的用来表示**系统当前运行状态**的枚举变量, 其定义在[include/linux/kernel.h?v=4.7, line 487](http://lxr.free-electrons.com/source/include/linux/kernel.h?v=4.7#L487)
 
 ```cpp
 /* Values used for system_state */
@@ -467,9 +469,9 @@ extern enum system_states
 	SYSTEM_RESTART,
 } system_state;
 ```
-- 如果系统system\_state是SYSTEM\_BOOTING, 则调用`build_all_zonelists_init`初始化所有的内存结点
+- 如果系统system\_state是SYSTEM\_BOOTING, 则调用build\_all\_zonelists\_init初始化所有的内存结点
 
-- 否则的话如果定义了冷热页`CONFIG_MEMORY_HOTPLUG`且参数zone(待初始化的内存管理域zone)不为NULL, 则调用setup\_zone\_pageset设置冷热页
+- 否则的话如果定义了**冷热页CONFIG\_MEMORY\_HOTPLUG**且参数zone(待初始化的内存管理域zone)不为NULL, 则调用setup\_zone\_pageset设置冷热页
 
 ```cpp
 if (system_state == SYSTEM_BOOTING)
@@ -483,6 +485,8 @@ else
     	setup_zone_pageset(zone);
 #endif
 ```
+
+如果系统状态system\_state为SYSTEM\_BOOTING，系统状态只有在start\_kernel执行到最后一个函数rest\_init后，才会进入SYSTEM\_RUNNING
 
 ## 4.2 build\_all\_zonelists\_init函数
 
@@ -522,11 +526,11 @@ static int __build_all_zonelists(void *data)
 }
 ```
 
-`for_each_online_node`遍历了系统中**所有的活动结点**. 
+for\_each\_online\_node遍历了系统中**所有的活动结点**. 
 
 由于**UMA系统**只有一个结点，build\_zonelists只调用了一次,就对所有的内存创建了内存域列表.
 
-**NUMA系统**调用该函数的次数等同于结点的数目.**每次调用**对**一个不同结点**生成内存域数据
+**NUMA系统**调用该函数的次数等同于结点的数目.**每次调用**对**一个不同结点**生成**内存域数据**
 
 ## 4.3 build\_zonelists初始化每个内存结点的zonelists
 

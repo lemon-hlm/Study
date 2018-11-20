@@ -771,7 +771,7 @@ asmlinkage __visible void __init start_kernel(void)
 | kmemleak\_init | Kmemleak工作于内核态，Kmemleak提供了一种**可选的内核泄漏检测**，其方法类似于**跟踪内存收集器**。当独立的对象没有被释放时，其报告记录在/sys/kernel/debug/kmemleak中, Kmemcheck能够帮助定位大多数内存错误的上下文 |
 | setup\_per\_cpu\_pageset | **初始化CPU高速缓存行**, 为**pagesets**的**第一个数组元素分配内存**, 换句话说, 其实就是**第一个系统处理器分配**. 由于在分页情况下，**每次存储器访问都要存取多级页表**，这就大大降低了访问速度。所以，为了提高速度，在**CPU中**设置一个**最近存取页面**的**高速缓存硬件机制**，当进行**存储器访问**时，**先检查**要访问的**页面是否在高速缓存(！！！**)中. |
 
-## 6.1 特定于体系结构的内存初始化工作
+# 7 特定于体系结构的内存初始化工作
 
 setup\_arch()完成与体系结构相关的一系列初始化工作，其中就包括各种内存的初始化工作，如内存图的建立、管理区的初始化等等。对x86体系结构，setup\_arch()函数在arch/x86/kernel/setup.c中，如下：
 
@@ -843,9 +843,11 @@ void __init setup_arch(char **cmdline_p)
 
 （4）**初始化低端内存和高端内存固定映射区的页表**：init\_mem\_mapping()；
 
-（5）**内存管理框架初始化**, node等初始化: initmem\_init()
+（5）**内存管理node节点设置**: initmem\_init()
 
-### 6.1.1 建立内存图
+（6）管理区和页面管理的构建: x86\_init.paging.pagetable\_init()
+
+## 7.1 建立内存图
 
 内存探测完之后，就要建立描述各**内存块情况**的**全局内存图结构**了。
 
@@ -950,7 +952,7 @@ change_member*[]
 
 ![config](./images/16.png)
 
-### 6.1.2 页表缓冲区申请
+## 7.2 页表缓冲区申请
 
 在**setup\_arch**()函数中调用的**页表缓冲区申请**操作**early\_alloc\_pgt\_buf**()
 
@@ -1004,11 +1006,11 @@ static void __init reserve_brk(void)
 
 其主要是用来将**early\_alloc\_pgt\_buf**()申请的空间在memblock算法中做**reserved保留操作**，避免被其他地方申请使用引发异常。
 
-### 6.1.3 memblock算法
+## 7.3 memblock算法
 
 memblock算法的实现是，**它将所有状态都保存在一个全局变量\_\_initdata\_memblock中，算法的初始化以及内存的申请释放都是在将内存块的状态做变更**。
 
-#### 6.1.3.1 struct memblock结构
+### 7.3.1 struct memblock结构
 
 那么从数据结构入手，\_\_initdata\_memblock是一个memblock结构体。其结构体定义：
 
@@ -1045,7 +1047,7 @@ struct memblock {
 
 - 物理内存型(需要配置宏CONFIG\_HAVE\_MEMBLOCK\_PHYS\_MAP)
 
-#### 6.1.3.2 内存块类型struct memblock\_type
+### 7.3.2 内存块类型struct memblock\_type
 
 往下看看memory和reserved的结构体**memblock\_type**定义：
 
@@ -1069,7 +1071,7 @@ struct memblock_type {
 | total\_size | 集合记录**区域信息大小（region的size和，不是个数**） |
 | regions | 内存区域结构指针 |
 
-#### 6.1.3.3 内存区域struct memblock\_region
+### 7.3.3 内存区域struct memblock\_region
 
 ```
 # /include/linux/memblock.h
@@ -1091,7 +1093,7 @@ struct memblock_region {
 | flags | 标记 |
 | nid | **node号** |
 
-#### 6.1.3.4 内存区域标识
+### 7.3.4 内存区域标识
 
 ```cpp
 // include/linux/memblock.h
@@ -1104,15 +1106,15 @@ enum {
 };
 ```
 
-#### 6.1.3.5 结构总体布局
+### 7.3.5 结构总体布局
 
 结构关系图:
 
 ![config](./images/17.png)
 
-#### 6.1.3.6 memblock初始化
+### 7.3.6 memblock初始化
 
-##### 6.1.3.6.1 初始化memblock静态变量
+#### 7.3.6.1 初始化memblock静态变量
 
 在**编译（编译时确定！！！**）时,会分配好**memblock结构所需要的内存空间**. 
 
@@ -1149,7 +1151,7 @@ struct memblock memblock __initdata_memblock = {
 
 它初始化了部分成员，表示内存申请自高地址向低地址，且current_limit设为\~0，即0xFFFFFFFF，同时通过全局变量定义为memblock的算法管理中的memory和reserved准备了内存空间。
 
-##### 6.1.3.6.2 宏\_\_initdata\_memblock指定了存储位置
+#### 7.3.6.2 宏\_\_initdata\_memblock指定了存储位置
 
 ```cpp
 [include/linux/memblock.h]
@@ -1164,7 +1166,7 @@ struct memblock memblock __initdata_memblock = {
 
 启用CONFIG\_ARCH\_DISCARD\_MEMBLOCK宏配置选项，memblock代码会被放**到\.init代码段**,在内核启动完成后memblock代码会从.init代码段释放。
 
-##### 6.1.3.6.3 x86架构下的memblock初始化
+#### 7.3.6.3 x86架构下的memblock初始化
 
 在物理内存探测并且整理保存到全局变量e820后, memblock初始化发生在这个之后
 
@@ -1231,7 +1233,7 @@ void __init memblock_x86_fill(void)
 
 **后两个函数**主要是修剪内存**使之对齐和输出信息**.
 
-#### 6.1.3.7 memblock操作总结
+### 7.3.7 memblock操作总结
 
 memblock内存管理是将**所有的物理内存**放到**memblock.memory**中作为可用内存来管理, **分配过**的内存**只加入**到**memblock.reserved**中,并**不从memory中移出**.
 
@@ -1243,7 +1245,7 @@ memblock内存管理是将**所有的物理内存**放到**memblock.memory**中�
 
 - 从高往低找, **就近查找可用的内存**
 
-### 6.1.4 建立内核页表
+## 7.4 建立内核页表
 
 **32位**情况下, **每个进程**一般都能寻址**4G的内存空间**. 但如果**物理内存没这么大**的话, 进程怎么能获得4G的内存空间呢？这就是使用了**虚拟地址**的好处。我们经常在程序的反汇编代码中看到一些类似0x32118965这样的地址，**操作系统**中称为**线性地址**，或**虚拟地址**。通常我们使用一种叫做**虚拟内存的技术**来实现，因为可以**使用硬盘中的一部分来当作内存**使用。另外，现在操作系统都划分为**系统空间**和**用户空间**，使用**虚拟地址**可以很好的**保护内核空间不被用户空间破坏**。Linux 2.6内核使用了许多技术来改进对大量虚拟内存空间的使用，以及对内存映射的优化，使得Linux比以往任何时候都更适用于企业。包括**反向映射（reverse mapping**）、使用**更大的内存页**、**页表条目存储在高端内存**中，以及更稳定的管理器。对于**虚拟地址**如何**转为物理地址**,这个**转换过程**有**操作系统**和**CPU**共同完成。**操作系统**为CPU**设置好页表**。**CPU**通过**MMU单元**进行**地址转换**。**CPU**做出**映射**的**前提**是**操作系统**要为其**准备好内核页表**，而对于**页表的设置**，内核在**系统启动的初期(！！！**)和**系统初始化完成后(！！！**)都分别进行了设置。
 
@@ -1267,19 +1269,19 @@ linux**页表映射机制**的建立分为**两个阶段**，
 
 第二阶段是**建立完整的内存映射机制**，在在setup\_arch()--->arch/x86/mm/init.c:**init\_memory\_mapping**()中完成。注意对于**物理地址扩展（PAE)分页机制**，Intel通过在她得处理器上把管脚数从32增加到36已经满足了这些需求，**寻址能力**可以达到**64GB**。不过，只有引入一种新的分页机制把32位线性地址转换为36位物理地址才能使用所增加的物理地址。linux为对多种体系的支持，选择了一套简单的通用实现机制。在这里只分析x86 32位下的实现。
 
-#### 6.1.4.1 临时页表的初始化
+### 7.4.1 临时页表的初始化
 
 **swapper\_pg\_dir**是**临时全局页目录表起址**，它是在**内核编译过程**中**静态初始化**的。内核是在swapper\_pg\_dir的第**768个表项**开始建立页表。其**对应线性地址**就是\_\_**brk\_base**（内核编译时指定其值，默认为**0xc0000000**）以上的地址，即**3GB以上的高端地址**（3GB\-4GB），再次强调这高端的1GB线性空间是内核占据的虚拟空间，在进行实际内存映射时，映射到**物理内存**却总是从最低地址（**0x00000000**）开始。
 
 内核从\_\_**brk\_base开始建立页表**, 然后创建页表相关结构, **开启CPU映射机制**, 继续初始化(包括INIT\_TASK<即第一个进程>, 建立完整中断处理程序, 中心加载GDT描述符), 最后**跳转到init/main.c中的start\_kernel()函数继续初始化**.
 
-#### 6.1.4.2 内存映射机制的完整建立初始化
+### 7.4.2 内存映射机制的完整建立初始化
 
 这一阶段在start\_kernel()--->**setup\_arch**()中完成. 在Linux中，**物理内存**被分为**低端内存区**和**高端内存区**（如果内核编译时**配置了高端内存标志**的话），为了**建立物理内存到虚拟地址空间的映射**，需要先计算出**物理内存总共有多少页面数**，即找出**最大可用页框号**，这**包含了整个低端和高端内存区**。还要计算出**低端内存区总共占多少页面**。
 
 下面就基于RAM大于896MB，而小于4GB，并且**CONFIG\_HIGHMEM(必须配置！！！**）配置了高端内存的环境情况进行分析。
 
-##### 6.1.4.2.1 相关变量与宏的定义
+#### 7.4.2.1 相关变量与宏的定义
 
 - max\_pfn：**最大物理内存页面帧号**；
 
@@ -1324,10 +1326,9 @@ Linux支持4级页表, 根据上面讲过的PAGE\_SIZE等会逐步推出诸如FI
 
 ![config](./images/19.png)
 
-##### 6.1.4.2.3 低端内存页表和高端内存固定映射区页表的建立init\_mem\_mapping()
+#### 7.4.2.3 低端内存页表和高端内存固定映射区页表的建立init\_mem\_mapping()
 
 有了**总页面数**、**低端页面数**、**高端页面数**这些信息，setup\_arch()接着调用arch/x86/mm/init.c:**init\_mem\_mapping**()函数**建立低端内存页表和高端内存固定映射区的页表**.
-
 
 该函数**在PAGE\_OFFSET处(！！！**)建立**物理内存的直接映射**，即**把物理内存中0\~max\_low\_pfn\<\<12**地址范围的**低端空间区直接映射**到**内核虚拟空间**（它是从**PAGE\_OFFSET**即**0xc0000000**开始的**1GB线性地址**）。这在**bootmem/memblock初始化之前运行**，并且**直接从物理内存获取页面**，这些页面在前面已经被**临时映射**了。注意高端映射区并没有映射到实际的物理页面，只是这种机制的初步建立，页表存储的空间保留。
 
@@ -1347,9 +1348,7 @@ setup_arch()
     |-->load_cr3(swapper_pg_dir);  //将内核PGD地址加载到cr3寄存器
 ```
 
-### 6.1.5 内存管理框架初始化initmem\_init()
-
-
+## 7.5 内存管理node节点设置initmem\_init()
 
 ```c
 [arch/x86/mm/init_64.c]
@@ -1367,10 +1366,117 @@ void __init initmem_init(void)
 }
 ```
 
-memblock\_set\_node, 该函数用于给早前建立的memblock算法设置node节点信息。这里传参数是全的memblock.memory信息.
+上面是针对非NUMA情况, 下面是numa的初始化
+
+memblock\_set\_node, 该函数用于给早前建立的memblock算法**设置node节点信息**。这里传参数是**全的memblock.memory信息**.
+
+linux内核中是如何获得NUMA信息的
+
+在x86平台，这个工作分成两步
+
+- 将numa信息保存到numa\_meminfo
+- 将numa\_meminfo映射到memblock结构
+
+着重关注第一次获取到numa信息的过程，对node和zone的数据结构暂时不在本文中体现。
+
+整体调用结构
 
 ```c
-[/mm/memblock.c]
+setup_arch()
+  initmem_init()
+    x86_numa_init()
+        numa_init()
+            x86_acpi_numa_init()
+            numa_cleanup_meminfo()
+            numa_register_memblks()
+                memblock_set_node()
+                alloc_node_data()
+                memblock_dump_all()
+```
+
+### 7.5.1 将numa信息保存到numa\_meminfo
+
+在x86架构上，**numa信息第一次获取**是通过**acpi**或者是**读取北桥上的信息**。具体的函数是**numa\_init**()。不管是哪种方式，**numa相关的信息**都最后保存在了**numa\_meminfo这个数据结构**中。
+
+这个数据结构和memblock长得很像，展开看就是一个数组，**每个元素**记录了**一段内存的起止地址和node信息**。
+
+```
+numa_meminfo
+    +------------------------------+
+    |nr_blks                       |
+    |    (int)                     |
+    +------------------------------+
+    |blk[NR_NODE_MEMBLKS]          |
+    |    (struct numa_memblk)      |
+    |    +-------------------------+
+    |    |start                    |
+    |    |end                      |
+    |    |   (u64)                 |
+    |    |nid                      |
+    |    |   (int)                 |
+    +----+-------------------------+
+```
+
+在这个过程中使用的就是numa\_add\_memblk()函数添加的numa\_meminfo数据结构。
+
+### 7.5.2 将numa\_meminfo映射到memblock结构
+
+内核获取了**numa\_meminfo**之后并没有如我们想象一般直接拿来用了。虽然此时**给每个numa节点**生成了我们以后会看到的**node\_data数据结构**，但此时并没有直接使能它。
+
+memblock是内核初期内存分配器，所以当内核获取了**numa信息**首先是**把相关的信息映射到了memblock结构**中，使其具有numa的knowledge。这样在**内核初期分配内存**时，也可以分配到更近的内存了。
+
+在这个过程中有两个比较重要的函数
+
+- numa\_cleanup\_meminfo()
+- numa\_register\_memblks()
+
+前者主要用来**过滤numa\_meminfo结构**，**合并同一个node上的内存**。
+
+后者就是**把numa信息映射到memblock**了。除此之外，顺便还把之后需要的**node\_data给分配(alloc\_node\_data**)了，为后续的页分配器做好了准备。
+
+```c
+static int __init numa_register_memblks(struct numa_meminfo *mi)
+{
+    for (i = 0; i < mi->nr_blks; i++) {
+		struct numa_memblk *mb = &mi->blk[i];
+		memblock_set_node(mb->start, mb->end - mb->start,
+				  &memblock.memory, mb->nid);
+	}
+	
+	/* Finally register nodes. */
+	for_each_node_mask(nid, node_possible_map) {
+		u64 start = PFN_PHYS(max_pfn);
+		u64 end = 0;
+
+		for (i = 0; i < mi->nr_blks; i++) {
+			if (nid != mi->blk[i].nid)
+				continue;
+			start = min(mi->blk[i].start, start);
+			end = max(mi->blk[i].end, end);
+		}
+
+		if (start >= end)
+			continue;
+
+		/*
+		 * Don't confuse VM with a node that doesn't have the
+		 * minimum amount of memory:
+		 */
+		if (end && (end - start) < NODE_MIN_SIZE)
+			continue;
+
+		alloc_node_data(nid);
+	}	
+	/* Dump memblock with node info and return. */
+	memblock_dump_all();
+	return 0;
+}
+```
+
+memblock\_set\_node主要调用了三个函数做相关操作：memblock\_isolate\_range、memblock\_set\_region\_node和memblock\_merge\_regions。
+
+```c
+【file：/mm/memblock.c】
 /**
  * memblock_set_node - set node ID on memblock regions
  * @base: base of area to set node ID for
@@ -1385,44 +1491,310 @@ memblock\_set\_node, 该函数用于给早前建立的memblock算法设置node�
  * 0 on success, -errno on failure.
  */
 int __init_memblock memblock_set_node(phys_addr_t base, phys_addr_t size,
-				      struct memblock_type *type, int nid)
+                      struct memblock_type *type, int nid)
 {
-	int start_rgn, end_rgn;
-	int i, ret;
-
-	ret = memblock_isolate_range(type, base, size, &start_rgn, &end_rgn);
-	if (ret)
-		return ret;
-
-	for (i = start_rgn; i < end_rgn; i++)
-		memblock_set_region_node(&type->regions[i], nid);
-
-	memblock_merge_regions(type);
-	return 0;
+    int start_rgn, end_rgn;
+    int i, ret;
+ 
+    ret = memblock_isolate_range(type, base, size, &start_rgn, &end_rgn);
+    if (ret)
+        return ret;
+ 
+    for (i = start_rgn; i < end_rgn; i++)
+        memblock_set_region_node(&type->regions[i], nid);
+ 
+    memblock_merge_regions(type);
+    return 0;
 }
 ```
+
+**memblock\_isolate\_range**主要做**分割操作**, 在**memblock算法建立时**，只是**判断了flags是否相同**，然后将**连续内存做合并**操作，而**此时建立node节点**，则根据**入参base和size标记节点内存范围**将**内存划分开来**。
+
+如果**memblock中的region**恰好以**该节点内存范围末尾划分开来**的话，那么则将region的索引记录至start\_rgn，索引加1记录至end\_rgn返回回去；
+
+如果**memblock中的region**跨越了**该节点内存末尾分界**，那么将会把**当前的region边界调整为node节点内存范围边界**，另一部分通过**memblock\_insert\_region**()函数**插入到memblock管理regions当中**，以完成拆分。
+
+memblock\_set\_region\_node是获取node节点号，而memblock\_merge\_regions()则是用于将region合并的。
+
+### 7.5.3 观察memblock的变化
+
+memblock的调试信息默认没有打开，所以要观察的话需要传入内核启动参数”memblock=debug”。
+
+进入系统后，输入命令”dmesg | grep -A 9 MEMBLOCK”可以看到
+
+## 7.6 管理区和页面管理的构建x86\_init.paging.pagetable\_init()
+
+x86\_init.paging.pagetable\_init(), 该钩子实际上挂接的是native\_pagetable\_init()函数。
+
+[arch/x86/mm/init\_32.c]
+
+(1) 循环检测**max\_low\_pfn直接映射空间后面**的**物理内存**是否存在**系统启动引导时创建的页表**，如果存在，则使用pte\_clear()将其清除。
+
+(2) 接下来的paravirt\_alloc\_pmd()主要是用于准虚拟化，主要是使用钩子函数的方式替换x86环境中多种多样的指令实现。
+
+(3) 再往下的paging\_init()
+
+### 7.6.1 paging\_init()
 
 ```c
-void __init x86_numa_init(void)
+[arch/x86/mm/init_64.c]
+void __init paging_init(void)
 {
-	if (!numa_off) {
-#ifdef CONFIG_ACPI_NUMA
-		if (!numa_init(x86_acpi_numa_init))
-			return;
-#endif
-#ifdef CONFIG_AMD_NUMA
-		if (!numa_init(amd_numa_init))
-			return;
-#endif
-	}
+	sparse_memory_present_with_active_regions(MAX_NUMNODES);
+	sparse_init();
 
-	numa_init(dummy_numa_init);
+	/*
+	 * clear the default setting with node 0
+	 * note: don't use nodes_clear here, that is really clearing when
+	 *	 numa support is not compiled in, and later node_set_state
+	 *	 will not set it back.
+	 */
+	node_clear_state(0, N_MEMORY);
+	if (N_MEMORY != N_NORMAL_MEMORY)
+		node_clear_state(0, N_NORMAL_MEMORY);
+
+	zone_sizes_init();
 }
 ```
 
+这里**sparse memory**涉及到linux的一个**内存模型概念**。linux内核有**三种内存模型**：**Flat memory**、**Discontiguous memory**和**Sparse memory**。其分别表示：
+
+**Flat memory**：顾名思义，**物理内存是平坦连续的**，整个系统只有**一个node**节点。
+
+**Discontiguous memory**：**物理内存不连续**，内存中**存在空洞**，也因而系统**将物理内存分为多个节点**，但是**每个节点的内部内存是平坦连续**的。值得注意的是，该模型不仅是对于*NUMA环境*而言，**UMA**环境上同样可能存在**多个节点**的情况。
+
+**Sparse memory**：**物理内存是不连续**的，**节点的内部内存也可能是不连续**的，系统也因而可能会有**一个或多个节点**。此外，该模型是**内存热插拔**的基础。
 
 
+........
 
 
+**zone\_size\_init**
 
+```c
+void __init zone_sizes_init(void)
+{
+	unsigned long max_zone_pfns[MAX_NR_ZONES];
+
+	memset(max_zone_pfns, 0, sizeof(max_zone_pfns));
+
+#ifdef CONFIG_ZONE_DMA
+	max_zone_pfns[ZONE_DMA]		= min(MAX_DMA_PFN, max_low_pfn);
+#endif
+#ifdef CONFIG_ZONE_DMA32
+	max_zone_pfns[ZONE_DMA32]	= min(MAX_DMA32_PFN, max_low_pfn);
+#endif
+	max_zone_pfns[ZONE_NORMAL]	= max_low_pfn;
+#ifdef CONFIG_HIGHMEM
+	max_zone_pfns[ZONE_HIGHMEM]	= max_pfn;
+#endif
+
+	free_area_init_nodes(max_zone_pfns);
+}
+```
+
+通过max\_zone\_pfns获取各个管理区的最大页面数，并作为参数调用free\_area\_init\_nodes()
+
+#### 7.6.1.1 free\_area\_init\_nodes()
+
+[/mm/page_alloc.c]
+
+该函数中，**arch\_zone\_lowest\_possible\_pfn**用于存储**各内存管理区**可使用的**最小内存页框号**，而**arch\_zone\_highest\_possible\_pfn**则是用来存储**各内存管理区**可使用的**最大内存页框号**。也就是说**确定了各管理区的上下边界**. 此外，还有一个**全局数组zone\_movable\_pfn**，用于记录**各个node**节点的**Movable管理区的起始页框号**
+
+打印管理区范围信息(dmesg可看到)
+
+setup\_nr\_node\_ids()设置内存节点总数
+
+最后有一个**遍历各个节点**做初始化
+
+```c
+for_each_online_node(nid) {
+    pg_data_t *pgdat = NODE_DATA(nid);
+    free_area_init_node(nid, NULL,
+            find_min_pfn_for_node(nid), NULL);
+
+    /* Any memory on that node */
+    if (pgdat->node_present_pages)
+        node_set_state(nid, N_MEMORY);
+    check_for_memory(pgdat, nid);
+}
+```
+
+node\_set\_state()主要是对node节点进行状态设置，而check\_for\_memory()则是做内存检查。
+
+关键函数是**free\_area\_init\_node**()，其入参find\_min\_pfn\_for\_node()用于**获取node**节点中**最低的内存页框号**。
+
+```c
+【file：/mm/page_alloc.c】
+void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
+        unsigned long node_start_pfn, unsigned long *zholes_size)
+{
+    pg_data_t *pgdat = NODE_DATA(nid);
+    unsigned long start_pfn = 0;
+    unsigned long end_pfn = 0;
+ 
+    /* pg_data_t should be reset to zero when it's allocated */
+    WARN_ON(pgdat->nr_zones || pgdat->classzone_idx);
+ 
+    pgdat->node_id = nid;
+    pgdat->node_start_pfn = node_start_pfn;
+    init_zone_allows_reclaim(nid);
+#ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP
+    get_pfn_range_for_nid(nid, &start_pfn, &end_pfn);
+#endif
+    calculate_node_totalpages(pgdat, start_pfn, end_pfn,
+                  zones_size, zholes_size);
+ 
+    alloc_node_mem_map(pgdat);
+#ifdef CONFIG_FLAT_NODE_MEM_MAP
+    printk(KERN_DEBUG "free_area_init_node: node %d, pgdat %08lx, node_mem_map %08lx\n",
+        nid, (unsigned long)pgdat,
+        (unsigned long)pgdat->node_mem_map);
+#endif
+ 
+    free_area_init_core(pgdat, start_pfn, end_pfn,
+                zones_size, zholes_size);
+}
+```
+
+- init\_zone\_allows\_reclaim()评估内存管理区是否可回收以及合适的node节点数
+- get\_pfn\_range\_for\_nid获取内存node节点的起始和末尾页框号
+- calculate\_node\_totalpages(): 遍历node的zone, 得到所有zone的所有页面数(node\_spanned\_pages), 不包括movable管理区; 计算内存空洞页面数; 从而得到物理页面总数(node\_present\_pages); 打印节点信息和node\_present\_pages
+- alloc\_node\_mem\_map(): 给**当前节点的内存页面**信息**申请内存空间**, 并赋值给pgdat\->node\_mem\_map; 如果当前节点是0号节点, 设置**全局变量mem\_map**为当前节点的node\_mem\_map
+- free\_area\_init\_core: 初始化工作
+
+设置了内存管理节点的管理结构体，包括pgdat\_resize\_init()初始化**锁**资源、init\_waitqueue\_head()初始**内存队列**、pgdat\_page\_cgroup\_init()**控制组群初始化**。
+
+循环遍历统计**各个管理区**最大跨度间相差的**页面数size**以及**除去内存“空洞**”**后的实际页面数realsize**,然后通过**calc\_memmap\_size**()计算出**该管理区**所需的**页面管理结构**占用的**页面数memmap\_pages**，最后可以计算得除高端内存外的系统内存共有的**内存页面数nr\_kernel\_pages（用于统计所有一致映射的页**）；此外循环体内的操作则是**初始化内存管理区的管理结构(zone的初始化**)，例如各类锁的初始化、队列初始化。值得注意的是**zone\_pcp\_init**()是初始化**冷热页分配器**的，mod\_zone\_page\_state()用于**计算更新管理区的状态统计**，lruvec\_init()则是**初始化LRU算法使用的链表和保护锁**，而set\_pageblock\_order()用于在CONFIG\_HUGETLB\_PAGE\_SIZE\_VARIABLE配置下设置pageblock\_order值的；此外**setup\_usemap**()函数则是主要是为了给zone管理结构体中的**pageblock\_flags**申请**内存空间**，pageblock\_flags与**伙伴系统的碎片迁移算法有关**。而init\_currently\_empty\_zone()则主要初始化管理区的**等待队列哈希表**和**等待队列**，同时还初始化了**与伙伴系统相关的free\_aera列表**; memmap\_init: 根据页框号pfn通过pfn\_to\_page()查找到页面管理结构page, 然后对其进行初始化.
+
+中间有部分记录可以通过demesg查到
+
+至此, 内存管理框架构建完毕。
+
+# 8 build\_all\_zonelists初始化存储节点中的管理区链表
+
+start\_kernel()接下来的初始化则是linux**通用的内存管理算法框架**了。
+
+之前已经完成了节点和管理区的关键数据的初始化.
+
+build\_all\_zonelists()用来初始化**内存分配器**使用的**存储节点**中的**管理区链表node\_zonelists**，是为**内存管理算法（伙伴管理算法**）做准备工作的。
+
+```c
+build_all_zonelists(NULL, NULL);
+```
+
+函数实现
+
+```cpp
+void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
+{
+	/*  设置zonelist中节点和内存域的组织形式
+     *  current_zonelist_order变量标识了当前系统的内存组织形式
+     *	zonelist_order_name以字符串存储了系统中内存组织形式的名称  */
+    set_zonelist_order();
+
+    if (system_state == SYSTEM_BOOTING) {
+        build_all_zonelists_init();
+    } else {
+#ifdef CONFIG_MEMORY_HOTPLUG
+        if (zone)
+            setup_zone_pageset(zone);
+#endif
+        stop_machine(__build_all_zonelists, pgdat, NULL);
+    }
+    vm_total_pages = nr_free_pagecache_pages();
+    if (vm_total_pages < (pageblock_nr_pages * MIGRATE_TYPES))
+        page_group_by_mobility_disabled = 1;
+    else
+        page_group_by_mobility_disabled = 0;
+
+    pr_info("Built %i zonelists in %s order, mobility grouping %s.  Total pages: %ld\n",
+        nr_online_nodes,
+        zonelist_order_name[current_zonelist_order],
+        page_group_by_mobility_disabled ? "off" : "on",
+        vm_total_pages);
+#ifdef CONFIG_NUMA
+    pr_info("Policy zone: %s\n", zone_names[policy_zone]);
+#endif
+}
+```
+
+## 8.1 设置结点初始化顺序set\_zonelist\_order()
+
+可以通过启动参数"**numa\_zonelist\_order**"来配置zonelist order，内核定义了3种配置
+
+```cpp
+// http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L4551
+#define ZONELIST_ORDER_DEFAULT  0 /* 智能选择Node或Zone方式 */
+#define ZONELIST_ORDER_NODE     1 /* 对应Node方式 */
+#define ZONELIST_ORDER_ZONE     2 /* 对应Zone方式 */
+```
+
+非NUMA系统中, 这两个排序方式都是一样的, 也就是legacy方式.
+
+**全局的current\_zonelist\_order变量**标识了系统中的**当前使用的内存域排列方式**, 默认配置为ZONELIST\_ORDER\_DEFAULT
+
+```
+static int current_zonelist_order = ZONELIST_ORDER_DEFAULT;
+static char zonelist_order_name[3][8] = {"Default", "Node", "Zone"};
+```
+
+流程:
+
+1. 非NUMA系统, current\_zonelist\_order为ZONE方式(与NODE方式相同)
+
+2. NUMA系统, 根据设置
+
+- 如果是ZONELIST\_ORDER\_DEFAULT, 则内核选择, 目前是32位系统ZONE方式, 64位系统NODE方式
+
+可以通过/proc/sys/vm/numa\_zonelist\_order动态改变zonelist order的分配方式
+
+## 8.2 system\_state系统状态标识
+
+其中**system\_state**变量是一个**系统全局定义**的用来表示**系统当前运行状态**的枚举变量
+
+```cpp
+[include/linux/kernel.h]
+extern enum system_states
+{
+	SYSTEM_BOOTING,
+	SYSTEM_RUNNING,
+	SYSTEM_HALT,
+	SYSTEM_POWER_OFF,
+	SYSTEM_RESTART,
+} system_state;
+```
+
+系统状态system\_state为SYSTEM\_BOOTING，系统状态只有在**start\_kernel**执行到最后一个函数**rest\_init**后，才会进入**SYSTEM\_RUNNING**
+
+## 8.3 build\_all\_zonelists\_init函数
+
+```cpp
+[mm/page_alloc.c]
+static noinline void __init
+build_all_zonelists_init(void)
+{
+    __build_all_zonelists(NULL);
+    mminit_verify_zonelist();
+    cpuset_init_current_mems_allowed();
+}
+```
+
+```cpp
+static int __build_all_zonelists(void *data)
+{
+    int nid;
+    int cpu;
+    pg_data_t *self = data;
+
+	/*  ......  */
+
+    for_each_online_node(nid) {
+        pg_data_t *pgdat = NODE_DATA(nid);
+
+        build_zonelists(pgdat);
+    }
+	/*  ......  */
+}
+```
 

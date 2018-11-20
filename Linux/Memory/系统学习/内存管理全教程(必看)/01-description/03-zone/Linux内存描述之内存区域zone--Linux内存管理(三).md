@@ -838,6 +838,8 @@ min\_low\_pfn， max\_pfn和max\_low\_pfn这3个值，也要用于对**高端内
 
 # 5 管理区表zone\_table与管理区节点的映射
 
+系统中的**所有管理域**都存储在一个**多维的数组zone\_table**.内核在初始化内存管理区时,必须要建立管理区表zone\_table.
+
 内核在**初始化内存管理区**时, 首先**建立管理区表zone\_table**. 参见[mm/page_alloc.c?v=2.4.37, line 38](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=2.4.37#L38)
 
 ```cpp
