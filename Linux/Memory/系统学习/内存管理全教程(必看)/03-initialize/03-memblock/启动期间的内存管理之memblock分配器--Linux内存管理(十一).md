@@ -286,7 +286,6 @@ memblock_alloc(phys_addr_t size, phys_addr_t align)
 memblock_free(phys_addr_t base, phys_addr_t size)
 
 
-
 /////////////////////////////////////////
 //   查找 & 遍历
 /////////////////////////////////////////
@@ -294,7 +293,6 @@ memblock_free(phys_addr_t base, phys_addr_t size)
 phys_addr_t memblock_find_in_range(phys_addr_t start, phys_addr_t end, phys_addr_t size, phys_addr_t align)
 //  反复迭代 memblock
 for_each_mem_range(i, type_a, type_b, nid, flags, p_start, p_end, p_nid)
-
 
 
 /////////////////////////////////////////
@@ -343,7 +341,7 @@ int __init_memblock memblock_add(phys_addr_t base, phys_addr_t size)
 #define MAX_NUMNODES    (1 << NODES_SHIFT)
 ```
 
-memblock\_add传递的参数依次是 : **内存块类型(memory**), **物理基址**, **内存区域大小**, **最大节点数**(0如果CONFIG\_NODES\_SHIFT没有在配置文件中设置，不然就是**2\^CONFIG\_NODES\_SHIFT**）和标志
+memblock\_ad\_range传递的参数依次是 : **内存块类型(memory**), **物理基址**, **内存区域大小**, **最大节点数**(0如果CONFIG\_NODES\_SHIFT没有在配置文件中设置，不然就是**2\^CONFIG\_NODES\_SHIFT**）和标志
 
 ```cpp
 // arch/x86/Kconfig

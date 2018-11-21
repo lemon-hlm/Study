@@ -9,7 +9,7 @@
 
 # 1 伙伴系统的心脏\_\_alloc\_pages\_nodemask
 
-内核源代码将`__alloc_pages_nodemask`称之为"伙伴系统的心脏"(`the 'heart' of the zoned buddy allocator``), 因为它处理的是实质性的内存分配.
+内核源代码将\_\_**alloc\_pages\_nodemask**称之为"伙伴系统的心脏"(`the 'heart' of the zoned buddy allocator``), 因为它处理的是实质性的内存分配.
 
 ```
 //  http://lxr.free-electrons.com/source/include/linux/gfp.h?v=4.7#L428

@@ -244,9 +244,9 @@ static int fallbacks[MIGRATE_TYPES][4] = {
 
 ## 2.5 全局pageblock\_order变量
 
-尽管**页可移动性分组特性**的**全局变量**和**辅助函数**总是**编译到内核**中，但只有在系统中**有足够内存可以分配到多个迁移类型对应的链表（！！！**）时，才是有意义的。由于每个迁移链表都应该有适当数量的内存，内核需要定义"适当"的概念.这是通过两个全局变量pageblock\_order和pageblock\_nr\_pages提供的. 
+尽管**页可移动性分组特性**的**全局变量**和**辅助函数**总是**编译到内核**中，但只有在系统中**有足够内存可以分配到多个迁移类型对应的链表（！！！**）时，才是有意义的。由于**每个迁移链表**都应该有**适当数量的内存**，内核需要定义"适当"的概念.这是通过两个全局变量**pageblock\_order**和**pageblock\_nr\_pages**提供的. 
 
-第一个表示内核认为是"大"的**一个分配阶**,**pageblock\_nr\_pages**则表示**该分配阶对应的页数**。如果体系结构提供了**巨型页机制**,则**pageblock\_order**通常定义为**巨型页对应的分配阶**.定义在[include/linux/pageblock-flags.h?v=4.7, line 44](http://lxr.free-electrons.com/source/include/linux/pageblock-flags.h?v=4.7#L42)
+第一个表示内核认为是"大"的**一个分配阶**, **pageblock\_nr\_pages**则表示**该分配阶对应的页数**。如果体系结构提供了**巨型页机制**,则**pageblock\_order**通常定义为**巨型页对应的分配阶**.定义在[include/linux/pageblock-flags.h?v=4.7, line 44](http://lxr.free-electrons.com/source/include/linux/pageblock-flags.h?v=4.7#L42)
 
 ```cpp
 #ifdef CONFIG_HUGETLB_PAGE
@@ -273,9 +273,9 @@ static int fallbacks[MIGRATE_TYPES][4] = {
 #define pageblock_nr_pages      (1UL << pageblock_order)
 ```
 
-在IA-32体系结构上, **巨型页长度是4MB（Linux使用32-bit的PSE了？？**）,因此**每个巨型页由1024个普通页组成**,而**HUGETLB\_PAGE\_ORDER**则定义为10.相比之下,IA-64体系结构允许设置**可变的普通和巨型页长度**,因此HUGETLB\_PAGE\_ORDER的值**取决于内核配置**.
+在IA\-32体系结构上, **巨型页长度是4MB（Linux使用32-bit的PSE了？？**）,因此**每个巨型页由1024个普通页组成**,而**HUGETLB\_PAGE\_ORDER**则定义为10. 相比之下,IA\-64体系结构允许设置**可变的普通和巨型页长度**,因此HUGETLB\_PAGE\_ORDER的值**取决于内核配置**.
 
-如果体系结构**不支持巨型页**, 则将其定义为**第二高的分配阶**, 即`MAX_ORDER - 1`
+如果体系结构**不支持巨型页**, 则将其定义为**第二高的分配阶**, 即MAX\_ORDER \- 1
 
 ```cpp
 /* If huge pages are not used, group by MAX_ORDER_NR_PAGES */
@@ -292,7 +292,7 @@ static int fallbacks[MIGRATE_TYPES][4] = {
 
 ## 2.6 gfpflags_to_migratetype转换分配标识到迁移类型
 
-如果这些标志**都没有设置**,则**分配的内存假定为不可移动的**.辅助函数gfpflags\_to\_migratetype可用于**转换分配标志及对应的迁移类型**, 该函数定义在[include/linux/gfp.h?v=4.7, line 266](http://lxr.free-electrons.com/source/include/linux/gfp.h?v=4.7#L266)
+如果这些标志**都没有设置**,则**分配的内存假定为不可移动的**. 辅助函数gfpflags\_to\_migratetype可用于**转换分配标志及对应的迁移类型**, 该函数定义在[include/linux/gfp.h?v=4.7, line 266](http://lxr.free-electrons.com/source/include/linux/gfp.h?v=4.7#L266)
 
 ```cpp
 static inline int gfpflags_to_migratetype(const gfp_t gfp_flags)
@@ -309,7 +309,7 @@ static inline int gfpflags_to_migratetype(const gfp_t gfp_flags)
 }
 ```
 
->linux-2.6.x的内核中转换分配标志及对应的迁移类型的辅助函数为allocflags\_to\_migratetype,这个名字会有歧义的, 让我们误以为参数的标识中有alloc flags,但是其实并不然,因此后来的内核中将该函数更名为gfpflags\_to\_migratetype, 参见[Rename it to gfpflags_to_migratetype()](https://patchwork.kernel.org/patch/4291831)
+>linux-2.6.x的内核中转换分配标志及对应的迁移类型的辅助函数为allocflags\_to\_migratetype,这个名字会有歧义的, 让我们误以为参数的标识中有alloc flags,但是其实并不然,因此后来的内核中将该函数更名为gfpflags\_to\_migratetype, 参见[Rename it to gfpflags\_to\_migratetype()](https://patchwork.kernel.org/patch/4291831)
 
 在2.6.25中为如下接口
 
@@ -332,7 +332,7 @@ static inline int allocflags_to_migratetype(gfp_t gfp_flags)
 
 ## 2.7 pageblock\_flags变量与其函数接口
 
-最后要注意, 每个内存域都提供了一个特殊的字段,可以**跟踪包含pageblock\_nr\_pages个页的内存区的属性**.即zone->pageblock\_flags字段,当前只有**与页可移动性相关的代码使用**,参见[include/linux/mmzone.h?v=4.7, line 367](http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=4.7#L367)
+最后要注意, 每个内存域都提供了一个特殊的字段,可以**跟踪包含pageblock\_nr\_pages个页的内存区的属性**. 即zone\-\>pageblock\_flags字段, 当前只有**与页可移动性相关的代码使用**,参见[include/linux/mmzone.h?v=4.7, line 367](http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=4.7#L367)
 
 ```cpp
 struct zone
@@ -379,7 +379,7 @@ void set_pageblock_migratetype(struct page *page, int migratetype)
 }
 ```
 
-`migratetype`参数可以通过上文介绍的`gfpflags_to_migratetype`辅助函数构建. 请注意很重要的一点, **页的迁移类型**是**预先分配**好的,对应的比特位总是可用,与**页是否由伙伴系统管理无关**.在**释放内存**时，页必须返回到**正确的迁移链表**。这之所以可行，是因为能够从**get\_pageblock\_migratetype**获得所需的信息. 参见[include/linux/mmzone.h?v=4.7, line 84](http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=4.7#L84)
+**migratetype参数**可以通过上文介绍的**gfpflags\_to\_migratetype辅助函数构建**. 请注意很重要的一点, **页的迁移类型**是**预先分配**好的,对应的比特位总是可用,与**页是否由伙伴系统管理无关**.在**释放内存**时，页必须返回到**正确的迁移链表**。这之所以可行，是因为能够从**get\_pageblock\_migratetype**获得所需的信息. 参见[include/linux/mmzone.h?v=4.7, line 84](http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=4.7#L84)
 
 ```cpp
 #define get_pageblock_migratetype(page)                                 \
@@ -423,9 +423,9 @@ not_early:
 }
 ```
 
-在**分配内存**时, 如果必须"盗取"**不同于预定迁移类型的内存区**,内核在策略上**倾向于"盗取"更大的内存区**.由于所有页最初都是可移动的,那么在内核分配不可移动的内存区时,则必须"盗取".
+在**分配内存**时, 如果必须"盗取"**不同于预定迁移类型的内存区**,内核在策略上**倾向于"盗取"更大的内存区**.由于所有页最初都是可移动的,那么在**内核分配不可移动的内存区**时,则必须"盗取".
 
-实际上, 在**启动期间**分配**可移动内存区的情况较少**,那么分配器有很高的几率分配长度最大的内存区,并将其**从可移动列表转换到不可移动列表（回收后？？？**）.由于分配的内存区长度是最大的,因此不会向可移动内存中引入碎片.
+实际上, 在**启动期间**分配**可移动内存区的情况较少**, 那么分配器有很高的几率分配长度最大的内存区, 并将其**从可移动列表转换到不可移动列表（回收后？？？**）. 由于分配的内存区长度是最大的,因此不会向可移动内存中引入碎片.
 
 总而言之, 这种做法**避免**了**启动期间内核分配的内存**(经常在系统的**整个运行时间都不释放**)散布到物理内存各处, 从而**使其他类型的内存分配免受碎片的干扰**，这也是页可移动性分组框架的最重要的目标之一.
 
@@ -447,7 +447,7 @@ not_early:
 
 **kernelcore参数**用来指定用于**不可移动分配的内存数量**,即用于**既不能回收也不能迁移**的内存数量。**剩余的内存用于可移动分配**。在分析该参数之后，结果保存在**全局变量required\_kernelcore**中.
 
-还可以使用参数**movablecore**控制用于**可移动内存分配的内存数量**。required\_kernelcore的大小将会据此计算。
+还可以使用参数**movablecore**控制用于**可移动内存分配的内存数量**。**required\_kernelcore**的大小将会据此计算。
 
 如果**同时指定两个参数**，内核会按前述方法计算出`required_kernelcore`的值，并取指定值和计算值中**较大**的一个.
 
@@ -480,7 +480,7 @@ enum zone_type {
 };
 ```
 
-与系统中所有其他的内存域相反, **ZONE\_MOVABLE**并**不关联到任何硬件**上**有意义的内存范围**.实际上, 该**内存域中的内存**取自**高端内存域**或**普通内存域**, 因此我们在下文中称ZONE_MOVABLE是一个虚拟内存域.
+与系统中所有其他的内存域相反, **ZONE\_MOVABLE**并**不关联到任何硬件**上**有意义的内存范围**. 实际上, 该**内存域中的内存**取自**高端内存域**或**普通内存域**, 因此我们在下文中称ZONE\_MOVABLE是一个虚拟内存域.
 
 辅助函数[**find\_zone\_movable\_pfns\_for\_nodes**](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L6231)用于**计算进入ZONE_MOVABLE的内存数量**.
 
@@ -505,7 +505,7 @@ static unsigned long __meminitdata zone_movable_pfn[MAX_NUMNODES];
 static bool mirrored_kernelcore;
 ```
 
-内核确保这些页将用于满足符合ZONE_MOVABLE职责的内存分配。
+内核确保这些页将用于满足符合ZONE\_MOVABLE职责的内存分配。
 
 ## 3.3 实现
 
