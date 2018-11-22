@@ -376,9 +376,11 @@ enum
 };
 ```
 
-**UMA结构**下, 数组大小**MAX\_ZONELISTS = 1**, NUMA下需要多余的**ZONELIST\_NOFALLBACK**用以表示**当前结点**的信息
+**UMA结构**下, 数组大小**MAX\_ZONELISTS = 1**
 
-由于该**备用列表**必须包括**所有结点**的**所有内存域(！！！**)，因此**由MAX\_NUMNODES * MAX\_NZ\_ZONES项**组成，外加一个**用于标记列表结束的空指针**
+NUMA下需要多余的**ZONELIST\_NOFALLBACK**用以表示**当前结点(！！！**)的信息
+
+由于该**备用列表**必须包括**所有结点(！！！包括当前节点！！！**)的**所有内存域(！！！**)，因此**由MAX\_NUMNODES * MAX\_NZ\_ZONES项**组成，外加一个**用于标记列表结束的空指针**
 
 ```cpp
 struct zonelist {
@@ -390,6 +392,8 @@ struct zoneref {
     int zone_idx;       /* zone_idx(zoneref->zone) */
 };
 ```
+
+也就是说, 每个节点node有一个zonelist数组(对于UMA只有一个数组项, NUMA有两个数组项), 每个数组项是一个zonelist的数据结构, 该数据结构由zone信息组成的数组(备用列表包含所有节点的所有内存域, 所以数组大小是MAX\_NUMNODES \* MAX\_NZ\_ZONES + 1, 包含一个标记结束的空指针) 
 
 #### 4.2.6.3 内存域的排列方式
 
@@ -414,6 +418,14 @@ NUMA系统中存在**多个节点**, **每个结点**中可以包含**多个zone
 #define ZONELIST_ORDER_NODE     1 /* 对应Node方式 */
 #define ZONELIST_ORDER_ZONE     2 /* 对应Zone方式 */
 ```
+
+#### 4.2.6.4 build\_all\_zonelists初始化内存节点
+
+内核通过build\_all\_zonelists初始化了内存结点的zonelists域
+
+- 首先内核通过set\_zonelist\_order函数设置了zonelist\_order,如下所示, 参见mm/page_alloc.c?v=4.7, line 5031
+
+- 建立备用层次结构的任务委托给build\_zonelists,该函数为每个NUMA结点都创建了相应的数据结构. 它需要指向相关的pg\_data\_t实例的指针作为参数
 
 ## 4.3 Page
 
@@ -1691,6 +1703,8 @@ void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 
 # 8 build\_all\_zonelists初始化每个node的备用管理区链表zonelists
 
+注: 该备用列表必须包括**所有结点(！！！包括当前节点！！！**)的**所有内存域(！！！**)
+
 为内存管理做得一个准备工作就是将所有节点的管理区（所有的节点pg_data_t的zone！！！）都链入到zonelist中，便于后面内存分配工作的进行.
 
 内存节点pg\_data\_t中将内存节点中的内存区域zone按照某种组织层次（可配置！！！）存储在一个zonelist中, 即**pglist\_data\->node\_zonelists成员信息**
@@ -1821,7 +1835,7 @@ build_all_zonelists_init(void)
 }
 ```
 
-build\_all\_zonelists\_init将将所有工作都委托给\_\_build\_all\_zonelists完成了zonelists的初始化工作
+build\_all\_zonelists\_init将将所有工作都委托给\_\_build\_all\_zonelists完成了zonelists的初始化工作, 传入的参数为NULL.
 
 ```cpp
 static int __build_all_zonelists(void *data)
@@ -1841,7 +1855,7 @@ static int __build_all_zonelists(void *data)
 }
 ```
 
-**遍历**了系统中**所有的活动结点**
+**遍历**了系统中**所有的活动结点(所有的, 不仅仅是其他节点**), **每次调用**对**一个不同结点**生成**内存域数据**
 
 ### 8.3.1 build\_zonelists初始化每个内存结点的zonelists
 
@@ -1895,7 +1909,7 @@ static void set_zonelist_order(void)
 #endif  /* CONFIG_NUMA */
 ```
 
-以UMA结构下的build\_zonelists为例,来讲讲内核是怎么初始化备用内存域层次结构的
+以**UMA结构**下的build\_zonelists为例,来讲讲内核是怎么初始化备用内存域层次结构的
 
 ```c
 static void build_zonelists(pg_data_t *pgdat)
@@ -1935,11 +1949,59 @@ static void build_zonelists(pg_data_t *pgdat)
 
 node\_zonelists的数组元素通过指针操作寻址. 实际工作则委托给build\_zonelist\_node。
 
+UMA结构下, 数组大小MAX\_ZONELISTS = 1, 所以使用zonelist = &pgdat\-\>node\_zonelists[0], 也就是说节点的备用节点内存域也是包含当前节点内存域的
+
 内核在**build\_zonelists**中按**分配代价**从**昂贵**到**低廉**的次序, **迭代**了**结点中所有的内存域**.
 
 而在build\_zonelists\_node中,则按照分配代价**从低廉到昂贵的次序**, **迭代**了分配**代价不低于当前内存域的内存域(！！！**）.
 
-build\_zonelists\_node: 对每个内存域
+build\_zonelists\_node函数: 
+
+```cpp
+/*
+ * Builds allocation fallback zone lists.
+ *
+ * Add all populated zones of a node to the zonelist.
+ */
+static int build_zonelists_node(pg_data_t *pgdat, struct zonelist *zonelist, int nr_zones)
+{
+    struct zone *zone;
+    enum zone_type zone_type = MAX_NR_ZONES;
+
+    do {
+        zone_type--;
+        zone = pgdat->node_zones + zone_type;
+        if (populated_zone(zone)) {
+            zoneref_set_zone(zone,
+                &zonelist->_zonerefs[nr_zones++]);
+            check_highest_zone(zone_type);
+        }
+    } while (zone_type);
+
+    return nr_zones;
+}
+```
+
+nr\_zones表示从备用列表中的**哪个位置开始填充新项**. 
+
+从低廉到昂贵的次序迭代内存域
+
+第一次执行build\_zonelists\_node, 由于列表中尚没有项, 因此调用者传递了nr\_zones为0.
+
+考虑一个系统, 有内存域ZONE\_HIGHMEM、ZONE\_NORMAL、ZONE\_DMA。在第一次运行build\_zonelists\_node时, 实际上会执行下列赋值
+
+```cpp
+zonelist->zones[0] = ZONE_HIGHMEM;
+zonelist->zones[1] = ZONE_NORMAL;
+zonelist->zones[2] = ZONE_DMA;
+```
+
+这里实际上是&pgdat\-\>node\_zonelists[0]
+
+第一个循环依次迭代大于当前结点编号的所有结点
+
+第二个for循环接下来对所有编号小于当前结点的结点生成备用列表项。
+
 
 ```cpp
 void build_all_zonelists(void)
@@ -2288,6 +2350,20 @@ Node 0, zone    DMA32      1      1      1      3      4      3      3      5   
 Node 0, zone   Normal    166    157    202    437    122    187     77     60     60      8   2003
 ```
 
+#### 9.2.1.4 传统伙伴系统算法
+
+在**内核分配内存**时,必须记录**页帧的已分配或空闲状态**,以免**两个进程使用同样的内存区域**.由于内存分配和释放非常频繁, 内核还必须保证相关操作尽快完成.内核可以**只分配完整的页帧**.将内存划分为更小的部分的工作, 则委托给**用户空间中的标准库**.标准库将来源于内核的**页帧拆分为小的区域**,并为进程分配内存.
+
+内核中很多时候**要求分配连续页**. 为快速检测内存中的连续区域, 内核采用了一种古老而历经检验的技术: **伙伴系统**
+
+系统中的**空闲内存块（！！！空闲的块**）总是**两两分组**,每组中的**两个内存块称作伙伴**.伙伴的分配可以是彼此独立的. 但如果**两个伙伴都是空闲的**,内核会将其**合并为一个更大的内存块**,作为**下一层次上某个内存块的伙伴**.
+
+如果下一个请求**只需要2个连续页帧**,则由**8页组成的块**会分裂成**2个伙伴**,每个包含**4个页帧**.其中**一块放置回伙伴列表**中，而**另一个**再次分裂成**2个伙伴**,每个包含**2页**。其中**一个回到伙伴系统**，另一个则**传递给应用程序（分配时候会从伙伴系统去掉！！！**）.
+
+在应用程序**释放内存**时,内核可以**直接检查地址**,来判断**是否能够创建一组伙伴**,并合并为一个更大的内存块放回到伙伴列表中,这刚好是**内存块分裂的逆过程（释放内存可能会将内存块放回伙伴列表！！！**）。这提高了较大内存块可用的可能性.
+
+长期运行会导致碎片化问题
+
 ### 9.2.2 伙伴算法释放过程
 
 伙伴管理算法的释放过程是，满足条件的**两个页面块**称之为**伙伴**：**两个页面块的大小相同(！！！**)且**两者的物理地址连续(！！！**)。当**某块页面被释放**时，且其**存在空闲的伙伴页面块**，则算法会将其两者**合并为一个大的页面块**，合并后的页面块如果**还可以找到伙伴页面块**，则将会继续**与相邻的块进行合并**，直至到大小为2\^MAX\_ORDER个页面为止。
@@ -2397,7 +2473,7 @@ enum {
 
 ##### 9.2.4.1.4 迁移备用列表fallbacks
 
-内核无法满足针对某一给定迁移类型的分配请求, 会怎么样?
+内核无法满足针对某一**给定迁移类型**的**分配请求**, 会怎么样?
 
 类似于NUMA的备用内存域列表zonelists. 内存迁移提供了备用列表fallbacks.
 
@@ -2429,9 +2505,9 @@ static int fallbacks[MIGRATE_TYPES][4] = {
 
 **页可移动性分组特性**的**全局变量**和**辅助函数**总是**编译到内核**中，但只有在系统中**有足够内存可以分配到多个迁移类型对应的链表（！！！**）时，才是有意义的。
 
-**每个迁移链表**都应该有**适当数量的内存**, 这是通过两个全局变量**pageblock\_order**和**pageblock\_nr\_pages**提供的.
+**每个迁移链表(！！！**)都应该有**适当数量的内存(！！！**), 这是通过两个全局变量**pageblock\_order**和**pageblock\_nr\_pages**提供的.
 
-pageblock\_order是一个大的分配阶, **pageblock\_nr\_pages**则表示**该分配阶对应的页数**。如果体系结构提供了**巨型页机制**,则**pageblock\_order**通常定义为**巨型页对应的分配阶**.
+pageblock\_order是一个**大**的分配阶, **pageblock\_nr\_pages**则表示**该分配阶对应的页数**。如果体系结构提供了**巨型页机制**,则**pageblock\_order**通常定义为**巨型页对应的分配阶**.
 
 ```cpp
 #ifdef CONFIG_HUGETLB_PAGE
@@ -2458,9 +2534,11 @@ pageblock\_order是一个大的分配阶, **pageblock\_nr\_pages**则表示**该
 #define pageblock_nr_pages      (1UL << pageblock_order)
 ```
 
+
+
 如果体系结构**不支持巨型页**, 则将其定义为**第二高的分配阶**, 即MAX\_ORDER \- 1
 
-如果**各迁移类型的链表**中没有一块较大的连续内存, 那么**页面迁移不会提供任何好处**, 因此在**可用内存太少时内核会关闭该特性**. 这是在**build\_all\_zonelists**函数中检查的, 该函数用于初始化内存域列表.如果没有足够的内存可用, 则**全局变量**[**page\_group\_by\_mobility\_disabled**]设置为0, 否则设置为1.
+如果**各迁移类型的链表**中**没有**一块**较大的连续内存**, 那么**页面迁移不会提供任何好处**, 因此在**可用内存太少时内核会关闭该特性**. 这是在**build\_all\_zonelists**函数中检查的, 该函数用于初始化内存域列表.如果**没有足够的内存可用**, 则**全局变量**[**page\_group\_by\_mobility\_disabled**]设置为**0**, 否则设置为1.
 
 内核如何知道**给定的分配内存**属于**何种迁移类型**? 有关**各个内存分配的细节**都通过**分配掩码指定**.
 
@@ -2489,9 +2567,9 @@ static inline int gfpflags_to_migratetype(const gfp_t gfp_flags)
 
 如果**停用了页面迁移**特性,则**所有的页都是不可移动**的.否则.该函数的**返回值**可以直接用作free\_area.free\_list的**数组索引**.
 
-##### 9.2.4.1.7 内存域提供跟踪内存区的属性
+##### 9.2.4.1.7 内存域zone提供跟踪内存区的属性
 
-每个内存域都提供了一个特殊的字段,可以**跟踪包含pageblock\_nr\_pages个页的内存区的属性**. 即zone\-\>pageblock\_flags字段
+**每个内存域**都提供了一个特殊的字段,可以**跟踪包含pageblock\_nr\_pages个页的内存区的属性**. 即zone\-\>pageblock\_flags字段, 当前只有与**页可移动性相关**的代码使用
 
 在**初始化期间**, 内核自动确保对**内存域中**的**每个不同的迁移类型分组**, 在**pageblock\_flags**中都分配了足**够存储NR\_PAGEBLOCK\_BITS个比特位**的空间。当前，表示**一个连续内存区的迁移类型需要3个比特位**
 
@@ -2519,7 +2597,9 @@ void set_pageblock_migratetype(struct page *page, int migratetype)
 }
 ```
 
-**migratetype参数**可以通过上文介绍的**gfpflags\_to\_migratetype辅助函数构建**. 请注意很重要的一点, **页的迁移类型**是**预先分配**好的,对应的比特位总是可用,与**页是否由伙伴系统管理无关**.在**释放内存**时，页必须返回到**正确的迁移链表**。这之所以可行，是因为能够从**get\_pageblock\_migratetype**获得所需的信息.
+**migratetype参数**可以通过上文介绍的**gfpflags\_to\_migratetype辅助函数构建**. 请注意很重要的一点, **页的迁移类型**是**预先分配**好的,对应的比特位总是可用,与**页是否由伙伴系统管理无关**.
+
+在**释放内存**时，页必须返回到**正确的迁移链表**。这之所以可行，是因为能够从**get\_pageblock\_migratetype**获得所需的信息.
 
 ```cpp
 #define get_pageblock_migratetype(page)                                 \
@@ -2540,6 +2620,8 @@ void set_pageblock_migratetype(struct page *page, int migratetype)
 在**内核分配不可移动的内存区**时, 则必须"盗取".
 
 **启动阶段**分配**可移动区**的情况较少, 那么从可移动分区分配内存区, 并将其从可移动列表转换到不可移动列表.
+
+这样避免了**启动期间内核分配的内存**(经常系统**整个运行期间不释放**)散布到物理内存各处, 从而使其他类型的内存分配免受碎片干扰.
 
 #### 9.2.4.2 虚拟可移动内存域
 
@@ -2610,11 +2692,107 @@ enum zone_type {
 
 由于内核依据分配标志确定进行内存分配的内存域,在**设置了上述的标志**时,可以选择**ZONE\_MOVABLE内存域**.
 
+## 9.3 分配掩码(gfp\_mask标志)
+
+Linux将内存划分为内存域.内核提供了所谓的**内存域修饰符(zone modifier**)(在**掩码的最低4个比特位定义**),来指定从**哪个内存域分配所需的页**.
+
+内核使用宏的方式定义了这些掩码,一个掩码的定义被划分为3个部分进行定义, 共计26个掩码信息, 因此后面\_\_GFP\_BITS\_SHIFT =  26.
+
+### 9.3.1 掩码分类
+
+Linux中这些**掩码标志gfp\_mask**分为3种类型 :
+
+| 类型 | 描述 |
+|:-----:|:-----|
+| **区描述符(zone modifier**) | 内核把物理内存分为多个区,每个区用于不同的目的,区描述符指明到底从这些区中的**哪一区进行分配** |
+| **行为修饰符(action modifier**) | 表示内核应该**如何分配所需的内存**.在某些特定情况下,只能使用某些特定的方法分配内存 |
+| 类型标志 | **组合**了**行为修饰符**和**区描述符**,将这些可能用到的组合归纳为**不同类型** |
+
+### 9.3.2 内核中掩码的定义
+
+#### 9.3.2.1 内核中的定义方式
+
+```cpp
+//  include/linux/gfp.h
+
+/*  line 12 ~ line 44  第一部分
+ *  定义可掩码所在位的信息, 每个掩码对应一位为1
+ *  定义形式为  #define	___GFP_XXX		0x01u
+ */
+/* Plain integer GFP bitmasks. Do not use this directly. */
+#define ___GFP_DMA              0x01u
+#define ___GFP_HIGHMEM          0x02u
+#define ___GFP_DMA32            0x04u
+#define ___GFP_MOVABLE          0x08u
+/*  ......  */
+
+/*  line 46 ~ line 192  第二部分
+ *  定义掩码和MASK信息, 第二部分的某些宏可能是第一部分一个或者几个的组合
+ *  定义形式为  #define	__GFP_XXX		 ((__force gfp_t)___GFP_XXX)
+ */
+#define __GFP_DMA       ((__force gfp_t)___GFP_DMA)
+#define __GFP_HIGHMEM   ((__force gfp_t)___GFP_HIGHMEM)
+#define __GFP_DMA32     ((__force gfp_t)___GFP_DMA32)
+#define __GFP_MOVABLE   ((__force gfp_t)___GFP_MOVABLE)  /* ZONE_MOVABLE allowed */
+#define GFP_ZONEMASK    (__GFP_DMA|__GFP_HIGHMEM|__GFP_DMA32|__GFP_MOVABLE)
+
+/*  line 194 ~ line 260  第三部分
+ *  定义掩码
+ *  定义形式为  #define	GFP_XXX		 __GFP_XXX
+ */
+#define GFP_DMA         __GFP_DMA
+#define GFP_DMA32       __GFP_DMA32
+```
+
+其中**GFP**缩写的意思为**获取空闲页(get free page**), \_\_GFP\_MOVABLE不表示物理内存域, 但通知内核应在特殊的虚拟内存域ZONE\_MOVABLE进行相应的分配.
+
+#### 9.3.2.2 定义掩码位
+
+看第一部分, 一共**26个掩码信息**
+
+```cpp
+/* Plain integer GFP bitmasks. Do not use this directly. */
+//  区域修饰符
+#define ___GFP_DMA              0x01u
+#define ___GFP_HIGHMEM          0x02u
+#define ___GFP_DMA32            0x04u
+
+//  行为修饰符
+#define ___GFP_MOVABLE          0x08u	    /* 页是可移动的 */
+#define ___GFP_RECLAIMABLE      0x10u	    /* 页是可回收的 */
+#define ___GFP_HIGH             0x20u		/* 应该访问紧急分配池？ */
+#define ___GFP_IO               0x40u		/* 可以启动物理IO？ */
+#define ___GFP_FS               0x80u		/* 可以调用底层文件系统？ */
+#define ___GFP_COLD             0x100u	   /* 需要非缓存的冷页 */
+#define ___GFP_NOWARN           0x200u	   /* 禁止分配失败警告 */
+#define ___GFP_REPEAT           0x400u	   /* 重试分配，可能失败 */
+#define ___GFP_NOFAIL           0x800u	   /* 一直重试，不会失败 */
+#define ___GFP_NORETRY          0x1000u	  /* 不重试，可能失败 */
+#define ___GFP_MEMALLOC         0x2000u  	/* 使用紧急分配链表 */
+#define ___GFP_COMP             0x4000u	  /* 增加复合页元数据 */
+#define ___GFP_ZERO             0x8000u	  /* 成功则返回填充字节0的页 */
+//  类型修饰符
+#define ___GFP_NOMEMALLOC       0x10000u	 /* 不使用紧急分配链表 */
+#define ___GFP_HARDWALL         0x20000u	 /* 只允许在进程允许运行的CPU所关联的结点分配内存 */
+#define ___GFP_THISNODE         0x40000u	 /* 没有备用结点，没有策略 */
+#define ___GFP_ATOMIC           0x80000u 	/* 用于原子分配，在任何情况下都不能中断  */
+#define ___GFP_ACCOUNT          0x100000u
+#define ___GFP_NOTRACK          0x200000u
+#define ___GFP_DIRECT_RECLAIM   0x400000u
+#define ___GFP_OTHER_NODE       0x800000u
+#define ___GFP_WRITE            0x1000000u
+#define ___GFP_KSWAPD_RECLAIM   0x2000000u
+```
+
+#### 9.3.2.3 定义掩码位
+
+..............
+
 ## 9.3 alloc\_pages分配内存空间
 
 前面只是大概描述了伙伴系统分配页面过程, 下面详细看
 
-伙伴管理算法内存申请和释放的入口一样，其实并没有很清楚的界限表示这个函数是入口，而那个不是. 所有函数有一个共同点: **只能分配2的整数幂个页**.
+伙伴管理算法内存申请和释放的入口一样，其实并没有很清楚的界限表示这个函数是入口，而那个不是. 所有函数有一个共同点: **只能分配2的整数幂个连续的页**.
 
 ![config](./images/26.png)
 
@@ -2637,11 +2815,25 @@ static inline struct page *alloc_pages_node(int nid, gfp_t gfp_mask,
  
     return __alloc_pages(gfp_mask, order, node_zonelist(nid, gfp_mask));
 }
+
+static inline struct zonelist *node_zonelist(int nid, gfp_t flags)
+{
+	return NODE_DATA(nid)->node_zonelists + gfp_zonelist(flags);
+}
+
+static inline int gfp_zonelist(gfp_t flags)
+{
+#ifdef CONFIG_NUMA
+	if (unlikely(flags & __GFP_THISNODE))
+		return ZONELIST_NOFALLBACK;
+#endif
+	return ZONELIST_FALLBACK;
+}
 ```
 
 **没有**明确内存申请的**node节点**时，则**默认**会选择**当前的node**节点作为申请节点。
 
-调用\_\_**alloc\_pages**()来申请具体内存，其中**入参node\_zonelist**()是用于获取**node节点的zone管理区列表**。
+调用\_\_**alloc\_pages**()来申请具体内存，其中**入参node\_zonelist**()是用于获取**node节点的zone管理区列表(备用节点列表**)。
 
 ```c
 [/include/linux/gfp.h]
@@ -2653,7 +2845,7 @@ __alloc_pages(gfp_t gfp_mask, unsigned int order,
 }
 ```
 
-内核源代码将\_\_**alloc\_pages\_nodemask**称之为"伙伴系统的心脏", 因为它处理的是实质性的内存分配.
+内核源代码将\_\_**alloc\_pages\_nodemask**称之为"伙伴系统的心脏", 因为它处理的是**实质性的内存分配**.
 
 我们先转向页面选择是如何工作的
 
@@ -2716,16 +2908,194 @@ bool zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 }
 ```
 
-- 先得到空闲页的数目
+- zone\_page\_state访问每个内存域的统计量, 然后得到空闲页的数目
 
-- 根据标志设置最小值标记值
+- 根据**标志**设置**最小值标记值**
 
-- 检查**空闲页数目**是否小于**最小值**与**lowmem\_reserve(zone\-\>lowmem\_reserve[zone**]. 这个是为**各种内存域指定的若干页**, 用于一些**无论如何不能失败的关键性内存访问**)中指定的**紧急分配值min**之和
+- 检查**空闲页数目**是否小于等于**最小值**与**lowmem\_reserve(zone\-\>lowmem\_reserve[zone**]. 这个是为**各种内存域指定的若干页**, 用于一些**无论如何不能失败的关键性内存访问**)中指定的**紧急分配值min**之和, 是的话返回false
 
-- 如果不小于, 遍历所有小于当前阶的分配阶, 其中z\-\>free\_area\[x\]\-\>nr\_free是当前分配阶的空闲块的数目, 遍历所有的低端内存后, 如果内存不足, 则不进行内存分配.
+- 如果不小于, 遍历所有**大于等于当前阶的分配阶**, 其中z\-\>free\_area\[x\]\-\>nr\_free是当前分配阶的**空闲块的数目**, 遍历所有的低端内存后, 如果内存不足, 则不进行内存分配.
+
+- 不符合要求返回false
 
 #### 9.3.1.3 get\_page\_from\_freelist实际分配
 
+通过**标志集和分配阶来判断是否能进行分配**。如果可以，则发起**实际的分配操作**.
+
+该函数随着不断演变, 支持的特性很多, 参数很复杂, 所以后面讲那些相关联的参数封装成一个结构
+
+```c
+static struct page *
+get_page_from_freelist(gfp_t gfp_mask, unsigned int order, int alloc_flags, const struct alloc_context *ac)
+```
+
+这个结构是struct alloc\_context
+
+```c
+struct alloc_context {
+        struct zonelist *zonelist;
+        nodemask_t *nodemask;
+        struct zoneref *preferred_zoneref;
+        int migratetype;
+        enum zone_type high_zoneidx;
+        bool spread_dirty_pages;
+};
+```
+
+| 字段 | 描述 |
+|:-----:|:-----|
+| zonelist | 当**perferred\_zone**上**没有合适的页**可以分配时，就要**按zonelist中的顺序**扫描该zonelist中**备用zone列表**，一个个的**试用** |
+| nodemask | 表示**节点的mask**，就是**是否能在该节点上分配内存**，这是个**bit位数组** |
+| **preferred\_zoneref** | 表示从**high\_zoneidx**后找到的**合适的zone**，一般会从**该zone分配**；**分配失败**的话，就会在**zonelist**再找一个**preferred\_zone = 合适的zone** |
+| migratetype | **迁移类型**，在**zone\-\>free\_area.free\_list[XXX**] 作为**分配下标**使用，这个是用来**反碎片化**的，修改了以前的free\_area结构体，在该结构体中再添加了一个数组，该数组以迁移类型为下标，每个数组元素都挂了对应迁移类型的页链表 |
+| **high\_zoneidx** | 是表示该分配时，**所能分配的最高zone**，一般从high-->normal-->dma 内存越来越昂贵，所以一般从high到dma分配依次分配 |
+| spread\_dirty\_pages | |
+
+**zonelist是指向备用列表的指针**. 在**预期内存域(！！！)没有空闲空间**的情况下, 该列表确定了**扫描系统其他内存域(和结点)的顺序**.
+
+随后for循环**遍历备用列表的所有内存域**，用最简单的方式查找**一个适当的空闲内存块**
+
+- 首先，解释ALLOC\_\*标志(\_\_cpuset\_zone\_allowed\_softwall是另一个辅助函数, 用于**检查给定内存域是否属于该进程允许运行的CPU**).
+
+- zone\_watermark\_ok接下来**检查所遍历到的内存域是否有足够的空闲页**，并**试图分配一个连续内存块**。如果**两个条件之一**不能满足，即或者**没有足够的空闲页**，或者**没有连续内存块**可满足分配请求，则循环进行到**备用列表中的下一个内存域**，作同样的检查. 直到找到一个合适的页面, 去**try\_this\_zone进行内存分配**
+
+- 如果**内存域适用于当前的分配请求**, 那么**buffered\_rmqueue**试图从中**分配所需数目的页**
+
+### 9.3.2 伙伴系统核心\_\_alloc\_pages\_nodemask实质性的内存分配
+
+\_\_alloc\_pages\_nodemask是伙伴系统的心脏
+
+```c
+struct page *
+__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
+			struct zonelist *zonelist, nodemask_t *nodemask)
+{
+	struct page *page;
+	unsigned int cpuset_mems_cookie;
+	unsigned int alloc_flags = ALLOC_WMARK_LOW|ALLOC_FAIR;
+	gfp_t alloc_mask = gfp_mask; /* The gfp_t that was actually used for allocation */
+	struct alloc_context ac = {
+		.high_zoneidx = gfp_zone(gfp_mask),
+		.zonelist = zonelist,
+		.nodemask = nodemask,
+		.migratetype = gfpflags_to_migratetype(gfp_mask),
+	};
+
+	if (cpusets_enabled()) {
+		alloc_mask |= __GFP_HARDWALL;
+		alloc_flags |= ALLOC_CPUSET;
+		if (!ac.nodemask)
+			ac.nodemask = &cpuset_current_mems_allowed;
+	}
+
+	gfp_mask &= gfp_allowed_mask;
+
+	lockdep_trace_alloc(gfp_mask);
+
+	might_sleep_if(gfp_mask & __GFP_DIRECT_RECLAIM);
+
+	if (should_fail_alloc_page(gfp_mask, order))
+		return NULL;
+
+	/*
+	 * Check the zones suitable for the gfp_mask contain at least one
+	 * valid zone. It's possible to have an empty zonelist as a result
+	 * of __GFP_THISNODE and a memoryless node
+	 */
+	if (unlikely(!zonelist->_zonerefs->zone))
+		return NULL;
+
+	if (IS_ENABLED(CONFIG_CMA) && ac.migratetype == MIGRATE_MOVABLE)
+		alloc_flags |= ALLOC_CMA;
+
+retry_cpuset:
+	cpuset_mems_cookie = read_mems_allowed_begin();
+
+	/* Dirty zone balancing only done in the fast path */
+	ac.spread_dirty_pages = (gfp_mask & __GFP_WRITE);
+
+	/*
+	 * The preferred zone is used for statistics but crucially it is
+	 * also used as the starting point for the zonelist iterator. It
+	 * may get reset for allocations that ignore memory policies.
+	 */
+	ac.preferred_zoneref = first_zones_zonelist(ac.zonelist,
+					ac.high_zoneidx, ac.nodemask);
+	if (!ac.preferred_zoneref) {
+		page = NULL;
+		goto no_zone;
+	}
+
+	/* First allocation attempt */
+	page = get_page_from_freelist(alloc_mask, order, alloc_flags, &ac);
+	if (likely(page))
+		goto out;
+
+	/*
+	 * Runtime PM, block IO and its error handling path can deadlock
+	 * because I/O on the device might not complete.
+	 */
+	alloc_mask = memalloc_noio_flags(gfp_mask);
+	ac.spread_dirty_pages = false;
+
+	/*
+	 * Restore the original nodemask if it was potentially replaced with
+	 * &cpuset_current_mems_allowed to optimize the fast-path attempt.
+	 */
+	if (cpusets_enabled())
+		ac.nodemask = nodemask;
+	page = __alloc_pages_slowpath(alloc_mask, order, &ac);
+
+no_zone:
+	/*
+	 * When updating a task's mems_allowed, it is possible to race with
+	 * parallel threads in such a way that an allocation can fail while
+	 * the mask is being updated. If a page allocation is about to fail,
+	 * check if the cpuset changed during allocation and if so, retry.
+	 */
+	if (unlikely(!page && read_mems_allowed_retry(cpuset_mems_cookie))) {
+		alloc_mask = gfp_mask;
+		goto retry_cpuset;
+	}
+
+out:
+	if (kmemcheck_enabled && page)
+		kmemcheck_pagealloc_alloc(page, order, gfp_mask);
+
+	trace_mm_page_alloc(page, order, alloc_mask, ac.migratetype);
+
+	return page;
+}
+EXPORT_SYMBOL(__alloc_pages_nodemask);
+```
+
+gfpflags\_to\_migratetype(gfp\_mask)转换申请页面的类型为**迁移类型**.
+
+如果申请页面传入的**gfp\_mask掩码**携带\_\_GFP\_DIRECT\_RECLAIM标识，表示允许页面申请时休眠，则会进入might\_sleep\_if()检查是否需要休眠等待以及重新调度
+
+if (unlikely(!zonelist\-\>\_zonerefs\-\>zone))用于检查**当前申请页面的内存管理区zone是否为空**；
+
+read\_mems\_allowed\_begin()用于获得当前对被顺序计数保护的共享资源进行读访问的顺序号，用于避免并发的情况下引起的失败
+
+**first\_zones\_zonelist**()则是用于根据**nodemask**，找到合适的**不大于high\_zoneidx**的**内存管理区preferred\_zone**；
+
+最后分配内存页面的关键函数**get\_page\_from\_freelist**()和\_\_**alloc\_pages\_slowpath**()
+
+**get\_page\_from\_freelist**()最先尝试页面分配, 如果分配失败, 则进一步调用\_\_**alloc\_pages\_slowpath**(), 用于**慢速页面分配**, 允许等待和内存回收. \_\_alloc\_pages\_slowpath()涉及其他内存机制, 后续说明.
+
+## 9.4 释放内存空间
+
+有4个函数用于释放不再使用的页，与所述函数稍有不同
+
+
+| 内存释放函数 | 描述 |
+|:--------------|:-----|
+| [free\_page(struct page *)](http://lxr.free-electrons.com/source/include/linux/gfp.h?v=4.7#L520)<br>[free\_pages(struct page *, order)](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L3918) | 用于将**一个**或**2\^order**页返回给内存管理子系统。内存区的**起始地址**由指向该内存区的**第一个page实例的指针表示** |
+| [\_\_free\_page(addr)](http://lxr.free-electrons.com/source/include/linux/gfp.h?v=4.7#L519)<br>[\_\_free\_pages(addr, order)](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L3906) | 类似于前两个函数，但在表示需要释放的内存区时，使用了**虚拟内存地址**而不是page实例 |
+
+各个内存释放函数之间的关系
+
+![config](./images/27.png)
 
 
 回顾内存页面释放的函数\_\_free\_pages，其将空闲页面挂回去的时候，是做了迁移类型区分的。也就是意味着页面迁移类型是伴随着伙伴管理算法的内存管理构建，根据迁移类型进行分而治之初始化。

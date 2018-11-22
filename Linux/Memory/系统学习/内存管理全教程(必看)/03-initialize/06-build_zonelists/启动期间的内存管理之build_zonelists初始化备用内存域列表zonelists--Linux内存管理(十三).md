@@ -530,7 +530,7 @@ for\_each\_online\_node遍历了系统中**所有的活动结点**.
 
 由于**UMA系统**只有一个结点，build\_zonelists只调用了一次,就对所有的内存创建了内存域列表.
 
-**NUMA系统**调用该函数的次数等同于结点的数目.**每次调用**对**一个不同结点**生成**内存域数据**
+**NUMA系统**调用该函数的次数等同于结点的数目. **每次调用**对**一个不同结点**生成**内存域数据**
 
 ## 4.3 build\_zonelists初始化每个内存结点的zonelists
 
@@ -590,6 +590,42 @@ static void set_zonelist_order(void)
 
 我们以UMA结构下的build\_zonelists为例,来讲讲内核是怎么初始化备用内存域层次结构的, UMA结构下的build\_zonelists函数定义在[mm/page_alloc.c?v=4.7, line 4897](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L4897), 如下所示
 
+```c
+static void build_zonelists(pg_data_t *pgdat)
+{
+	int node, local_node;
+	enum zone_type j;
+	struct zonelist *zonelist;
+
+	local_node = pgdat->node_id;
+
+	zonelist = &pgdat->node_zonelists[0];
+	j = build_zonelists_node(pgdat, zonelist, 0);
+
+	/*
+	 * Now we build the zonelist so that it contains the zones
+	 * of all the other nodes.
+	 * We don't want to pressure a particular node, so when
+	 * building the zones for node N, we make sure that the
+	 * zones coming right after the local ones are those from
+	 * node N+1 (modulo N)
+	 */
+	for (node = local_node + 1; node < MAX_NUMNODES; node++) {
+		if (!node_online(node))
+			continue;
+		j = build_zonelists_node(NODE_DATA(node), zonelist, j);
+	}
+	for (node = 0; node < local_node; node++) {
+		if (!node_online(node))
+			continue;
+		j = build_zonelists_node(NODE_DATA(node), zonelist, j);
+	}
+
+	zonelist->_zonerefs[j].zone = NULL;
+	zonelist->_zonerefs[j].zone_idx = 0;
+}
+```
+
 node\_zonelists的数组元素通过指针操作寻址,这在C语言中是完全合法的惯例。实际工作则委托给build\_zonelist\_node。在调用时，它首先生成**本地结点**内分配内存时的备用层次
 
 内核在build\_zonelists中按分配代价**从昂贵到低廉的次序**,迭代了结点中**所有的内存域**.而在build\_zonelists\_node中,则按照分配代价**从低廉到昂贵的次序**,迭代了分配代价**不低于当前内存域的内存域(！！！**）.
@@ -629,7 +665,7 @@ nr\_zones表示从备用列表中的哪个位置开始填充新项. 由于列表
 
 内核在build\_zonelists中按分配代价从昂贵到低廉的次序,迭代了结点中所有的内存域.而在build\_zonelists\_node中,则按照分配代价从低廉到昂贵的次序,迭代了分配代价不低于当前内存域的内存域.
 
-在build\_zonelists\_node的每一步中,都对所选的**内存域**调用populated\_zone,确认**zone->present\_pages**大于0,即**确认内存域中确实有页存在**.倘若如此,则将指向zone实例的指针添加到zonelist->zones中的当前位置. 后备列表的当前位置保存在nr\_zones.
+在build\_zonelists\_node的每一步中,都对所选的**内存域**调用populated\_zone,确认**zone->present\_pages**大于0,即**确认内存域中确实有页存在**.倘若如此,则将指向**zone实例的指针**添加到**zonelist\->zones中的当前位置**. 后备列表的当前位置保存在nr\_zones.
 
 在每一步结束时, 都将**内存域类型zone\_type减1**.换句话说,设置为一个更昂贵的内存域类型. 例如,如果开始的内存域是ZONE\_HIGHMEM,减1后下一个内存域类型是ZONE\_NORMAL.
 

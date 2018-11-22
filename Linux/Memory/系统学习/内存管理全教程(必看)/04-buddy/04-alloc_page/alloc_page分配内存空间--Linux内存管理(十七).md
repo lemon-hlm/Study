@@ -248,7 +248,7 @@ static struct page *
 get_page_from_freelist(gfp_t gfp_mask, unsigned int order, int alloc_flags, const struct alloc_context *ac)
 ```
 
-这个封装好的结构就是[`struct alloc_context`](http://lxr.free-electrons.com/source/mm/internal.h?v=4.7#L103), 定义在[mm/internal.h?v=4.7, line 103](http://lxr.free-electrons.com/source/mm/internal.h?v=4.7#L103)
+这个封装好的结构就是[struct alloc\_context](http://lxr.free-electrons.com/source/mm/internal.h?v=4.7#L103), 定义在[mm/internal.h?v=4.7, line 103](http://lxr.free-electrons.com/source/mm/internal.h?v=4.7#L103)
 
 ```cpp
 /*
@@ -276,14 +276,14 @@ struct alloc_context {
 
 | 字段 | 描述 |
 |:-----:|:-----|
-| zonelist | 当perferred_zone上没有合适的页可以分配时，就要按zonelist中的顺序扫描该zonelist中备用zone列表，一个个的试用 |
-| nodemask | 表示节点的mask，就是是否能在该节点上分配内存，这是个bit位数组 |
-| preferred\_zone | 表示从high\_zoneidx后找到的合适的zone，一般会从该zone分配；分配失败的话，就会在zonelist再找一个preferred\_zone = 合适的zone |
-| migratetype | 迁移类型，在zone->free\_area.free\_list[XXX] 作为分配下标使用，这个是用来反碎片化的，修改了以前的free_area结构体，在该结构体中再添加了一个数组，该数组以迁移类型为下标，每个数组元素都挂了对应迁移类型的页链表 |
-| high_zoneidx | 是表示该分配时，所能分配的最高zone，一般从high-->normal-->dma 内存越来越昂贵，所以一般从high到dma分配依次分配 |
+| zonelist | 当**perferred\_zone**上**没有合适的页**可以分配时，就要**按zonelist中的顺序**扫描该zonelist中**备用zone列表**，一个个的**试用** |
+| nodemask | 表示**节点的mask**，就是**是否能在该节点上分配内存**，这是个**bit位数组** |
+| **preferred\_zone** | 表示从**high\_zoneidx**后找到的**合适的zone**，一般会从**该zone分配**；**分配失败**的话，就会在**zonelist**再找一个**preferred\_zone = 合适的zone** |
+| migratetype | **迁移类型**，在**zone\-\>free\_area.free\_list[XXX**] 作为**分配下标**使用，这个是用来**反碎片化**的，修改了以前的free\_area结构体，在该结构体中再添加了一个数组，该数组以迁移类型为下标，每个数组元素都挂了对应迁移类型的页链表 |
+| **high\_zoneidx** | 是表示该分配时，**所能分配的最高zone**，一般从high-->normal-->dma 内存越来越昂贵，所以一般从high到dma分配依次分配 |
 | spread\_dirty\_pages | |
 
-zonelist是指向备用列表的指针.在预期内存域没有空闲空间的情况下,该列表确定了扫描系统其他内存域(和结点)的顺序.
+zonelist是指向备用列表的指针.在预期内存域没有空闲空间的情况下, 该列表确定了扫描系统其他内存域(和结点)的顺序.
 
 随后的for循环所作的基本上与直觉一致,遍历备用列表的所有内存域，用最简单的方式查找一个适当的空闲内存块
 

@@ -592,7 +592,7 @@ not_early:
 
 ### 4.3.2 掩码分类
 
-Linux中这些掩码标志`gfp_mask`分为3种类型 :
+Linux中这些**掩码标志gfp\_mask**分为3种类型 :
 
 | 类型 | 描述 |
 |:-----:|:-----|
@@ -636,7 +636,7 @@ Linux中这些掩码标志`gfp_mask`分为3种类型 :
 #define GFP_DMA32       __GFP_DMA32
 ```
 
-其中GFP缩写的意思为获取空闲页(get free page),\_\_GFP\_MOVABLE不表示物理内存域,但通知内核应在特殊的虚拟内存域ZONE_MOVABLE进行相应的分配.
+其中GFP缩写的意思为获取空闲页(get free page), \_\_GFP\_MOVABLE不表示物理内存域, 但通知内核应在特殊的虚拟内存域ZONE\_MOVABLE进行相应的分配.
 
 **定义掩码位**
 
