@@ -438,7 +438,7 @@ static __init int setup_numa_zonelist_order(char *s)
 early_param("numa_zonelist_order", setup_numa_zonelist_order);
 ```
 
-# 4 build\_all\_zonelists\_init完成内存域zonelists的初始化
+# 4 build\_all\_zonelists完成内存域zonelists的初始化
 
 build\_all\_zonelists函数在通过set\_zonelist\_order**设置**了zonelists中**结点的组织顺序后**,首先**检查**了**sytem\_state标识**.如果当前系统处于boot阶段(SYSTEM\_BOOTING),就开始通过build\_all\_zonelists\_init函数初始化zonelist
 
@@ -736,7 +736,7 @@ static void build_zonelists(pg_data_t *pgdat)
 
 ## 4.4 setup\_pageset初始化per\_cpu缓存
 
-前面讲解内存管理域zone的时候,提到了per-CPU缓存,即冷热页.在组织每个节点的zonelist的过程中, setup\_pageset初始化了per\-CPU缓存(冷热页面)
+前面讲解**内存管理域zone**的时候,提到了**per\-CPU缓存**,即**冷热页**.在组织每个节点的zonelist的过程中, **setup\_pageset**初始化了**per\-CPU缓存(冷热页面**)
 
 ```cpp
 static void setup_pageset(struct per_cpu_pageset *p, unsigned long batch)
@@ -746,7 +746,7 @@ static void setup_pageset(struct per_cpu_pageset *p, unsigned long batch)
 }
 ```
 
-在此之前free\_area\_init\_node初始化内存结点的时候,内核就输出了冷热页的一些信息, 该工作由zone\_pcp\_init完成,该函数定义在[mm/page_alloc.c?v=4.7, line 5029](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L5029)
+在此之前**free\_area\_init\_node初始化内存结点**的时候,内核就输出了**冷热页的一些信息**, 该工作由**zone\_pcp\_init**完成,该函数定义在[mm/page_alloc.c?v=4.7, line 5029](http://lxr.free-electrons.com/source/mm/page_alloc.c?v=4.7#L5029)
 
 ```cpp
 static __meminit void zone_pcp_init(struct zone *zone)
