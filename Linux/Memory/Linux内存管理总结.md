@@ -3549,7 +3549,7 @@ slab分配器还有**两个**更进一步的**好处**
 
 **着色**这个术语是隐喻性的. 它与颜色无关,只是表示slab中的**对象需要移动的特定偏移量**,以便**使对象放置到不同的缓存行**.
 
-**slab分配器**由何得名?各个**缓存管理的对象**，会合并为**较大的组**，覆盖**一个或多个连续页帧**.这种**组称作slab**，**每个缓存**由**几个这种slab组成**.
+**slab分配器**由何得名?各个**缓存管理的对象**，会合并为**较大的组**，覆盖**一个或多个连续页帧(！！！连续的！！！**).这种**组称作slab**，**每个缓存**由**几个这种slab组成**.
 
 **Slab内存分配算法**是**最先出现**的；
 
@@ -3638,7 +3638,7 @@ module_init(fcache_init);
 module_exit(fcache_exit);
 ```
 
-所有**活动缓存的列表**保存**在/proc/slabinfo**中(为节省空间，下文的输出省去了不重要的部分).
+所有**活动缓存的分配情况列表**保存**在/proc/slabinfo**中(为节省空间，下文的输出省去了不重要的部分).
 
 ![cat /proc/slabinfo](./images/29.png)
 
@@ -3646,7 +3646,7 @@ module_exit(fcache_exit);
 
 ![cat /proc/slabinfo](./images/30.png)
 
-输出的各列除了包含用于标识各个缓存的**字符串名称**(也**确保不会创建相同的缓存**)之外,还包含下列信息.
+输出的各列除了包含用于标识各个缓存的**字符串名称**(也**确保不会创建相同的缓存！！！**)之外,还包含下列信息.
 
 - 缓存中**活动对象的数量**。
 
@@ -3662,9 +3662,408 @@ module_exit(fcache_exit);
 
 在内核决定**向缓存分配更多内存**时,所**分配对象的数量**.每次会分配一个**较大的内存块**,以**减少与伙伴系统的交互**.在**缩小缓存**时，也使用该值作为**释放内存块的大小**.
 
-# 13 slab分配的原理
+# 13 slab原理
+
+## 13.1 slab分配的原理
+
+SLAB为了解决这个**小粒度内存分配**的问题, 基于"面向对象类型"的思想, 不同的类型使用不同的SLAB，一个SLAB只分配一种类型
+
+SLAB为提高内核中一些**十分频繁进行分配释放的"对象**"的分配效率, SLAB: **每次释放掉某个对象**之后，**不是立即将其返回给伙伴系统**（SLAB 分配器是建立在伙伴系统之上的），而是存放在一个叫 **array\_cache**的结构中，下次要分配的时候就可以**直接从这里分配**
+
+- **缓存(cache**): 其实就是一个**管理结构头**，它控制了**每个SLAB的布局**，具体的结构体是**struct kmem\_cache**。
+- **SLAB**: 从**伙伴系统**分配的**2\^order个物理页**就组成了**一个SLAB**，而**后续的操作**就是在这个**SLAB上在进行细分**的，具体的结构体是**struct slab**。
+- **对象(object**): **每一个SLAB**都只针对**一个数据类型**，这个**数据类型**就被称为该SLAB的“**对象**”，将该对象进行**对齐之后的大小**就是该“**对象”的大小**，依照**该大小**将上面的**SLAB进行切分**，从而实现了我们想要的**细粒度内存分配（！！！**）。
+- **per\-CPU缓存**：这个就是**array\_cache**，这个是为了**加快分配**，预先**从SLAB中分配部分对象内存(！！！**）以加快速度。具体的结构体是**struct array\_cache**，包含在**struct kmem\_cache**中。
+
+基本上SLAB缓存由下图两部分组成
+
+- 保存**管理性数据**的**缓存对象**
+- 保存**被管理对象**的各个**slab**
+
+![config](./images/31.png)
+
+**每个缓存**只负责**一种对象类型**（例如**struct unix\_sock实例**），或提供**一般性的缓冲区**。**各个缓存(！！！**)中**slab的数目(！！！)各有不同**，这与已经使用的**页的数目**、**对象长度**和**被管理对象的数目**有关。
+
+另外，系统中**所有的缓存**都保存在一个**双链表**中。这使得内核有机会依次**遍历所有的缓存**。这是有必要的，例如在**即将发生内存不足**时，内核可能需要**缩减分配给缓存的内存数量**.
+
+## 13.2 缓存的结构
+
+**缓存结构**包括两个特别重要的成员.
+
+- 指向**一个数组的指针**, 其中保存了**各个CPU最后释放的对象**.
+
+- **每个内存结点**都对应**3个表头**，用于**组织slab的链表**。第1个链表包含**完全用尽的slab**，第2个是**部分空闲的slab**，第3个是**空闲的slab**。
+
+缓存的精细结构：
+
+![slab缓存的精细结构](./images/32.png)
+
+**缓存结构指向一个数组**,其中包含了
+
+- **与系统CPU数目相同的数组项**.每个元素都是一个指针，指向一个接一步的结构称之为**数组缓存(array cache**),其中包含了对应于**特定系统CPU的管理数据**.
+- 管理性数据之后的内存区包含了**一个指针数组**，各个数组项指向**slab中未使用的对象**.
+
+为最好地**利用CPU高速缓存**,这些**per\-CPU指针**是很重要的。在**分配和释放对象**时，采用**后进先出原理**(LIFO，last in first out).内核假定**刚释放的对象**仍然**处于CPU高速缓存**中，会尽快**再次分配它**(响应下一个分配请求). **仅当per\-CPU缓存为空**时，才会用**slab中的空闲对象重新填充**它们.
+
+这样，**对象分配的体系**就形成了一个**三级的层次结构**，**分配成本**和操作对**CPU高速缓存和TLB的负面影响**逐级**升高**.
+
+1. 仍然处于**CPU高速缓存**中的**per\-CPU对象**
+
+2. 现存**slab**中**未使用的对象**
+
+3. 刚**使用伙伴系统分配**的**新slab**中**未使用的对象**
+
+缓存的精细结构：
+
+![slab缓存的精细结构](./images/33.png)
+
+## 13.3 slab的结构
+
+**对象**在**slab**中**并非连续排列**，而是按照一个相当复杂的方案分布。图3\-46说明了相关细节.
+
+用于**每个对象的长度**并**不反映其确切的大小**.相反,**长度已经进行了舍入**,以满足某些**对齐方式的要求**. 有两种可用的备选**对齐方案**.
+
+- slab创建时使用标志**SLAB\_HWCACHE\_ALIGN**，slab用户可以要求对象**按硬件缓存行对齐**.那么会按照**cache\_line\_size**的返回值进行**对齐**，该函数返回特定于处理器的**L1缓存大小**。如果**对象小于缓存行长度的一半**，那么将**多个对象放入一个缓存行**。
+
+- 如果**不要求按硬件缓存行对齐**，那么内核保证对象按**BYTES\_PER\_WORD对齐**，该值是表示void指针**所需字节**的数目.
+
+在**32位处理器**上，**void指针**需要**4个字节**。因此，对有**6个字节**的对象，则需要8 = 2×4个字节, 15个字节的对象需要16=4×4个字节。多余的字节称为**填充字节**.
+
+**管理结构**位于**每个slab**的**起始**处，保存了所有的**管理数据**（和**用于连接缓存链表的链表元素**).
+
+其后面是一个**数组**，**每个（整数）数组项**对应于**slab中的一个对象**。只有在**对象没有分配**时，相应的**数组项才有意义**。在这种情况下，它指定了下一个空闲对象的索引。由于**最低编号的空闲对象的编号**还保存在slab起始处的**管理结构**中，内核无需使用链表或其他复杂的关联机制，即可轻松找到当前可用的所有对象。数组的**最后一项**总是一个**结束标记**，值为**BUFCTL\_END**.
+
+slab缓存的精细结构:
+
+![slab缓存的精细结构](./images/34.png)
+
+大多数情况下, **slab内存区的长度(减去了头部管理数据**)是不能被（可能填补过的）对象长度整除的。因此，内核就有了一些**多余的内存**，可以用来**以偏移量的形式**给**slab"着色**", 如上文所述.
+
+**缓存**的**各个slab成员**会指定**不同的偏移量**，以便将**数据**定位到**不同的缓存行**，因而**slab开始**和**结束处的空闲内存**是不同的。在计算偏移量时，内核必须考虑其他的对齐因素. 
+
+例如，L1高速缓存中数据的对齐(下文讨论).
+
+**管理数据**可以放置在**slab自身**，也可以放置到**使用kmalloc分配的不同内存区中**. 内核如何选择, 取决于**slab的长度**和**已用对象的数量**。相应的选择标准稍后讨论。**管理数据**和**slab内存之间的关联**很容易建立，因为**slab头包含了一个指针**，指向slab数据区的起始处(无论管理数据**是否在slab上**).
+
+slab缓存的精细结构:
+
+![slab缓存的精细结构](./images/35.png)
+
+最后，内核需要一种方法, 通过**对象自身**即可**识别slab(以及对象驻留的缓存**).
+
+根据对象的**物理内存地址**,可以找到**相关的页**,因此可以在**全局mem\_map数组**中找到对应的**page实例**.
+
+我们已经知道，**page结构**包括一个**链表元素**，用于**管理各种链表中的页**。对于**slab缓存中的页**而言, 该指针是不必要的，可用于其他用途.
+
+- page\->lru.next指向**页驻留的缓存的管理结构**
+
+- page\->lru.prev指向**保存该页的slab的管理结构**
+
+**设置或读取slab信息**分别由**set\_page\_slab**和**get\_page\_slab**函数完成，带有`_cache`后缀的函数则处理缓存信息的设置和读取.
+
+```cpp
+mm/slab.c
+void page_set_cache(struct page *page, struct kmem_cache *cache)
+struct kmem_cache *page_get_cache(struct page *page)
+void page_set_slab(struct page *page, struct slab *slab)
+struct slab *page_get_slab(struct page *page)
+```
+
+此外，内核还对分配给**slab分配器**的**每个物理内存页**都设置标志**PG\_SLAB（！！！**）.
+
+## 13.4 数据结构
+
+在最高层是**cache\_chain**，这是一个**slab缓存的链接列表**。可以用来查找最适合**所需要的分配大小的缓存**（**遍历列表**）。cache\_chain的**每个元素**都是**一个kmem\_cache结构的引用**（称为**一个cache**）。它定义了一个要管理的给定大小的对象池。
+
+slab 分配器的主要结构:
+
+![config](images/1.gif)
+
+**每个缓存**都包含了一个 **slabs 列表**，这是一段**连续的内存块（通常都是页面！！！**）。存在 **3 种 slab**：
+
+- slabs\_full: **完全分配的 slab**
+- slabs\_partial: 部分分配的 slab
+- slabs\_empty: **空 slab**，或者没有对象被分配
+
+**slabs\_empty列表中的slab**是进行**回收（reaping**）的**主要备选对象**。正是通过此过程，**slab所使用的内存**被**返回给操作系统**供其他用户使用。
+
+slab列表中的**每个slab**都是一个**连续的内存块**（一个或多个**连续页**），它们被划分成一个个**对象**。这些对象是从特定缓存中进行分配和释放的基本元素。注意**slab是slab分配器进行操作的最小分配单位**，因此如果需要对slab进行扩展，这也就是所扩展的最小值。通常来说，**每个slab**被分配为**多个对象**。
+
+由于**对象是从slab中进行分配和释放**的，因此**单个slab**可以**在slab列表之间进行移动**。例如，当一个slab中的**所有对象**都被**使用完**时，就从**slabs\_partial列表**中移动到**slabs\_full列表**中。当一个slab**完全被分配**并且有**对象被释放**后，就从slabs\_full列表中移动到slabs\_partial列表中。当所有对象都被释放之后，就从**slabs\_partial列表**移动到**slabs\_empty**列表中。
+
+**每个缓存**由**kmem\_cache**结构的一个实例表示, 将slab缓存视为通过一组标准函数来高效地创建和释放特定类型对象的机制
+
+| kmem\_cache | slab | slob | slub |
+|:--------------:|:-----:|:-----:|:-----:|
+| kmem\_cache | include/linux/slab\_def.h | [mm/slab.h] | [include/linux/slub_def.h] |
+
+```cpp
+struct kmem_cache {
+    //  per-CPU数据，在每次分配/释放期间都会访问
+    struct array_cache __percpu *cpu_cache;
+
+/* 1) Cache tunables. Protected by slab_mutex
+ *    可调整的缓存参数。由cache_chain_mutex保护  */
+    //  要转移本地高速缓存的大批对象的数量
+    unsigned int batchcount;
+    unsigned int limit;
+    //  本地高速缓存中空闲对象的最大数目
+    unsigned int shared;
+    //  高速缓存的大小
+    unsigned int size;
+    struct reciprocal_value reciprocal_buffer_size;
+
+/* 2) touched by every alloc & free from the backend
+ *    后端每次分配和释放内存时都会访问 */
+    //  描述高速缓存永久属性的一组标志
+    unsigned int flags;         /* constant flags */
+    //  封装在一个单独slab中的对象个数
+    unsigned int num;           /* # of objs per slab */
+
+/* 3) cache_grow/shrink
+ *    缓存的增长/缩减  */
+    /* order of pgs per slab (2^n) 一个单独slab中包含的连续页框数目的对数*/
+    unsigned int gfporder;
+
+    /* force GFP flags, e.g. GFP_DMA   强制的GFP标志，例如GFP_DMA  */
+    gfp_t allocflags;
+
+    size_t colour;          /* cache colouring range 缓存着色范围  */
+    unsigned int colour_off;    /* colour offset slab中的着色偏移 */
+    struct kmem_cache *freelist_cache;
+    unsigned int freelist_size;
+
+    /* constructor func 构造函数  */
+    void (*ctor)(void *obj);
+
+/* 4) cache creation/removal
+ *    缓存创建/删除 */
+    const char *name;   //  存放高速缓存名字的字符数组
+    struct list_head list;  //  高速缓存描述符双向链表使用的指针
+    int refcount;
+    int object_size;
+    int align;
+
+/* 5) statistics
+ *    统计量 */
+#ifdef CONFIG_DEBUG_SLAB
+    unsigned long num_active;
+    unsigned long num_allocations;
+    unsigned long high_mark;
+    unsigned long grown;
+    unsigned long reaped;
+    unsigned long errors;
+    unsigned long max_freeable;
+    unsigned long node_allocs;
+    unsigned long node_frees;
+    unsigned long node_overflow;
+    atomic_t allochit;
+    atomic_t allocmiss;
+    atomic_t freehit;
+    atomic_t freemiss;
+#ifdef CONFIG_DEBUG_SLAB_LEAK
+    atomic_t store_user_clean;
+#endif
+
+    int obj_offset;
+#endif /* CONFIG_DEBUG_SLAB */
+
+#ifdef CONFIG_MEMCG
+    struct memcg_cache_params memcg_params;
+#endif
+#ifdef CONFIG_KASAN
+    struct kasan_cache kasan_info;
+#endif
+
+#ifdef CONFIG_SLAB_FREELIST_RANDOM
+    void *random_seq;
+#endif
+
+    struct kmem_cache_node *node[MAX_NUMNODES];
+};
+```
+
+| 字段 | 说明 |
+|:-----:|:-----|
+| cpu\_cache | 是一个**指向数组的指针**，每个**数组项**都**对应于**系统中的**一个CPU**，每个**数组项**都包含了**另一个指针**，**指向**下文讨论的**array\_cache**结构的实例 |
+| batchcount | 指定了在**per\-CPU列表为空**的情况下，从**缓存的slab**中**获取对象的数目**，它还表示**在缓存增长时分配的对象数目** |
+| limit | 指定了**per\-CPU列表**中**保存的对象的最大数目**。如果超出了这个值，内核会**将batchcount个对象返回到slab** |
+| size | 指定了缓存中**管理的对象的长度**1 |
+| gfporder | 指定了**slab包含的页数目**以2为底的对数，简而言之，**slab包含2\^gfporder页** |
+| colorur | 指定了**颜色的最大数目** |
+| colour\_off | **基本偏移量乘以颜色值获得的绝对偏移量** |
+| dflags | 另一标志集合，描述**slab的动态性质** |
+| ctor | 一个指针，指向在对象创建时**调用的构造函数** |
+| name | 一个字符串，表示**缓存的名称** |
+| list | 是一个**标准链表元素** |
+
+### 13.4.1 per\-cpu数据(第0\~1部分)
+
+**每次分配期间内核对特定于CPU数据的访问**
+
+- cpu\_cache是一个**指向数组的指针**，**每个数组项**都对应于系统中的**一个CPU**。**每个数组项**都包含了**另一个指针**，指向下文讨论的**array\_cache结构**的实例。
+
+- batchcount指定了在**per\-CPU列表为空**的情况下，从**缓存的slab中获取对象的数目**。它还表示在**缓存增长时分配的对象数目**。
+
+- limit指定了**per\-CPU列表**中保存的**对象的最大数目**。如果超出该值，内核会将**batchcount个对象**返回到**slab**（如果接下来**内核缩减缓存**，则释放的内存从slab**返回到伙伴系统**）
+
+内核对**每个系统处理器**都提供了**一个array\_cache**实例. 该结构定义如下
+
+```cpp
+struct array_cache {
+    unsigned int avail;
+    unsigned int limit;
+    unsigned int batchcount;
+    unsigned int touched;
+    void *entry[];  /*
+             * Must have this definition in here for the proper
+             * alignment of array_cache. Also simplifies accessing
+             * the entries.
+             */
+};
+```
+
+- batchcount和limit的语义已经在上文给出,**kmem\_cache\_s的值**用作（通常不修改）per\-CPU值的**默认值**，用于缓存的重新填充或清空.
+
+- **avail**保存了**当前可用对象**的数目.
+
+- 在从缓存**移除一个对象**时，将**touched设置为1**，而**缓存收缩**时,则将touched设置为0。这使得内核能够确认在**缓存上一次收缩之后是否被访问过**，也是缓存重要性的一个标志。
+
+- 最后一个成员entry是一个**伪数组**,其中并**没有数组项**,只是为了便于访问内存中array\_cache实例之后缓存中的各个对象而已.
+
+### 13.4.2 基本数据变量
+
+- kmem\_cache的第2、第3部分包含了**管理slab所需的全部变量**，在填充或清空per\-CPU缓存时需要访问这两部分.
+
+- **node[MAX\_NUMNODES**];是一个数组，**每个数组项**对应于系统中**一个可能的内存结点**. **每个数组项**都包含**kmem\_cache\_node的一个实例**, **该结构**中有**3个slab列表**（完全用尽、空闲、部分空闲）
+
+- flags是一个标志寄存器，定义缓存的全局性质。当前只有一个标志位。如果**管理结构存储在slab外部**，则置位CFLGS\_OFF_SLAB
+
+- num保存了可以放入**slab的对象的最大数目**
+
+###### 13.4.3 slab小结
+
+slab系统由slab描述符、slab节点、本地对象缓冲池、共享对象缓冲池、3个slab链表、n个slab, 以及众多slab缓存对象组成，如图
+
+![config](./images/36.png)
+
+那么**每个slab**由**多少个页面组成**呢？每个slab由一个或者n个page连续页面组成，是**一个连续的物理空间**。创建slab描述符时会计算一个slab究竟需要占用多少个page页面，即2\^gfporder，一个slab里可以有多少个slab对象，以及有多少个cache着色，slab结构图见图
+
+![config](./images/37.png)
+
+slab需要的物理内存在什么时候分配呢？在创建slab描述符时，不会立即分配2\^gfporder 个页面，要等到分配slab对象时，发现本地缓冲池和共享缓冲池都是空的，然后查询3大链表中也没有空闲对象，那么只好分配一个slab了。这时才会分配2\^gfporder个页面，并且把这个slab挂入slabs\_free链表中。
+
+如果一个slab描述符中有很多空闲对象，那么系统是否要回收一些空闲的缓存对象从而释放内存归还系统呢？这个是必须要考虑的问题，否则系统有大量的slab描述符，每个slab描述符还有大量不用的、空闲的slab对象，这怎么行呢？
+
+slab系统有两种方式来回收内存。
+
+(1) 使用kmem\_cache\_free释放一个对象，当发现本地和共享对象缓冲池中的空闲对象数目ac->avail大于缓冲池的极限值ac->limit时，系统会主动释放bacthcount个对象。当系统所有空闲对象数目大于系统空闲对象数目极限值，并且这个slab没有活跃对象时，那么系统就会销毁这个slab ,从而回收内存。
+
+(2) slab系统还注册了一个定时器，定时去扫描所有的slab描述符，回收一部分空闲对象，达到条件的slab也会被销毁，实现函数在cache\_reap()
+
+为什么slab要有一个cache colour着色区？ cache colour着色区让每一个slab对应大小不同的cache行，着色区大小的计算为colour\_next\*colour\_off，其中colour\_next从0到这个slab描述符中计算出来的colour最大值，colour_off为L1 cache的cache行大小。这样可以使不同slab上同一个相对位置slab对象的起始地址在高速缓存中相互错开，有利于改善高速缓存的效率。
+
+另外一个利用cache的场景是Per\-CPU类型的本地对象缓冲池。slab分配器的一个重要目的是提升硬件和cache的使用效率。使用Per\-CPU类型的本地对象缓冲池有如下两个好处
+
+- 让一个对象尽可能地运行在同一个CPU上，可以让对象尽可能地使用同一个CPU的cache，有助于提高性能。
+- 访问Per\-CPU 类型的本地对象缓冲池不需要获取额外的自旋锁，因为不会有另外的CPU来访问这些Per\-CPU类型的对象缓存池，避免自旋锁的争用。
+
+## 13.5 slab系统初始化
+
+只在**slab系统已经启用之后**，才能使用**kmalloc**.
+
+### 13.5.1 slab分配器的初始化过程
+
+```cpp
+start_kernel()
+    |---->page_address_init()
+    | 
+    |---->setup_arch(&command_line);
+    |
+    |---->setup_per_cpu_areas();
+    |
+    |---->build_all_zonelist()
+    |
+    |---->page_alloc_init()
+    |
+    |---->pidhash_init()
+    |
+    |---->vfs_caches_init_early()
+    |
+    |---->mm_init()
+```
+
+内核通过**mm\_init**完成了**buddy伙伴系统**
+
+```cpp
+static void __init mm_init(void)
+{
+    /*
+     * page_ext requires contiguous pages,
+     * bigger than MAX_ORDER unless SPARSEMEM.
+     */
+    page_ext_init_flatmem();
+    mem_init();
+    kmem_cache_init();
+    percpu_init_late();
+    pgtable_init();
+    vmalloc_init();
+    ioremap_huge_init();
+}
+```
+
+内核通过函数**mem\_init**完成了**bootmem/memblock的释放工作**,从而将内存管理迁移到了buddy,随后就通过**kmem\_cache\_init**完成了**slab初始化分配器**.
+
+### 13.5.2 kmem\_cache\_init函数初始化slab分配器
+
+不仅slab, **每个内核分配器**都应该提供一个**kmem\_cache\_init**函数.
+
+1. **kmem\_cache\_init**创建系统中的**第一个slab缓存**,以便为**kmem\_cache的实例提供内存**.为此,内核使用的主要是**在编译时创建的静态数据**.实际上,一个**静态数据结构(initarray\_cache**)用作**per\-CPU数组**.该**缓存的名称是cache\_cache（name属性值**）.
+
+2. **kmem\_cache\_init**接下来**初始化一般性的缓存**,用作**kmalloc内存的来源（！！！**）.为此,针对所需的**各个缓存长度**, 分别调用**kmem\_cache\_create**.该函数起初只需要`cache_cache`缓存已经建立.但在**初始化per\-CPU缓存**时，该函数必须借助于**kmalloc（！！！**）, 这尚且不可能.
+
+......
+
+kmem\_cache\_init可以分为六个阶段
+
+| 阶段 | 描述 |
+|:-----:|:-----:|
+| 第一个阶段 | 是根据kmem\_cache来设置**cache\_cache**的字段值 |
+| 第二个阶段 | 首先是创建arraycache\_init对应的高速缓存，同时也是在这个kmem\_cache\_create的调用过程中，创建了用于保存cache的kmem\_cache的slab，并初始化了slab中的各个对象 |
+| 第三个阶段 | 创建kmem\_list3对应的高速缓存，在这里要注意的一点是，如果sizeof(arraycache\_t)和sizeof(kmem\_list3)的大小一样大，那么就不再使用kmem\_cache\_create来为kmem_list3创建cache了，因为如果两者相等的话，两者就可以使用同一个cache |
+| 第四个阶段 | 创建并初始化所有的通用cache和dma cache |
+| 第五个阶段 | 创建两个arraycache\_init对象，分别取代cache\_cache中的array字段和malloc\_sizes[INDEX\_AC].cs\_cachep->array字段 |
+| 第六个阶段 | 创建两个kmem\_list3对象，取代cache\_cache中的kmem\_list3字段和malloc\_sizes[INDEX\_AC].cs\_cachep->nodelist3字段.如此一来，经过上面的六个阶段后，所有的初始化工作基本完成了 |
+
+## 13.6 创建缓存kmem\_cache\_create
 
 
+
+## 13.7 分配对象kmem\_cache\_alloc
+
+**kmem\_cache\_alloc**用于**从特定的缓存获取对象**.类似于所有的**malloc函数**
+
+该函数从**给定的高速缓存cachep**中返回一个**指向对象的指针**.如果高速缓存中的**所有slab**中**没有空闲的对象**,那么slab层就必须通过**kmem\_getpages获取新的页（！！！没有空闲对象要获取新页！！！**）,**flags的值传递给\_\_get\_free\_pages函数**. 这与我们之前所看到的标志相同.你用到的应该是**GFP\_KERNEL**或**GFP\_ATOMIC**。
+
+## 13.8 释放对象kmem\_cache\_free
+
+如果一个分配的对象已经不再需要, 那么必须使用kmem\_cache\_free将对象释放, 并**返回给slab分配器**. 这样就能把**cachep中的对象标记为空闲（！！！**）.
+
+## 13.9 销毁缓存kmem\_cache\_destroy
+
+如果要销毁**只包含未使用对象**的一个缓存, 则必须调用**kmem\_cache\_destroy**函数.
+
+- 依次扫描**slabs\_free链表**上的**slab**.首先对**每个slab**上的**每个对象**调用析构器函数，然后将**slab的内存空间返回给伙伴系统**.
+
+- 释放用于**per\-CPU缓存**的内存空间。
+
+- 从**cache\_cache链表**移除相关数据。
+
+与**kmem\_cache\_create类似**,不能在中断上下文中调用这个函数.因为它也**可能睡眠**.调用该函数之前必须确保以下两个条件
+
+- 告诉缓存中**所有slab都必须是NULL**, 其实, 不管哪个slab中, 只要还有一个对象被分配出去并正在使用, 那么就不能撤销该告诉缓存
+
+- 在调用kmem\_cache\_destroy过程中, **不再访问这个高速缓存**. **调用者**必须确保这种同步.
 
 # 14 slub原理
 
@@ -3874,9 +4273,34 @@ create\_boot\_cache()用于创建分配算法缓存，主要是把**boot\_kmem\_
 
 bootstrap()函数主要是将临时kmem\_cache向最终kmem\_cache迁移，并修正相关指针，使其指向最终的kmem\_cache。
 
+..........
+
+
+
+
 # 15 kmalloc和kfree实现
 
-## 15.1 kmalloc的实现
+## 15.1 基础原理
+
+缓存名称是kmalloc\-*size*是kmalloc函数的基础, 是**内核为不同内存长度提供的slab缓存*.
+
+类似伙伴系统机制，按照**内存块的2\^order**来创建多个slab描述符，例如16B、32B 、64B 、128B 、…、32MB等大小，系统会分别创建名为kmalloc\-16、kmalloc\-32、kmalloc\-64...的slab描述符，这在**系统启动**时在**create\_kmalloc\_caches()函数**中完成。
+
+例如**分配30Byte**的一个**小内存块**，可以用“kmalloc(30，GFP\_KERNEL)”，那么系统会从**名为“kmalloc\-32**”的**slab描述符**中**分配一个对象**出来。
+
+除极少例外，其长度都是**2的幂次**，长度的范围从**2\^5=32B**（用于**页大小为4KiB的计算机**）或**64B**（所有其他计算机）,到**225B**. 上界也可以更小，是由**KMALLOC\_MAX\_SIZE**设置,后者**根据系统页大小和最大允许的分配阶**计算:
+
+```cpp
+[slab.h]
+#define KMALLOC_SHIFT_HIGH ((MAX_ORDER + PAGE_SHIFT -1) <= 25 ? \
+(MAX_ORDER + PAGE_SHIFT -1) : 25)
+#define KMALLOC_MAX_SIZE (1UL << KMALLOC_SHIFT_HIGH)
+#define KMALLOC_MAX_ORDER (KMALLOC_SHIFT_HIGH -PAGE_SHIFT)
+```
+
+每次**调用kmalloc**时,内核找到**最适合的缓存**,并从中**分配一个对象**满足请求(如果没有刚好适合的缓存，则分配稍大的对象，但不会分配更小的对象).
+
+## 15.2 kmalloc的实现
 
 kmalloc()是基于slab/slob/slub分配分配算法上实现的，不少地方将其作为slab/slob/slub分配算法的入口，实际上是略有区别的。
 
@@ -4040,7 +4464,92 @@ memleak的工作原理很简单，主要是对kmalloc()、vmalloc()、kmem\_cach
 
 # 18 vmalloc不连续内存管理
 
+## 18.1 kmalloc, vmalloc和malloc之间的区别和实现上的差异
+
+kmalloc、vmalloc和malloc这 3 个常用的API函数具有相当的分量，三者看上去很相似，但在实现上可大有讲究。**kmalloc基于slab分配器**，**slab缓冲区**建立在**一个连续物理地址的大块内存之上**，所以其**缓存对象也是物理地址连续**的。
+
+如果在内核中**不需要连续的物理地址**，而**仅仅需要内核空间里连续虚拟地址**的内存块，该如何处理呢？这时vmalloc()就派上用场了。
+
+## 18.2 vmalloc原理
+
 **伙伴管理算法**初衷是**解决外部碎片**问题，而**slab算法**则是用于**解决内部碎片**问题，但是内存使用的得不合理终究会产生碎片。碎片问题产生后，申请大块连续内存将可能持续失败，但是实际上内存的空闲空间却是足够的。这时候就引入了**不连续页面管理算法**，即我们常用的**vmalloc**申请分配的内存空间，它主要是用于将**不连续的页面**，通过内存映射到**连续的虚拟地址空间**中，提供给申请者使用，由此实现内存的高利用。
 
-# 19 缺页异常处理
+
+
+# 19 VMA操作
+
+# 20 malloc
+
+# 21 mmap
+
+# 22 缺页异常处理
+
+在之前介绍malloc()和 mmap()两个用户态API函数的内核实现时，
+
+## 19.1 缺页异常初始化
+
+缺页异常初始化的地方。缺页异常初始化函数为early\_trap\_init()或early\_trap\_pf\_init()，在**setup\_arch()中调用**。
+
+```c
+[arch/x86/kernel/traps.c]
+void __init early_trap_init(void)
+{
+	set_intr_gate_notrace(X86_TRAP_DB, debug);
+	/* int3 can be called from all */
+	set_system_intr_gate(X86_TRAP_BP, &int3);
+#ifdef CONFIG_X86_32
+	set_intr_gate(X86_TRAP_PF, page_fault);
+#endif
+	load_idt(&idt_descr);
+}
+
+void __init early_trap_pf_init(void)
+{
+#ifdef CONFIG_X86_64
+	set_intr_gate(X86_TRAP_PF, page_fault);
+#endif
+}
+```
+
+**set\_intr\_gate\_notrace**()和**set\_system\_intr\_gate**()分别设置了**调试**和**断点的中断处理**，set\_intr\_gate()正好设置了**缺页异常处理**，最后通过**load\_idt**()**刷新中断向量表**。
+
+set\_intr\_gate()是一个宏定义。
+
+```c
+#define set_intr_gate(n, addr)						\
+	do {								\
+		set_intr_gate_notrace(n, addr);				\
+		_trace_set_gate(n, GATE_INTERRUPT, (void *)trace_##addr,\
+				0, 0, __KERNEL_CS);			\
+	} while (0)
+```
+
+它包含了两个动作，\_set\_gate()是用于设置中断向量，\_trace\_set\_gate()的实现和\_set\_gate()一致，也是写中断向量，但是它写的是一个**中断跟踪向量表trace\_idt\_table**，写入处理函数为**trace\_page\_fault**()，用于**中断向量跟踪**用的。
+
+异常处理函数是do\_page\_fault()
+
+## 19.2 do\_page\_fault()
+
+```c
+[arch/x86/mm/fault.c]
+dotraplinkage void notrace
+do_page_fault(struct pt_regs *regs, unsigned long error_code)
+{
+	unsigned long address = read_cr2(); /* Get the faulting address */
+	enum ctx_state prev_state;
+
+	/*
+	 * We must have this function tagged with __kprobes, notrace and call
+	 * read_cr2() before calling anything else. To avoid calling any kind
+	 * of tracing machinery before we've observed the CR2 value.
+	 *
+	 * exception_{enter,exit}() contain all sorts of tracepoints.
+	 */
+
+	prev_state = exception_enter();
+	__do_page_fault(regs, error_code, address);
+	exception_exit(prev_state);
+}
+NOKPROBE_SYMBOL(do_page_fault);
+```
 

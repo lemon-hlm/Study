@@ -2,17 +2,107 @@
 
 # 1 Linux整体机制
 
+中断在那个CPU上执行，取决于在**那个CPU上申请了vector**并**配置了对应的中断控制器(比如local APIC**)。如果想要**改变一个中断的执行CPU**，必须**重新申请vector并配置中断控制器**。一般通过**echo xxx > /proc/irq/xxx/affinity**来完成调整，同时irq\_balance一类软件可以用于完成中断的均衡。
+
 当外设触发一次中断后，一个大概的处理过程是：
 
-1、具体CPU architecture相关的模块会进行现场保护，然后调用machine driver(！！！这是platform driver<位于drivers/of/platform.c>??)对应的中断处理handler
+1、具体CPU architecture相关的模块会进行现场保护
 
-2、machine driver对应的中断处理handler中会根据硬件的信息获取HW interrupt ID，并且通过irq domain模块翻译成IRQ number
+2、通过IDT中的中断描述符，调用common_interrupt； 
 
-3、调用该IRQ number对应的high level irq event handler，在这个high level的handler中，会通过和interupt controller交互，进行中断处理的flow control（处理中断的嵌套、抢占等），当然最终会遍历该中断描述符的IRQ action list，调用外设的specific handler来处理该中断
+3、通过common\_interrupt，调用do\_IRQ，完成vector到irq\_desc的转换，进入Generic interrupt layer(调用处理函数generic\_handle\_irq\_desc)； 
 
-4、具体CPU architecture相关的模块会进行现场恢复。
+4、调用在**中断初始化的时候**，按照**中断特性**(level触发，edge触发等、simple等)初始化的irq\_desc:: handle\_irq，执行不同的通用处理接口，比如handle\_simple\_irq； 
 
-## 1.1 硬件中断号和软件中断号映射
+5、这些通用处理接口会调用中断初始化的时候注册的外部中断处理函数；完成EOI等硬件相关操作；并完成中断处理的相关控制。
+
+6、具体CPU architecture相关的模块会进行现场恢复。
+
+## 1.1 中断初始化
+
+对X86 CPU，Linux内核使用全局idt\_table来表达当前的IDT，该变量定义在traps.c
+
+```c
+[arch/x86/kernel/traps.c]
+gate_desc idt_table[NR_VECTORS] __page_aligned_bss;
+```
+
+对中断相关的初始化，内核主要有以下工作： 
+
+1、 设置used\_vectors，确保外设不能分配到X86保留使用的vector(**预留的vector范围为[0,31**]，另外还有其他通过apic\_intr_init等接口预留的系统使用的vector); 
+
+2、 设置X86CPU保留使用的vector对应的IDT entry;这些entry使用特定的中断处理接口； 
+
+3、 设置外设 (包括ISA中断)使用的中断处理接口，这些中断处理接口都一样。 
+
+4、 设置ISA IRQ使用的irq_desc； 
+
+5、 把IDT的首地址加载到CPU的IDTR(Interrupt Descriptor Table Register); 
+
+6、 初始化中断控制器(下一章描述) 
+
+以上工作主要在以下函数中完成：
+
+```c
+start_kernel
+    trap_init 
+        使用set_intr_gate等接口初始化保留vector
+        used_vectors中[0,0x1f]对应的vector被置1，表示已经预留不能再使用
+        cpu_init
+            load_idt((const struct desc_ptr *)&idt_descr) 把&idt_descr的地址加载到idtr
+                native_load_idt()
+    init_IRQ
+        初始化0号CPU的vector_irq：其vector[0x30-0x3f]和irq号[0-15](ISA中断)对应
+        x86_init.irqs.intr_init(native_init_IRQ)
+            x86_init.irqs.pre_vector_init(init_ISA_irqs)
+                init_ISA_irqs:初始化ISA，设置irq号[0,15] (ISA中断)的irq_desc
+            apic_intr_init 设置APIC相关中断(使用的alloc_intr_gate会设置used_vectors)
+            使用interrupt数组初始化设置外设中断idt entry
+```
+
+这个过程会完成每个中断vector对应的idt entry的初始化，系统把这些中断vector分成以下几种： 
+
+1、**X86保留vector**，这些**vector包括[0,0x1f**]和**APIC等系统部件占用的vector**,对这些vector，会**记录在bitmap used\_vectors中**，确保**不会被外设分配使用**；同时这些vector都使用**各自的中断处理接口(！！！**)，其中断处理过程相对简单(没有generic interrupt layer的参与，CPU直接调用到各自的ISR)。 
+
+2、**ISA irqs**，对这些中断，在初始化过程中已经完成了**irq\_desc**、**vector\_irq**、以及**IDT中对应entry的分配和设置**，同时可以发现**ISA中断**，在初始化的时候都被设置为**运行在0号CPU**。 0x30\-0x3f是ISA的
+
+3、**其它外设的中断**，对这些中断，在初始化过程中**仅设置了对应的IDT**，和**ISA中断一样**，其**中断处理接口都来自interrupt数组**。
+
+### 1.1.1 中断处理接口interrupt数组 
+
+interrupt数组是内核中外设中断对应的IDT entry，其在arch/x86/entry/entry\_64.S中定义，定义如下：
+
+```assembly
+[arch/x86/include/asm/irq_vectors.h]
+#define FIRST_EXTERNAL_VECTOR		0x20
+#define LOCAL_TIMER_VECTOR		0xef
+
+#define NR_VECTORS			 256
+
+#ifdef CONFIG_X86_LOCAL_APIC
+#define FIRST_SYSTEM_VECTOR		LOCAL_TIMER_VECTOR
+#else
+#define FIRST_SYSTEM_VECTOR		NR_VECTORS
+#endif
+
+[arch/x86/entry/entry_64.S]
+ENTRY(irq_entries_start)
+    vector=FIRST_EXTERNAL_VECTOR
+    .rept (FIRST_SYSTEM_VECTOR - FIRST_EXTERNAL_VECTOR)
+    /* 代码段内容*/
+	pushq	$(~vector+0x80)			/* Note: always in signed byte range */
+    vector=vector+1
+	jmp	common_interrupt
+	.align	8
+    .endr
+END(irq_entries_start)
+```
+
+这段汇编的效果是：在**代码段**，生成了一个**符号irq\_entries\_start**，该符号对应的内容是一组可执行代码.
+
+X86 CPU在准备好了中断执行环境后，会调用中断描述符定义的中断处理入口；对于**用户自定义中断**，中断处理入口都是(对系统预留的，就直接执行定义的接口了)common\_interrupt
+
+## 1.2 硬件中断号和软件中断号映射
 
 Linux维护了一个位图allocated\_irqs用来管理软中断号, 
 
@@ -57,7 +147,7 @@ struct irq_domain {
 
 系统初始化解析设备信息, 得到外设硬件中断号和触发类型, 通过全局allocated\_irqs位图分配一个空闲比特位(外设和中断控制器的request line有且仅有一条)从而获得一个IRQ号, 分配一个中断描述符irq\_desc, 配置CONFIG\_SPARE\_IRQ使用R树存储, 否则是全局数组, 将硬件中断号设置到中断描述符, 从而建立硬件中断号和软件中断号的映射关系.
 
-## 1.2 注册中断
+## 1.3 注册中断
 
 request\_irq()和线程化注册函数request\_threaded\_irq()
 
@@ -93,25 +183,27 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
 
 (7) 有thread\_fn, 则唤醒创建的内核线程, 该线程会很快睡眠, 详见下面线程执行
 
-## 1.3 底层中断处理
+## 1.4 底层中断处理
 
 具体看体系结构
 
-## 1.4 高层中断处理
+## 1.5 高层中断处理
 
-驱动读取硬件中断号, 调用内核代码继续处理
+common\_interrupt在entry\_64.S中定义，其中关键步骤为：调用**do\_IRQ**，完成后会根据**环境**判断**是否需要执行调度**，最后执行**iretq指令**完成中断处理，iret指令的重要功能就是**恢复中断函数前的EFLAGS(执行中断入口前被入栈保存，并清零IF位关中断**)，并恢复执行被中断的程序(这里不一定会恢复到之前的执行环境，可能执行软中断处理，或者执行调度)。
+
+do_IRQ的基本处理过程如下，其负责中断执行环境建立、vector到irq的转换等, 调用内核代码继续处理
 
 (1) irq\_enter(): 增加当前进程thread\_info的preempt\_count中的HARDIRQ域值, 表明进入硬件中断上下文
 
 (2) irq\_find\_mapping()通过硬件中断号查找IRQ中断号(irq domain模块中R树或数组)
 
-(3) 获得中断描述符, 调用desc\-\>handle\_irq(), 即high level event handler, 不同触发类型不同high level event handler. 基本操作都是中断响应相关, 然后遍历中断描述符的action链表, 依次执行每个action的primary handler, 一般而言, primary handler编写最开始要通过dev\_id确认是否是自己的设备产生了中断
+(3) 获得中断描述符, 调用desc\-\>**handle\_irq**(), 即high level event handler, 不同触发类型不同high level event handler. 基本操作都是中断响应相关, 然后遍历中断描述符的action链表, 依次执行每个action的primary handler, 一般而言, primary handler编写最开始要通过dev\_id确认是否是自己的设备产生了中断
 
 (4) primary handler如果返回IRQ\_WAKE\_THREAD(默认primary就是直接返回这个),设置aciton的flags为IRQTF\_RUNTHREAD(已经置位说明已经唤醒, 直接退出), 唤醒action\-\>thread中断线程
 
 (5) irq\_exit(): 减少当前进程thread\_info的preempt\_count中的HARDIRQ域值, 退出硬件中断上下文; 如果不在中断上下文, 并且本地CPU的\_\_softirq\_pending有pending等待的软中断则处理, 详细见软中断
 
-## 1.5 中断线程执行过程
+## 1.6 中断线程执行过程
 
 (1) 如果aciton的flags没设置为IRQTF\_RUNTHREAD, 设置线程为TASK\_INTERRUPTIBLE, 调用schedule(), 换出CPU, 进入睡眠等待
 

@@ -4,3 +4,4 @@
 - Linux inside: https://0xax.gitbooks.io/linux-insides/content/Interrupts/
 - Linux inside中文: https://xinqiu.gitbooks.io/linux-insides-cn/content/index.html
 - 中断子系统: https://blog.csdn.net/droidphone/article/category/1118447
+- x86中断初始化: https://blog.csdn.net/jus3ve/article/details/81517907 和 https://blog.csdn.net/phenix_lord/article/details/45116595
