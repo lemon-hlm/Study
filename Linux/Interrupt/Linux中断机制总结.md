@@ -10,9 +10,9 @@
 
 2、通过IDT中的中断描述符，调用common_interrupt； 
 
-3、通过common\_interrupt，调用do\_IRQ，完成vector到irq\_desc的转换，进入Generic interrupt layer(调用处理函数generic\_handle\_irq\_desc)； 
+3、通过common\_interrupt，调用do\_IRQ，完成vector到irq\_desc的转换(根据硬件的信息获取HW interrupt ID，并且通过irq domain模块翻译成IRQ number)，进入Generic interrupt layer(调用处理函数generic\_handle\_irq\_desc)； 
 
-4、调用在**中断初始化的时候**，按照**中断特性**(level触发，edge触发等、simple等)初始化的irq\_desc:: handle\_irq，执行不同的通用处理接口，比如handle\_simple\_irq； 
+4、调用在**中断初始化的时候**，按照**中断特性**(level触发，edge触发等、simple等)初始化的irq\_desc:: handle\_irq，执行不同的通用处理接口，比如handle\_simple\_irq; 调用该IRQ number对应的high level irq event handler，在这个high level的handler中，会通过和interupt controller交互，进行中断处理的flow control（处理中断的嵌套、抢占等），当然最终会遍历该中断描述符的IRQ action list，调用外设的specific handler来处理该中断
 
 5、这些通用处理接口会调用中断初始化的时候注册的外部中断处理函数；完成EOI等硬件相关操作；并完成中断处理的相关控制。
 
