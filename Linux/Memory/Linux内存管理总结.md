@@ -4595,7 +4595,7 @@ void kmem_cache_free(struct kmem_cache *s, void *x)
 EXPORT_SYMBOL(kmem_cache_free);
 ```
 
-该函数中，cache\_from\_obj()主要是用于**获取回收对象的kmem\_cache**，而slab\_free()主要是用于将对象回收，至于trace\_kmem\_cache\_free()则是对对象的回收做轨迹跟踪的。
+该函数中，**cache\_from\_obj**()主要是用于**获取回收对象的kmem\_cache**，而**slab\_free**()主要是用于**将对象回收**，至于**trace\_kmem\_cache\_free**()则是对对象的回收做**轨迹跟踪**的。
 
 ### 14.5.1 cache\_from\_obj()获取回收对象的缓存结构kmem\_cache
 
@@ -4620,8 +4620,100 @@ static inline struct kmem_cache *cache_from_obj(struct kmem_cache *s, void *x)
 }
 ```
 
-**kmem\_cache**在kmem\_cache\_free()的**入参已经传入**了，但是这里仍然要去**重新判断获取该结构**，主要是由于当**内核将各缓冲区链起来**的时候，其通过**对象地址**经**virt\_to\_head\_page**()转换后**获取的page页面结构**远比用户传入的值得可信。所以在该函数中则先会if (!memcg\_kmem\_enabled() \&\& !unlikely(s->flags & SLAB_DEBUG_FREE))判断是否memcg未开启且kmem_cache未设置SLAB_DEBUG_FREE，如果是的话，接着通过virt_to_head_page()经由对象地址获得其页面page管理结构；再经由slab_equal_or_root()判断调用者传入的kmem_cache是否与释放的对象所属的cache相匹配，如果匹配，则将由对象得到kmem_cache返回；否则最后只好将调用者传入的kmem_cache返回。
+**kmem\_cache**在kmem\_cache\_free()的**入参已经传入**了，但是这里仍然要去**重新判断获取该结构**，主要是由于当**内核将各缓冲区链起来**的时候，其通过**对象地址**经**virt\_to\_head\_page**()转换后**获取的page页面结构**远比用户传入的值得可信。所以在该函数中则先会if (!memcg\_kmem\_enabled() \&\& !unlikely(s->flags & SLAB\_DEBUG\_FREE))判断是否memcg未开启且kmem\_cache未设置SLAB\_DEBUG\_FREE，如果是的话，接着通过virt\_to\_head\_page()经由对象地址获得其页面page管理结构；再经由**slab\_equal\_or\_root**()判断调用者传入的kmem\_cache是否与释放的对象所属的cache相匹配，如果匹配，则将由对象得到kmem\_cache返回；否则最后只好将调用者传入的kmem\_cache返回。
 
+### 14.5.2 slab\_free()将对象回收
+
+```c
+static __always_inline void slab_free(struct kmem_cache *s,
+			struct page *page, void *x, unsigned long addr)
+{
+	void **object = (void *)x;
+	struct kmem_cache_cpu *c;
+	unsigned long tid;
+
+	slab_free_hook(s, x);
+
+redo:
+	do {
+		tid = this_cpu_read(s->cpu_slab->tid);
+		c = raw_cpu_ptr(s->cpu_slab);
+	} while (IS_ENABLED(CONFIG_PREEMPT) &&
+		 unlikely(tid != READ_ONCE(c->tid)));
+
+	/* Same with comment on barrier() in slab_alloc_node() */
+	barrier();
+
+	if (likely(page == c->page)) {
+		set_freepointer(s, object, c->freelist);
+
+		if (unlikely(!this_cpu_cmpxchg_double(
+				s->cpu_slab->freelist, s->cpu_slab->tid,
+				c->freelist, tid,
+				object, next_tid(tid)))) {
+
+			note_cmpxchg_failure("slab_free", s, tid);
+			goto redo;
+		}
+		stat(s, FREE_FASTPATH);
+	} else
+		__slab_free(s, page, x, addr);
+
+}
+```
+
+函数最先的是slab\_free\_hook()对象释放处理钩子调用处理，主要是用于去注册kmemleak中的对象；接着是redo的标签，该标签主要是用于释放过程中出现因抢占而发生CPU迁移的时候，跳转重新处理的点；在redo里面，将先通过preempt\_disable()禁止抢占，然后\_\_this\_cpu\_ptr()获取本地CPU的kmem\_cache\_cpu管理结构以及其中的事务ID（tid），然后preempt\_enable()恢复抢占；if(likely(page == c\-\>page))如果当前释放的对象与本地CPU的缓存区相匹配，将会set\_freepointer()设置该对象尾随的空闲对象指针数据，然后类似分配时，经由this\_cpu\_cmpxchg\_double()原子操作，将对象归还回去；但是如果当前释放的对象与本地CPU的缓存区不匹配，意味着不可以快速释放对象，此时将会通过\_\_slab\_free()慢通道将对象释放。
+
+#### 14.5.2.1 \_\_slab\_free()
+
+
+## 14.6 kmem\_cache\_destroy()缓存区的销毁
+
+```c
+void kmem_cache_destroy(struct kmem_cache *s)
+{
+	struct kmem_cache *c, *c2;
+	LIST_HEAD(release);
+	bool need_rcu_barrier = false;
+	bool busy = false;
+
+	BUG_ON(!is_root_cache(s));
+
+	get_online_cpus();
+	get_online_mems();
+
+	mutex_lock(&slab_mutex);
+
+	s->refcount--;
+	if (s->refcount)
+		goto out_unlock;
+
+	for_each_memcg_cache_safe(c, c2, s) {
+		if (do_kmem_cache_shutdown(c, &release, &need_rcu_barrier))
+			busy = true;
+	}
+	if (!busy)
+		do_kmem_cache_shutdown(s, &release, &need_rcu_barrier);
+out_unlock:
+	mutex_unlock(&slab_mutex);
+	put_online_mems();
+	put_online_cpus();
+	do_kmem_cache_release(&release, need_rcu_barrier);
+}
+EXPORT_SYMBOL(kmem_cache_destroy);
+```
+
+get\_online\_cpus()是对cpu\_online\_map的加锁，其与末尾的put\_online\_cpus()是配对使用的。
+
+mutex\_lock()用于获取slab\_mutex互斥锁，该锁主要用于全局资源保护。
+
+对kmem\_cache的引用计数refcount自减操作，如果自减后if (s\-\>refcount)为false，即**引用计数为0**，表示**该缓冲区不存在slab别名挂靠**的情况，那么**其kmem\_cache结构可以删除**，否则表示**有其他缓冲区别名挂靠**，仍有依赖，那么将会**解锁slab\_mutex**并**put\_online\_cpus()释放cpu\_online\_map锁**，然后退出。
+
+if(s->refcount)为false的分支中，
+
+，然后\_\_kmem\_cache\_shutdown()**删除kmem\_cache结构信息**。
+
+由此slab销毁完毕。
 
 # 15 kmalloc和kfree实现
 
@@ -4650,6 +4742,7 @@ static inline struct kmem_cache *cache_from_obj(struct kmem_cache *s, void *x)
 kmalloc()是基于slab/slob/slub分配分配算法上实现的，不少地方将其作为slab/slob/slub分配算法的入口，实际上是略有区别的。
 
 ```c
+[include/linux/slab.h]
 static __always_inline void *kmalloc(size_t size, gfp_t flags)
 {
     if (__builtin_constant_p(size)) {
@@ -4705,7 +4798,7 @@ GFP\_DMA：从DMA内存中分配合适的内存，应仅使用于kmalloc的cache
 
 函数入口if判断内的\_\_builtin\_constant\_p是**Gcc内建函数**，用于判断一个值是否为**编译时常量**，是则返回true，否则返回false。也就意味着如果调用kmalloc()传入**常量**且该值**大于KMALLOC\_MAX\_CACHE\_SIZE**（即申请空间超过kmalloc()所能分配**最大cache的大小**），那么将会通过**kmalloc\_large**()进行分配；否则都将通过\_\_**kmalloc**()进行分配。
 
-如果通过**kmalloc\_large**()进行内存分配，将会经kmalloc\_large()\-\>kmalloc\_order()\-\>\_\_get\_free\_pages()，最终通过**Buddy伙伴算法**申请所需内存。
+如果通过**kmalloc\_large**()进行内存分配，将会经**kmalloc\_large**()\-\>**kmalloc\_order**()\-\>\_\_**get\_free\_pages**()，最终通过**Buddy伙伴算法**申请所需内存。
 
 看\_\_kmalloc()的实现
 
@@ -4715,64 +4808,85 @@ void *__kmalloc(size_t size, gfp_t flags)
 {
     struct kmem_cache *s;
     void *ret;
- 
     if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
         return kmalloc_large(size, flags);
- 
     s = kmalloc_slab(size, flags);
- 
     if (unlikely(ZERO_OR_NULL_PTR(s)))
         return s;
- 
     ret = slab_alloc(s, flags, _RET_IP_);
- 
     trace_kmalloc(_RET_IP_, ret, size, s->size, flags);
- 
     return ret;
 }
 ```
 
-判断申请**是否超过最大cache大小**，如果是则通过**kmalloc\_large**()进行分配；接着通过**申请大小**及**申请标志**调用**kmalloc\_slab**()查找**适用的kmem\_cache**；最后通过**slab\_alloc**()进行**slab分配**。
+判断申请**是否超过最大cache大小**，如果是则通过**kmalloc\_large**()进行分配；
+
+接着通过**申请大小**及**申请标志**调用**kmalloc\_slab**()查找**适用的kmem\_cache**；
+
+最后通过**slab\_alloc**()进行**slab分配**。
 
 看一下kmalloc\_slab()的实现：
 
 ```c
 [mm/slab_commmon.c]
-/*
- * Find the kmem_cache structure that serves a given size of
- * allocation
- */
 struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags)
 {
     int index;
- 
     if (unlikely(size > KMALLOC_MAX_SIZE)) {
         WARN_ON_ONCE(!(flags & __GFP_NOWARN));
         return NULL;
     }
- 
     if (size <= 192) {
         if (!size)
             return ZERO_SIZE_PTR;
- 
         index = size_index[size_index_elem(size)];
     } else
         index = fls(size - 1);
- 
 #ifdef CONFIG_ZONE_DMA
     if (unlikely((flags & GFP_DMA)))
         return kmalloc_dma_caches[index];
- 
 #endif
     return kmalloc_caches[index];
 }
+
+static inline int size_index_elem(size_t bytes)
+{
+	return (bytes - 1) / 8;
+}
+
+static s8 size_index[24] = {
+	3,	/* 8 */
+	4,	/* 16 */
+	5,	/* 24 */
+	5,	/* 32 */
+	6,	/* 40 */
+	6,	/* 48 */
+	6,	/* 56 */
+	6,	/* 64 */
+	1,	/* 72 */
+	1,	/* 80 */
+	1,	/* 88 */
+	1,	/* 96 */
+	7,	/* 104 */
+	7,	/* 112 */
+	7,	/* 120 */
+	7,	/* 128 */
+	2,	/* 136 */
+	2,	/* 144 */
+	2,	/* 152 */
+	2,	/* 160 */
+	2,	/* 168 */
+	2,	/* 176 */
+	2,	/* 184 */
+	2	/* 192 */
+};
 ```
 
-申请的大小超过KMALLOC\_MAX\_SIZE最大值，则返回NULL表示失败；如果**申请大小小于192,且不为0**，将通过size\_index\_elem宏转换为下标后，经size\_index全局数组取得索引值，否则将直接通过fls()取得索引值；最后如果开启了DMA内存配置且设置了GFP\_DMA标志，将结合索引值通过kmalloc\_dma\_caches返回kmem\_cache管理结构信息，否则将通过kmalloc\_caches返回该结构。
+申请的大小超过KMALLOC\_MAX\_SIZE最大值，则返回NULL表示失败；如果**申请大小小于192,且不为0**，将通过**size\_index\_elem宏**转换为**下标**后，经**size\_index全局数组**取得索引值，否则将**直接通过fls()取得索引值**；最后如果**开启了DMA内存配置**且设置了**GFP\_DMA标志**，将**结合索引值**通过**kmalloc\_dma\_caches**返回**kmem\_cache管理结构信息**，否则将通过**kmalloc\_caches**[]返回该结构。
 
 由此可以看出kmalloc()实现较为简单，其分配所得的**内存**不仅是**虚拟地址上的连续**存储空间，同时也是**物理地址上的连续**存储空间。这是有别于后面将会分析到的vmalloc()申请所得的内存。
 
-## 15.2 kfree()的实现
+## 15.3 kfree()的实现
 
 主要是在slab.c/slob.c/slub.c中
 
@@ -4799,13 +4913,59 @@ void kfree(const void *x)
 }
 ```
 
-经过trace\_kfree()记录kfree轨迹，然后if (unlikely(ZERO\_OR\_NULL\_PTR(x)))对**地址做非零判断**，接着virt\_to\_head\_page(x)将**虚拟地址转换到页面**；再是判断if (unlikely(!PageSlab(page)))**判断该页面是否作为slab分配管理**，如果是的话则转为通过**slab\_free()进行释放**，否则将进入if分支中；在if分支中，将会kfree\_hook()做释放前kmemleak处理（该函数主要是封装了kmemleak\_free()），完了之后将会\_\_free\_memcg\_kmem\_pages()将页面释放，同时该函数内也将cgroup释放处理。
+经过trace\_kfree()记录kfree轨迹，然后if (unlikely(ZERO\_OR\_NULL\_PTR(x)))对**地址做非零判断**，
+
+接着virt\_to\_head\_page(x)将**虚拟地址转换到页面**；
+
+再是判断if (unlikely(!PageSlab(page)))**判断该页面是否作为slab分配管理**，如果是的话则转为通过**slab\_free()进行释放**，否则将进入if分支中；
+
+在if分支中，将会kfree\_hook()做释放前kmemleak处理（该函数主要是封装了kmemleak\_free()），完了之后将会\_\_free\_memcg\_kmem\_pages()将页面释放，同时该函数内也将cgroup释放处理。
 
 # 16 内存破坏检测kmemcheck分析
 
+kmemcheck和kmemleak是linux在2.6.31版本开始对外提供的内核内存管理方面的两个检测工具. 其中**kmemcheck**主要是用于**内核内存破坏检测**，而**kmemleak**则是用于**内核内存泄露检测**。
+
+kmemcheck的设计思路是**分配内存页面**的同时**分配等量的影子内存**，所有对**分配出来的内存的操作**，都将**被影子内存所“替代**”，也就是该操作都会**先通过影子内存**，经检测内存操作的“**合法性**”后，最终才会落入到**实际的内存页面**中，对于所有检测出来的“**非法”操作**，都将会被**记录下来**。
+
+其具体工作原理可以通过分配内存、访问内存、释放内存以及错误处理四个方面进行了解：
+
+## 16.1 分配内存
+
+对分配到的**内存数据页面**（分配标志中不包含 \_\_GFP\_**NOTRACK**，\_\_GFP\_HIGHMEM，对于**slab cache的内存**，cache 创建时标志中不包含SLAB\_**NOTRACK**)，**kmemcheck**会为其**分配相同数量的影子页面**（在分配影子页面时，置位了\_\_GFP\_NOTRACK标志位，所以它自己不会被 kmemcheck 跟踪），**数据页面！！！**通过其**page**结构体中的**shadow指针**和**影子页面联系**起来。然后**影子页面**中的**每个字节**会标志为**未初始化状态**，同时将**数据页面**对应的**页表项！！！中\_PAGE\_PRESENT标志位清零**（这样访问该数据页面时会引发**页面异常**），并置位\_**PAGE\_HIDDEN标志位**来表明**该页面是被kmemcheck跟踪**的。
+
+## 16.2 访问内存
+
+由于在分配过程中将**数据页面**对应的**页表项中的\_PAGE\_PRESENT清零**了，因此对该数据页面的访问会引发一次**页面异常**，在**do\_page\_fault**函数处理过程中，如果它发现**页表项属性中的\_PAGE\_HIDDEN 置位**了，那么说明**该页面是被 Kmemcheck 跟踪**的，接下来就会**进入 kmemcheck 的处理流程**，其中会根据**该次内存访问地址**所对应的**影子页面中的内容**来检查这次访问**是否是合法**的，如果是**非法**的那么它就会**将预先设置好的一个 tasklet（该 tasklet 负责错误处理）插入到当前 CPU 的 tasklet 队列**中，然后去**触发一个软中断**，这样在中断的下半部分就会**执行这个 tasklet**。
+
+接下来 kmemcheck 会将**影子页面**中**对应本次内存访问地址的内存区域**标识为**初始化状态（防止同一个地址警告两次**），同时将**数据页面页表项中的 \_PAGE\_PRESENT 置位**，并将 **CPU 标志寄存器 TF 置位开启单步调试功能**，这样**当页面异常处理返回**后，CPU 会**重新执行触发异常的指令**，而这次是**可以正确执行**的。但是**执行该指令完毕后**，由于 **TF 标志位置位**了，所以在**执行下一条指令之前！！！**，系统会进入**调试陷阱（debug trap**），在其处理函数 **do\_trap** 中，**kmemcheck** 又会**清零该数据页面页表项中的 \_PAGE\_PRESENT 属性标志位**（并且**清零标志寄存器中的 TF 位**），从而当**下次再访问到这个页面**时，又会**引发一次页面异常**。
+
+## 16.3 释放内存
+
+**影子页面**会随着**数据页面的释放而被释放**，因此当**数据页面被释放**之后，如果再去访问该页面，不会出现 kmemcheck 报警。
+
+## 16.4 错误处理
+
+**kmemcheck** 用了一个**循环缓冲区**（包含了 **CONFIG\_KMEMCHECK\_QUEUE\_SIZE 个元素**）来记录**每次的警告信息**，包括**警告类型**，引发警告的**内存地址**及其**访问长度**，**各寄存器的值**和 **stack trace**，同时还将访问地址附近（起始地址：以 2 的 CONFIG\_KMEMCHECK\_SHADOW\_COPY\_SHIFT 次幂大小对该地址进行圆整后的值；大小：2 的 CONFIG\_KMEMCHECK\_SHADOW\_COPY\_SHIFT 次幂）的数据页面和其对应影子页面中的内容保存在记录中（由同一指令地址引发的相邻的两次警告不会被重复记录）。当前文中注册的 tasklet 被调度执行时，会将循环缓冲区中所有的记录都打印出来。
+
+................
+
 # 17 内存泄漏检测kmemleak分析
 
-memleak的工作原理很简单，主要是对kmalloc()、vmalloc()、kmem\_cache\_alloc()等接口分配的内存地址空间进行跟踪，通过对其地址、空间大小、分配调用栈等信息添加到PRIO搜索树中进行管理。当有匹配的内存释放操作时，将会把跟踪的信息从kmemleak管理中移除。
+kmemleak的工作原理很简单，主要是对**kmalloc**()、**vmalloc**()、**kmem\_cache\_alloc**()等接口**分配的内存地址空间进行跟踪**，通过对**其地址**、**空间大小**、**分配调用栈**等信息添加到**PRIO搜索树**中进行管理。当有**匹配的内存释放操作**时，将会把跟踪的信息**从kmemleak管理中移除**。
+
+通过**内存扫描**（包括对保存的**寄存器值**），如果发现**某块内存在没有任何一个指针指向其起始地址或者其空间范围**，那么该内存将会被判定为**孤立块**。因为这意味着，该**内存的地址无任何途径被传递到内存释放函数**中，由此可以判定**该内存存在泄漏行为**。
+
+内存扫描的算法实现也很简单：
+
+1、 将**所有跟踪的内存对象标识为白色**，如果经过**内存扫描**后，**内存对象管理树**中仍标志为**白色**的则会被判定为**孤立**的；
+
+2、 自**数据段**以及**调用栈空间**开始扫描内存，检测**是否内存空间数据**，判断是否**存在数值**与kmemleak的**PRIO搜索树**所记录的**内存地址相邻近**。如果查找到存在指针值指向被标记为白色的跟踪对象，那么该跟踪对象将会被添加到**灰色链表**中（标记为**灰色**）；
+
+3、 扫描完**灰色链表中的对象**，检查是否存在与kmemleak的**PRIO搜索树**管理的**跟踪内存地址匹配**的，因为某些标记为**白色的对象**可能变成了灰色的并被添加到链表的末端；
+
+4、 经过以上步骤后，**仍标记为白色的对象**将会被认定为**孤立的**，将会上报记录到/**sys/kernel/debug/kmemleak文件  **中。
+
+..............
 
 # 18 vmalloc不连续内存管理
 
@@ -4819,19 +4979,558 @@ kmalloc、vmalloc和malloc这 3 个常用的API函数具有相当的分量，三
 
 **伙伴管理算法**初衷是**解决外部碎片**问题，而**slab算法**则是用于**解决内部碎片**问题，但是内存使用的得不合理终究会产生碎片。碎片问题产生后，申请大块连续内存将可能持续失败，但是实际上内存的空闲空间却是足够的。这时候就引入了**不连续页面管理算法**，即我们常用的**vmalloc**申请分配的内存空间，它主要是用于将**不连续的页面**，通过内存映射到**连续的虚拟地址空间**中，提供给申请者使用，由此实现内存的高利用。
 
+## 18.3 vmalloc初始化
 
+vmalloc\_init()为vmalloc不连续内存管理初始化函数。
 
-# 19 VMA操作
+```c
+[mm/vmalloc.c]
+static struct vm_struct *vmlist __initdata;
+// 该函数先于vmalloc_init执行
+void __init vm_area_add_early(struct vm_struct *vm)
+{
+	struct vm_struct *tmp, **p;
+
+	BUG_ON(vmap_initialized);
+	for (p = &vmlist; (tmp = *p) != NULL; p = &tmp->next) {
+		if (tmp->addr >= vm->addr) {
+			BUG_ON(tmp->addr < vm->addr + vm->size);
+			break;
+		} else
+			BUG_ON(tmp->addr + tmp->size > vm->addr);
+	}
+	vm->next = *p;
+	*p = vm;
+}
+// 该函数先于vmalloc_init执行
+void __init vm_area_register_early(struct vm_struct *vm, size_t align)
+{
+	static size_t vm_init_off __initdata;
+	unsigned long addr;
+
+	addr = ALIGN(VMALLOC_START + vm_init_off, align);
+	vm_init_off = PFN_ALIGN(addr + vm->size) - VMALLOC_START;
+
+	vm->addr = (void *)addr;
+
+	vm_area_add_early(vm);
+}
+
+void __init vmalloc_init(void)
+{
+	struct vmap_area *va;
+	struct vm_struct *tmp;
+	int i;
+	for_each_possible_cpu(i) {
+		struct vmap_block_queue *vbq;
+		struct vfree_deferred *p;
+		
+		vbq = &per_cpu(vmap_block_queue, i);
+		spin_lock_init(&vbq->lock);
+		INIT_LIST_HEAD(&vbq->free);
+		p = &per_cpu(vfree_deferred, i);
+		init_llist_head(&p->list);
+		INIT_WORK(&p->wq, free_work);
+	}
+	/* Import existing vmlist entries. */
+	for (tmp = vmlist; tmp; tmp = tmp->next) {
+		va = kzalloc(sizeof(struct vmap_area), GFP_NOWAIT);
+		va->flags = VM_VM_AREA;
+		va->va_start = (unsigned long)tmp->addr;
+		va->va_end = va->va_start + tmp->size;
+		va->vm = tmp;
+		__insert_vmap_area(va);
+	}
+	vmap_area_pcpu_hole = VMALLOC_END;
+	vmap_initialized = true;
+}
+```
+
+先是**遍历每CPU的vmap\_block\_queue**和**vfree\_deferred**变量并进行**初始化**。
+
+- 其中**vmap\_block\_queue**是**非连续内存块队列管理结构**，主要是**队列**以及**对应的保护锁**；
+
+- 而**vfree\_deferred**是**vmalloc**的**内存延迟释放管理**，除了**队列初始**外，还创建了一个**free\_work**()工作队列用于**异步释放内存**。
+
+接着将挂接在**vmlist链表的各项**\_\_insert\_vmap\_area()输入到**非连续内存块的管理**中。
+
+\_\_insert\_vmap\_area()的实现
+
+```c
+mm/vmalloc.c】
+static void __insert_vmap_area(struct vmap_area *va)
+{
+    struct rb_node **p = &vmap_area_root.rb_node;
+    struct rb_node *parent = NULL;
+    struct rb_node *tmp;
+ 
+    while (*p) {
+        struct vmap_area *tmp_va;
+ 
+        parent = *p;
+        tmp_va = rb_entry(parent, struct vmap_area, rb_node);
+        if (va->va_start < tmp_va->va_end)
+            p = &(*p)->rb_left;
+        else if (va->va_end > tmp_va->va_start)
+            p = &(*p)->rb_right;
+        else
+            BUG();
+    }
+ 
+    rb_link_node(&va->rb_node, parent, p);
+    rb_insert_color(&va->rb_node, &vmap_area_root);
+ 
+    /* address-sort this list */
+    tmp = rb_prev(&va->rb_node);
+    if (tmp) {
+        struct vmap_area *prev;
+        prev = rb_entry(tmp, struct vmap_area, rb_node);
+        list_add_rcu(&va->list, &prev->list);
+    } else
+        list_add_rcu(&va->list, &vmap_area_list);
+}
+```
+
+主要动作先是**遍历vmap\_area\_root红黑树**（这是一棵根据**非连续内存地址**排序的**红黑树**），**查找合适的节点**位置，然后rb\_insert\_color()**插入到红黑树**中，最后则是查找插入的内存块管理树的**父节点**，有则**插入到该节点链表的后面**位置，否则**作为链表头**插入到**vmap\_area\_list链表**中（该链表同样是根据地址排序的）。
+
+## 18.4 内存申请vmalloc()
+
+```c
+[mm/vmalloc.c]
+void *vmalloc(unsigned long size)
+{
+	return __vmalloc_node_flags(size, NUMA_NO_NODE,
+				    GFP_KERNEL | __GFP_HIGHMEM);
+}
+EXPORT_SYMBOL(vmalloc);
+```
+
+使用分配掩码GFP\_KERNEL | \_\_GFP\_HIGHMEM, 说明优先使用高端内存High Memory.
+
+\_\_vmalloc\_node\_flags()的存在，主要是用于**指定申请不连续内存页面所来源的node结点**。
+
+```c
+[mm/vmalloc.c]
+static inline void *__vmalloc_node_flags(unsigned long size,
+					int node, gfp_t flags)
+{
+	return __vmalloc_node(size, 1, flags, PAGE_KERNEL,
+					node, __builtin_return_address(0));
+}
+```
+
+\_\_vmalloc\_node\_flags()从**结点**请求分配**连续虚拟内存(！！！**)，而\_\_vmalloc\_node\_flags()则是封装\_\_vmalloc\_node()。
+
+```c
+[mm/vmalloc.c]
+static void *__vmalloc_node(unsigned long size, unsigned long align,
+			    gfp_t gfp_mask, pgprot_t prot,
+			    int node, const void *caller)
+{
+	return __vmalloc_node_range(size, align, VMALLOC_START, VMALLOC_END,
+				gfp_mask, prot, 0, node, caller);
+}
+
+[arch/x86/include/asm/pgtable_64_types.h]
+#define VMALLOC_START    _AC(0xffffc90000000000, UL)
+#define VMALLOC_END      _AC(0xffffe8ffffffffff, UL)
+
+[arch/x86/include/asm/pgtable_32_types.h]
+#define VMALLOC_OFFSET	(8 * 1024 * 1024)
+#define VMALLOC_START	((unsigned long)high_memory + VMALLOC_OFFSET)
+
+#ifdef CONFIG_HIGHMEM
+# define VMALLOC_END	(PKMAP_BASE - 2 * PAGE_SIZE)
+#else
+# define VMALLOC_END	(FIXADDR_START - 2 * PAGE_SIZE)
+#endif
+```
+
+这里的VMALLOC\_START和VMALLOC\_END是vmalloc中很重要的宏，这两个宏定义在 arch/x86/include/asm/pgtable\_64\_types.h头文件中。VMALLOC\_START是vmalloc区域的开始地址，它是在High memory指定的高端内存开始地址再加上8MB大小的安全区域（VMALLOC\_OFFSET)。
+
+调用\_\_vmalloc\_node\_range()
+
+```c
+void *__vmalloc_node_range(unsigned long size, unsigned long align,
+			unsigned long start, unsigned long end, gfp_t gfp_mask,
+			pgprot_t prot, unsigned long vm_flags, int node,
+			const void *caller)
+{
+	struct vm_struct *area;
+	void *addr;
+	unsigned long real_size = size;
+
+	size = PAGE_ALIGN(size);
+	if (!size || (size >> PAGE_SHIFT) > totalram_pages)
+		goto fail;
+
+	area = __get_vm_area_node(size, align, VM_ALLOC | VM_UNINITIALIZED |
+				vm_flags, start, end, node, gfp_mask, caller);
+	if (!area)
+		goto fail;
+
+	addr = __vmalloc_area_node(area, gfp_mask, prot, node);
+	if (!addr)
+		return NULL;
+
+	clear_vm_uninitialized_flag(area);
+
+	kmemleak_alloc(addr, real_size, 2, gfp_mask);
+
+	return addr;
+
+fail:
+	warn_alloc_failed(gfp_mask, 0,
+			  "vmalloc: allocation failure: %lu bytes\n",
+			  real_size);
+	return NULL;
+}
+```
+
+首先对**申请内存的大小做对齐**后，如果大小为0或者大于总内存，则返回失败；
+
+继而调用\_\_**get\_vm\_area\_node**()向内核请求一个空间大小相匹配的**虚拟地址空间(！！！**)，返回**管理信息结构vm\_struct**；
+
+而调用\_\_**vmalloc\_area\_node**()将根据**vm\_struct的信息**进行**内存空间申请**；
+
+接着通过**clear\_vm\_uninitialized\_flag**()标示**内存空间初始化**；
+
+最后调用**kmemleak\_alloc**()进行**内存分配泄漏调测**。
+
+### 18.4.1 \_\_get\_vm\_area\_node()请求虚拟地址空间
+
+```c
+static struct vm_struct *__get_vm_area_node(unsigned long size,
+		unsigned long align, unsigned long flags, unsigned long start,
+		unsigned long end, int node, gfp_t gfp_mask, const void *caller)
+{
+	struct vmap_area *va;
+	struct vm_struct *area;
+
+	BUG_ON(in_interrupt());
+	if (flags & VM_IOREMAP)
+		align = 1ul << clamp(fls(size), PAGE_SHIFT, IOREMAP_MAX_ORDER);
+
+	size = PAGE_ALIGN(size);
+	if (unlikely(!size))
+		return NULL;
+
+	area = kzalloc_node(sizeof(*area), gfp_mask & GFP_RECLAIM_MASK, node);
+	if (unlikely(!area))
+		return NULL;
+
+	if (!(flags & VM_NO_GUARD))
+		size += PAGE_SIZE;
+
+	va = alloc_vmap_area(size, align, start, end, node, gfp_mask);
+	if (IS_ERR(va)) {
+		kfree(area);
+		return NULL;
+	}
+
+	setup_vmalloc_vm(area, va, flags, caller);
+
+	return area;
+}
+```
+
+如果标记为**VM\_IOREMAP**，表示它是用于**特殊架构修正内存对齐**；
+
+通过PAGE\_ALIGN对**内存进行对齐操作**，如果**申请的内存空间大小小于内存页面大小**，那么将返回NULL；
+
+接着通过**kzalloc\_node**()申请**vmap\_area数据结构空间**；
+
+**不连续内存页面**的**申请**，将会**新增一页内存作为保护页(！！！**)
+
+继而调用**alloc\_vmap\_area**()申请**指定的虚拟地址范围**内的未映射空间，说白了就是**申请不连续的物理内存(！！！**)；
+
+最后**setup\_vmalloc\_vm**()设置**vm\_struct**和**vmap\_area**收尾，用于将**分配的虚拟地址空间信息返回**出去。
+
+#### 18.4.1.1 申请不连续物理内存页面alloc\_vmap\_area()
+
+```c
+[mm/vmalloc.c]
+static struct vmap_area *alloc_vmap_area(unsigned long size,
+				unsigned long align,
+				unsigned long vstart, unsigned long vend,
+				int node, gfp_t gfp_mask)
+```
+
+通过kmalloc\_node()申请**vmap\_area空间**，仅使用GFP\_RECLAIM\_MASK标识；
+
+接着调用kmemleak\_scan\_area()将**该内存空间添加扫描区域内的内存块**中；
+
+**加锁vmap\_area\_lock**之后紧接着的条件判断中，如果**free\_vmap\_cache**为**空**，意味着是**首次进行vmalloc内存分配**，而**cached\_hole\_size**记录**最大空洞空间大小**，如果size小于最大空洞那么表示存在着可以复用的空洞，其余的则是cached\_vstart起始位置和cached\_align对齐大小的比较，只要最终条件判断结果为true的情况下，那么都将会**自vmalloc空间起始**去查找**合适的内存空间进行分配**；
+
+往下记录cached\_vstart和cached_align的最小合适的参数。
+
+继而判断free\_vmap\_cache是否为空，**free\_vmap\_cache**记录着**最近释放的**或**最近注册使用**的**不连续内存页面空间**，是用以**加快空间的搜索速度**的。如果**free\_vmap\_cache不为空**的情况下，将**对申请的空间进行检查**，当**申请的内存空间**超出范围将**不使用cache**，而当空间溢出时将直接跳转至**overflow退出申请**。如果free\_vmap\_cache为空的情况下，将先做溢出检验，接着**循环查找vmap\_area\_root红黑树**，尝试找到vstart附件已经分配出去的虚拟地址空间。若能找到的话，first将不为空，否则在first为空的情况下，表示vstart为起始的虚拟地址空间未被使用过，将会直接对该虚拟地址空间进行分配；若first不为空，意味着该空间曾经分配过，那么将会进入**while分支**进行处理，该循环是**从first为起点遍历vmap\_area\_list链表**管理的**虚拟地址空间链表**进行查找，如果**找合适的未使用的虚拟地址空间**或者遍历到了**链表末尾**，除非空间溢出，否则都表示找到了该空间。
+
+找到了**合适的虚拟地址空间**后，对**地址空间进行分配**，并将**分配信息**记录到**vmap\_area结构**中，最后将**该管理结构**通过\_\_insert\_vmap\_area()插入到**vmap\_area\_root红黑树**中，以及**vmap\_area\_list链表**中。
+
+至此虚拟地址空间分配完毕。
+
+红黑树管理:
+
+![config](./images/39.png)
+
+相对应红黑树的管理结构，其链表串联的情况则是下面这样的。
+
+![config](./images/40.png)
+
+### 18.4.2 \_\_vmalloc\_area\_node()
+
+该函数首先计算需要申请的**内存空间页面数量nr\_pages**以及需要**存储等量页面指针的数组空间大小**，如果**该数组所需内存空间超过单个页面**的时候，将通过\_\_**vmalloc\_node()申请**，否则使用**kmalloc\_node()进行申请**。
+
+如果**存放页面管理的数组空间申请失败**，则**内存申请失败**并对前面申请的**虚拟空间！！！**还回。
+
+接着**for循环**主要是根据**页面数量**，循环**申请内存页面空间**。**物理内存空间申请成功**后，将通过**map\_vm\_area**()进行**内存映射处理**。
+
+vmalloc不连续内存页面空间的申请分析完毕。
+
+# 19 VMA
+
+在 32 位系统中，**每个用户进程**可以拥有**3GB大小的虚拟地址空间**，通常要远大于物理内存，那么如何管理这些虚拟地址空间呢？**用户进程**通常会多次调用**malloc**()或使用**mmap**()接口**映射文件**到**用户空间**来进行**读写等操作**，这些操作都会要求在**虚拟地址空间(！！！**)中**分配内存块**，这些内存块基本上都是**离散的(！！！**)。
+
+- **malloc**()是**用户态**常用的**分配内存的接口 API**函数，后面详细介绍其内核实现机制；
+
+- **mmap**()是**用户态**常用的用于**建立文件映射**或**匿名映射**的函数，后面详细介绍其内核实现机制。
+
+这些**进程地址空间(！！！**)在**内核**中使用**struct vm\_area\_struct数据结构**来描述，简称**VMA**，也被称为**进程地址空间**或**进程线性区**。由于**这些地址空间**归属于**各个用户进程**，所以在**用户进程**的**struct mm\_struct数据结构**中也有**相应的成员**，用于对这些VMA进行管理。
+
+## 19.1 数据结构
+
+VMA数据结构定义在mm\_types.h文件中。
+
+```c
+[include/linux/mm_types.h]
+struct vm_area_struct {
+	unsigned long vm_start;
+	unsigned long vm_end;
+	struct vm_area_struct *vm_next, *vm_prev;
+	struct rb_node vm_rb;
+	unsigned long rb_subtree_gap;
+	
+	/* Second cache line starts here. */
+
+	struct mm_struct *vm_mm;	/* The address space we belong to. */
+	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
+	unsigned long vm_flags;		/* Flags, see mm.h. */
+	struct {
+		struct rb_node rb;
+		unsigned long rb_subtree_last;
+	} shared;
+	struct list_head anon_vma_chain;
+	struct anon_vma *anon_vma;
+	const struct vm_operations_struct *vm_ops;
+	unsigned long vm_pgoff;
+	struct file * vm_file;
+	void * vm_private_data;
+
+#ifndef CONFIG_MMU
+	struct vm_region *vm_region;	/* NOMMU mapping region */
+#endif
+#ifdef CONFIG_NUMA
+	struct mempolicy *vm_policy;	/* NUMA policy for the VMA */
+#endif
+};
+```
+
+- vm\_start和vm\_end: 指定VMA在**进程地址空间**的**起始地址**和**结束地址**。
+- vm\_next和vm\_prev: **进程的VMA**都连接成一个**链表**。
+- vm\_rb: **VMA 作为一个节点**加入**红黑树**中，**每个进程的struct mm\_struct**数据结构中都有这样一棵红黑树**mm\-\>mm\_rb**。
+- vm\_mm: 指向该VMA所属的**进程struct mm\_struct数据结构**。
+- vm\_page\_prot: VMA的**访问权限**。
+- vm\_flags: 描述该VMA的一组**标志位**。
+- anon\_vma\_chain 和 anon\_vma: 用于管理**RMAP反向映射**。
+- vm\_ops: 指向许多方法的集合，这些方法用于在VMA中执行**各种操作**，通常用于**文件映射**。
+- vm\_pgoff: 指定**文件映射的偏移量**，这个变量的单位不是Byte，而是**页面的大小(PAGE\_SIZE**)。
+- vm\_file: 指向file的实例，描述**一个被映射的文件**。
+
+**struct mm\_struct**数据结构是描述**进程内存管理的核心数据结构**，该数据结构也提供了管理VMA所需要的信息，这些信息概况如下：
+
+```c
+[include/linux/mm_types.h]
+struct mm_struct {
+	struct vm_area_struct *mmap;		/* list of VMAs */
+	struct rb_root mm_rb;
+```
+
+**每个VMA**都要连接到**mm\_struct**中的**链表**和**红黑树**中，以方便查找。
+
+- **mmap**形成一个**单链表**, **进程**中**所有的VMA**都链接到这个**链表**中，**链表头**是**mm\_struct\-\>mmap**.
+- **mm\_rb**是**红黑树的根节点**，**每个进程**有一棵**VMA的红黑树**。
+
+VMA按照**起始地址**以**递增的方式**插入**mm\_struct\-\>mmap链表**中。当**进程**拥有**大量的VMA**时，**扫描链表**和**查找特定的VMA**是非常**低效**的操作，例如在云计算的机器中，所以内核中通常要靠**红黑树**来协助，以便提高查找速度。
+
+## 19.2 查找VMA
+
+通过**虚拟地址addr**来**查找VMA**是内核中常用的操作，内核提供一个API函数来实现这个查找操作。**find\_vma**()函数根据**给定地址addr**查找满足如下条件之一的VMA，如图所示。
+
+- **addr在VMA空间范围**内，即vma\-\>vm\_start <= addr < vma\-\>vm\_end。
+- **距离addr最近**并且VMA的结束地址大于addr的一个VMA。
+
+![config](./images/41.png)
+
+## 19.3 插入VMA
+
+insert\_vm\_struct()是内核提供的**插入VMA**的核心API函数。
+
+```c
+[mm/mmap.c]
+int insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	struct vm_area_struct *prev;
+	struct rb_node **rb_link, *rb_parent;
+
+	if (!vma->vm_file) {
+		BUG_ON(vma->anon_vma);
+		vma->vm_pgoff = vma->vm_start >> PAGE_SHIFT;
+	}
+	if (find_vma_links(mm, vma->vm_start, vma->vm_end,
+			   &prev, &rb_link, &rb_parent))
+		return -ENOMEM;
+	if ((vma->vm_flags & VM_ACCOUNT) &&
+	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
+		return -ENOMEM;
+
+	vma_link(mm, vma, prev, rb_link, rb_parent);
+	return 0;
+}
+```
+
+insert\_vm\_struct()函数向**VMA链表**和**红黑树**插入一个**新的VMA**。参数**mm是进程的内存描述符**，**vma**是要插入的**线性区VMA**。
+
+## 19.4 合并VMA
+
+在**新的VMA**被加入到**进程的地址空间**时，**内核**会检查它是否可以**与一个或多个现存的VMA进行合并**。vma\_merge()函数实现将一个新的VMA和附近的VMA合并功能。
+
+![config](./images/42.png)
+
+## 19.5 小结
+
+**进程地址空间**在**内核**中用**VMA来抽象描述**，VMA离散分布在3GB的用户空间中（32位系统)，内核中提供相应的API来管理VMA，简单总结如下。
+
+(1) 查找VMA
+
+```c
+struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
+
+struct vm_area_struct *
+find_vma_prev(struct mm_struct *mm, unsigned long addr,
+			struct vm_area_struct **pprev)
+			
+static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * mm, unsigned long start_addr, unsigned long end_addr)
+```
+
+(2) 插入VMA
+
+```c
+int insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
+```
+
+(3) 合并VMA
+
+```c
+struct vm_area_struct *vma_merge(struct mm_struct *mm,
+			struct vm_area_struct *prev, unsigned long addr,
+			unsigned long end, unsigned long vm_flags,
+			struct anon_vma *anon_vma, struct file *file,
+			pgoff_t pgoff, struct mempolicy *policy)
+```
 
 # 20 malloc
 
+malloc()函数是C语言中内存分配函数
+
 # 21 mmap
+
+## 21.1 概述
+
+**mmap/munmap**接口是**用户空间最常用的一个系统调用接口**，无论是在**用户程序**中**分配内存**、**读写大文件**、**链接动态库文件**，还是**多进程间共享内存**，都可以看到mmap/munmap的身影。
+
+mmap/munmap函数声明如下：
+
+```c
+#include <sys/mman.h>
+void *mmap(void *addr, size_t length, int prot, int flags,
+            int fd, off_t offset);
+int munmap(void *addr, size_t length);
+```
+
+- addr: 用于指定映射到**进程地址空间的起始地址**，为了应用程序的可移植性，一般设置为**NULL**,让内核来选择一个**合适的地址**。
+- length: 表示映射到进程**地址空间的大小**。
+- prot: 用于设置内存映射区域的**读写属性**等。
+- flags: 用于设置**内存映射的属性**，例如共享映射、私有映射等。
+- fd: 表示这个是一个**文件映射**，fd是打开**文件的句柄**。
+- offset: 在**文件映射**时，表示**文件的偏移量**。
+
+**prot参数**通常表示**映射页面的读写权限**，可以有如下参数组合。
+
+- PROT\_EXEC: 表示映射的页面是可以**执行**的。
+- PROT\_READ: 表示映射的页面是可以**读取**的。
+- PROT\_WRITE: 表示映射的页面是可以**写入**的。
+- PROT\_NONE: 表示映射的页面是**不可访问**的。
+
+**flags参数**也是一个很重要的参数，有如下常见参数。
+
+- MAP\_SHARED: 创建一个**共享映射的区域**。**多个进程**可以通过**共享映射方式**来**映射一个文件**，这样**其他进程**也可以看到**映射内容的改变**，修改后的内容会**同步到磁盘文件**中。
+- MAP\_PRIVATE: 创建一个**私有的写时复制的映射**。**多个进程**可以通过**私有映射的方式来映射一个文件**，这样**其他进程不会看到映射内容的改变**，修改后的内容也**不会同步到磁盘文件**中。
+- MAP\_ANONYMOUS: 创建一个**匿名映射**，即**没有关联到文件的映射**。
+- MAP\_FIXED: 使用参数addr创建映射，如果在内核中**无法映射**指定的地址addr，那mmap会返回失败，参数addr要求**按页对齐**。如果addr和length指定的进程地址空间和己有的VMA区域重叠，那么内核会调用do\_munmap()函数把这段重叠区域销毁，然后重新映射新的内容。
+- MAP\_POPULATE: 对于**文件映射**来说，会**提前预读文件内容到映射区域**，该特性**只支持私用映射**。
+
+参数fd可以看出mmap映射是否和文件相关联，因此在Linux内核中映射可以分成**匿名映射**和**文件映射**。
+
+- **匿名映射**：**没有映射对应的相关文件**，这种映射的**内存区域的内容会被初始化为 0**.
+
+- **文件映射**：映射和实际文件相关联，通常是把**文件的内容**映射到**进程地址空间**，这样**应用程序**就可以像**操作进程地址空间**一样**读写文件**。
+
+最后根据文件关联性和映射区域是否共享等属性，又可以分成如下4 种情况，见表
+
+![config](./images/43.png)
+
+### 21.1.1 私有匿名映射
+
+当使用参数 **fd=\-1** 且 **flags=MAP\_ANONYMOUS | MAP\_PRIVATE**时，创建的mmap映射是**私有匿名映射**。私有匿名映射**最常见的用途**是在**glibc分配大块的内存**中，当需要分配的**内存大于MMAP\_THREASHOLD(128KB**)时，glibc会默认使用**mmap代替brk来分配内存**。
+
+### 21.1.2 共享匿名映射
+
+当使用参数fd=\-1且flags=MAP\_ANONYMOUS | MAP\_SHARED时，创建的mmap映射是共享匿名映射。共享匿名映射让相关进程共享一块内存区域，通常用于父子进程之间通信。
+
+创建**共享匿名映射**有如下**两种方式**。
+
+(1) fd=\-1且flags=MAP\_ANONYMOUS | MAP\_SHARED. 在这种情况下，do\_mmap\_pgoff()\-\>mmap\_region()函数最终会调用shmem\_zero\_setup()来打开一个 “/dev/zero” 特殊的设备文件。
+
+(2) 另外一种是**直接打开“/dev/zero”设备文件**，然后使用这个文件句柄来创建mmap。
+
+上述两种方式最终都是调用到**shmem模块**来创建共享匿名映射。
+
+### 21.1.3 私有文件映射
+
+创建**文件映射**时flags的标志位被设置为**MAP\_PRIVATE**, 那么就会创建私有文件映射。私有文件映射最常用的场景是**加载动态共享库**。
+
+### 21.1.4 共享文件映射
+
+创建**文件映射**时flags的标志位被设置为**MAP\_SHARED**,那么就会创建共享文件映射。如果prot参数指定了PROT\_WRITE,那么打开文件时需要指定O\_RDWR标志位。**共享文件映射**通常有如下两个场景。
+
+(1) **读写文件**。把**文件内容**映射到**进程地址空间**，同时对映射的内容做了修改，内核的**回写机制（writeback**) 最终会把修改的内容同步到磁盘中。
+
+(2) **进程间通信**。进程之间的进程地址空间相互隔离，一个进程不能访问到另外一个进程的地址空间。如果多个进程都同时映射到一个相同文件时，就实现了多进程间的共享内存通信。如果一个进程对映射内容做了修改，那么另外的进程是可以看到的。
+
+## 21.2 小结
+
+mmap机制在Linux内核中实现的代码框架和**brk机制**非常类似，其中有很多关于VMA的操作。mmap机制和缺页中断机制结合在一起会变得复杂很多。
+
+mmap机制在Linux内核中的代码流程如图所示。
+
+![config](./images/44.png)
 
 # 22 缺页异常处理
 
 在之前介绍malloc()和 mmap()两个用户态API函数的内核实现时，
 
-## 19.1 缺页异常初始化
+## 22.1 缺页异常初始化
 
 缺页异常初始化的地方。缺页异常初始化函数为early\_trap\_init()或early\_trap\_pf\_init()，在**setup\_arch()中调用**。
 
@@ -4873,7 +5572,7 @@ set\_intr\_gate()是一个宏定义。
 
 异常处理函数是do\_page\_fault()
 
-## 19.2 do\_page\_fault()
+## 22.2 do\_page\_fault()
 
 ```c
 [arch/x86/mm/fault.c]
@@ -4898,3 +5597,257 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 NOKPROBE_SYMBOL(do_page_fault);
 ```
 
+
+# 23 Page引用计数
+
+```
+struct page数据结构中的_count和_mapcount有什么区别？
+匿名页面和page cache页面有什么区别？
+struct page数据结构中有一个锁，请问trylock_page()和lock_page()有什么区别？
+```
+
+## 23.1 struct page数据结构
+
+大量使用了 C语言的联合体Union来优化其数据结构的大小，因为每个物理页面都需要一个struct page数据结构，因此管理成本很高。
+
+page数据结构的主要成员如下：
+
+## 23.2 \_count和\_mapcount的区别
+
+\_**count**和\_**mapcount**是struct **page数据结构**中非常的两个引用计数, 且都是**atomic\_t类型**的变量. 
+
+### 23.2.1 \_count
+
+\_**count**表示**内核引用该页面的次数**. 当\_count的值是**0**时, 表示该页面为**空闲**或即**将被释放**的页面. 当\_count的值**大于0**时，表示该page页面己经**被分配**且内核**正在使用**，暂时不会被释放。
+
+内核中常用的**加减\_count引用计数**的API为get\_page()和put\_page().
+
+```c
+[include/linux/mm.h]
+static inline void get_page(struct page *page)
+{
+	VM_BUG_ON_PAGE(atomic_read(&page->_count) <= 0, page);
+	atomic_inc(&page->_count);
+}
+
+[mm/swap.c]
+static void __put_single_page(struct page *page)
+{
+	__page_cache_release(page);
+	free_hot_cold_page(page, false);
+}
+void put_page(struct page *page)
+{
+	if (put_page_testzero(page))
+		__put_single_page(page);
+}
+EXPORT_SYMBOL(put_page);
+```
+
+get\_page()首先利用VM\_BUG\_ON\_PAGE()来判断页面的\_count的值不能小于等于0,这是因为页面伙伴分配系统分配好的页面初始值为1, 然后直接使用atomic\_inc()函数原子地增加引用计数。
+
+put\_page()首先也会使用VM\_BUG\_ON\_PAGE()判断\_count计数不能为0，如果为0,说明这页面己经被释放了。如果\_**count计数减1之后等于0**，就会调用\_\_**put\_single\_page()来释放这个页面(！！！**)。
+
+内核还有一对常用的变种宏，如下：
+
+```c
+#define page_cache_get(page)		get_page(page)
+#define page_cache_release(page)	put_page(page)
+```
+
+..............
+
+
+### 23.2.2 \_mapcount
+
+\_mapcount引用计数表示**这个页面**被**进程映射的个数**，即己经映射了**多少个用户pte页表**。在32位Linux内核中，**每个用户进程**都拥有**3GB的虚拟空间**和**一份独立的页表**，所以有可能出现**多个用户进程地址空间**同时映射到**一个物理页面**的情况，**RMAP反向映射系统**就是利用这个特性来实现的。\_mapcount引用计数主要用于RMAP反向映射系统中。
+
+- \_mapcount==\-1，表示**没有pte映射到页面**中。
+- \_mapcount= 0 ，表示**只有父进程映射了页面**。匿名页面刚分配时，\_mapcount引用计数**初始化为0**。例如do\_anonymous\_page()产生的匿名页面通过page\_add\_new\_anon\_rmap()添加到反向映射rmap系统中时，会设置\_mapcount为 0，表明匿名页面当前只有父进程的pte映射了页面。
+
+```c
+[发生缺页中断->handle_mm_fault()->handle_pte_fault()->do_anonymous_page()->page_add_new_anon_rmap()]
+
+void page_add_new_anon_rmap(struct page *page,
+	struct vm_area_struct *vma, unsigned long address)
+{
+	VM_BUG_ON_VMA(address < vma->vm_start || address >= vma->vm_end, vma);
+	SetPageSwapBacked(page);
+	atomic_set(&page->_mapcount, 0); /* increment count (starts at -1) */
+	...
+}
+```
+
+- \_mapcount\>0, 表示除了**父进程**外还有**其他进程映射了这个页面**。同样以子进程被创建时共享父进程地址空间为例，设置父进程的pte页表项内容到子进程中并增加该页面的\_mapcount计数，见do\_fork()\-\>copy\_process()\-\>copy\_mm()>dup\_mmap()\-\>copy\_pte\_range()\-\>copy\_one\_pte()函数。
+
+```c
+static inline unsigned long
+copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
+		unsigned long addr, int *rss)
+{
+    ...
+	page = vm_normal_page(vma, addr, pte);
+	if (page) {
+	    // 增加_count计数
+		get_page(page);
+		// 增加_mapcount计数
+		page_dup_rmap(page);
+		if (PageAnon(page))
+			rss[MM_ANONPAGES]++;
+		else
+			rss[MM_FILEPAGES]++;
+	}    
+    ...
+}
+```
+
+# 24 反向映射RMAP
+
+**用户进程**在使用**虚拟内存**过程中，从**虚拟内存页面**映射到**物理内存页面**，PTE页表项保留着这个记录，**page数据结构**中的\_**mapcount**成员记录有**多少个用户PTE页表项映射了物理页面**。
+
+**用户PTE页表项**是指**用户进程地址空间**和**物理页面**建立映射的PTE页表项，**不包括内核地址空间映射物理页面产生的PTE页表项**。
+
+有的**页面**需要**被迁移**，有的页面长时间不使用需要**被交换到磁盘**。在交换之前，必须找出**哪些进程使用这个页面**，然后**断开这些映射的PTE**。
+
+**一个物理页面**可以同时被**多个进程的虚拟内存映射**，**一个虚拟页面**同时**只能有一个物理页面与之映射**。
+
+之前, 为确定**某一个页面**是否被**某个进程映射**，必须**遍历每个进程的页表**，工作量相当大，效率很低。后续提出反向映射(the object\-based
+reverse\-mapping VM, RMAP), 资料: https://lwn.net/Articles/23732/ 
+
+## 24.4 RMAP应用
+
+内核中经常有通过struc page数据结构找到所有映射这个page的VMA的需求。早期的Linux内核的实现通过扫描所有进程的VMA,这种方法相当耗时。在Linux2.5开发期间,反向映射的概念已经形成，经过多年的优化形成现在的版本。
+
+反向映射的典型应用场景如下。
+
+- kswapd内核线程回收页面需要断开所有映射了该匿名页面的用户PTE页表项。
+- 页面迁移时 ，需要断开所有映射到匿名页面的用户PTE页表项。
+
+反向映射的核心函数是try\_to\_unmap(),内核中的其他模块会调用此函数来断开一个页面的所有映射。
+
+```c
+[mm/rmap.c]
+int try_to_unmap(struct page *page, enum ttu_flags flags)
+{
+	int ret;
+	struct rmap_walk_control rwc = {
+		.rmap_one = try_to_unmap_one,
+		.arg = (void *)flags,
+		.done = page_not_mapped,
+		.anon_lock = page_lock_anon_vma_read,
+	};
+	ret = rmap_walk(page, &rwc);
+
+	if (ret != SWAP_MLOCK && !page_mapped(page))
+		ret = SWAP_SUCCESS;
+	return ret;
+}
+```
+
+try\_to\_unmap()函数返回值如下。
+
+- SWAP\_SUCCESS: 成功解除了所有映射的pte。
+- SWAP\_AGAIN: 可能错过了一个映射的pte, 需要重新来一次。
+- SWAP\_FAIL: 失败。
+- SWAP\_MLOCK: 页面被锁住了。
+
+内核中有**3种页面需要unmap**操作，即**KSM页面**、**匿名页面**和**文件映射页面**，因此定义一个**rmap\_walk\_control**控制数据结构来统一管理**unmap操作**。
+
+```c
+struct rmap_walk_control {
+	void *arg;
+	int (*rmap_one)(struct page *page, struct vm_area_struct *vma,
+					unsigned long addr, void *arg);
+	int (*done)(struct page *page);
+	struct anon_vma *(*anon_lock)(struct page *page);
+	bool (*invalid_vma)(struct vm_area_struct *vma, void *arg);
+};
+```
+struct rmap\_walk\_control数据结构定义了一些函数指针，其中，rmap\_one表示具体断开某个VMA上映射的pte，done表示判断一个页面是否断开成功的条件，anon\_lock实现一个锁机制，invalid\_vma表示跳过无效的VMA。
+
+```c
+[try_to_unmap() ->rmap_walk() ->rmap_walk_anon()]
+static int rmap_walk_anon(struct page *page, struct rmap_walk_control *rwc)
+{
+	struct anon_vma *anon_vma;
+	pgoff_t pgoff;
+	struct anon_vma_chain *avc;
+	int ret = SWAP_AGAIN;
+
+	anon_vma = rmap_walk_anon_lock(page, rwc);
+	if (!anon_vma)
+		return ret;
+
+	pgoff = page_to_pgoff(page);
+	anon_vma_interval_tree_foreach(avc, &anon_vma->rb_root, pgoff, pgoff) {
+		struct vm_area_struct *vma = avc->vma;
+		unsigned long address = vma_address(page, vma);
+
+		if (rwc->invalid_vma && rwc->invalid_vma(vma, rwc->arg))
+			continue;
+
+		ret = rwc->rmap_one(page, vma, address, rwc->arg);
+		if (ret != SWAP_AGAIN)
+			break;
+		if (rwc->done && rwc->done(page))
+			break;
+	}
+	anon_vma_unlock_read(anon_vma);
+	return ret;
+}
+```
+
+rmap\_walk\_anon\_lock()获取页面 page\-\>mapping 指向的 anon\_vma 数据结
+构，并申请一个读者锁。
+
+遍历anon\_vma\-\>rb\_root红黑树中的avc，从avc中可以得到相应的VMA, 然后调用rmap\_one()来完成断开用户PTE页表项。
+
+## 24.5 小结
+
+早期的Linux 2.6的RMAP实现如图2.25所示，父进程的VMA中有一个struct anon\_vma数据结构（简称AVp)，page\-\>mapping指向AVp数据结构，另外父进程和子进程所有映射了页面的VMAs都挂入到父进程的AVp的一个链表中。当需要从物理页面找出所有映射页面的VMA时，只需要从物理页面的page->mapping找到AVp，再遍历AVp链表即可。当子进程的虚拟内存发生写时复制COW时，新分配的页面COW_Page->mapping依然指向父进程的AVp数据结构。这个模型非常简洁，而且通俗易懂，但也有致命的弱点，特别是在负载重的服务器中，例如父进程有1000个子进程，每个子进程都有一个VMA , 这个VMA中有1000个匿名页面，当所有的子进程的VMA中的所有匿名页面都同时发生写时复制时, 情况会很糟糕。因为在父进程的AVp队列中会有100万个匿名页面，扫描这个队列要耗费很长的时间。
+
+![config](./images/45.png)
+
+Linux 2.6.34内核对R M A P 反向映射系统进行了优化，模型和现在Linux 4.0内核中的模型相似，如图2.26所示，新增加了AVC数据结构（struct anon\_vma\_chain),父进程和子进程都有各自的AV数据结构且都有一棵红黑树（简称AV红黑树），此外，父进程和子进程都有各自的AVC挂入进程的AV红黑树中。还有一个AVC作为纽带来联系父进程和子进程，我们暂且称它为AVC枢纽。AVC枢纽挂入父进程的AV红黑树中，因此所有子进程都有一个AVC枢纽用于挂入父进程的AV红黑树。需要反向映射遍历时，只需要扫描父进程中的AV红黑树即可。当子进程VMA发生COW时，新分配的匿名页面cow\_page\->mapping指向子进程自己的AV数据结构，而不是指向父进程的AV数据结构，因此在反向映射遍历时不需要扫描所有的子进程。
+
+![config](./images/46.png)
+
+# 25 回收页面
+
+# 26 匿名页面生命周期
+
+匿名页面简称anon\_page
+
+## 26.1 匿名页面的产生
+
+从内核的角度来看，在如下情况下会出现匿名页面。
+
+1. **用户空间**通过**malloc/mmap**接口函数来分配内存，在**内核空间**中发生**缺页中断**时，**do\_anonymous\_page**()会产生**匿名页面**。
+2. 发生**写时复制**。当缺页中断出现写保护错误时，新分配的页面是匿名页面，下面又分两种情况。
+
+(1) do\_wp\_page()
+
+- 只读的special映射的页，例如映射到zero page的页面。
+- 非单身匿名页面（有多个映射的匿名页面，即page\->\_mapcount>0)。
+- 只读的私用映射的page cache。
+- KSM页面。
+
+(2) do\_cow_page()
+
+- 共 享 的 匿 名 页 面 （shared anonymous mapping，shmm)〇
+上述这些情况在发生写时复制时会新分配匿名页面。
+
+3. do\_swap\_page()，从 swap分区读回数据时会新分配匿名页面。
+4. 迁移页面。
+
+
+# 27 页面迁移
+
+# 28 内存规整(memory compaction)
+
+# 29 KSM
+
+# 30 Dirty COW内存漏洞
+
+# 31 总结内存管理数据结构和API
