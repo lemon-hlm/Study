@@ -461,7 +461,7 @@ siginfo_t *last_siginfo; /* For ptrace use.  */
 #define PT_BLOCKSTEP            (1<<PT_BLOCKSTEP_BIT)
 ```
 
-# 7 [Performance Event](http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1697)
+# 7 Performance Event
 
 Performance Event是一款随Linux内核代码一同发布和维护的**性能诊断工具**。这些成员用于帮助PerformanceEvent分析进程的性能问题。
 
@@ -575,7 +575,7 @@ extern const struct sched_class idle_sched_class;
 
 **开发者**可以根据己的设计需求,來把**所属的Task配置到不同的Scheduling Class**中.
 
-# 9 [进程地址空间](http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1453) 
+# 9 进程地址空间
 
 ```c
 /*  http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1453 */
@@ -601,6 +601,10 @@ unsigned brk_randomized:1;
 | rss\_stat | 用来**记录缓冲信息** |
 
 >因此如果**当前内核线程**被**调度之前**运行的也是**另外一个内核线程**时候，那么其**mm和avtive_mm都是NULL**
+
+对Linux来说，用户进程和内核线程（kernel thread)都是task\_struct的实例，唯一的区别是**kernel thread**是**没有进程地址空间**的，**内核线程**也**没有mm描述符**的，所以内核线程的tsk\->mm域是空（NULL）。内核scheduler在进程context switching的时候，会**根据tsk\->mm**判断即将调度的进程是**用户进程**还是**内核线程**。但是虽然**thread thread**不用访问**用户进程地址空间**，但是**仍然需要page table**来访问**kernel自己的空间**。但是幸运的是，对于**任何用户进程**来说，他们的**内核空间都是100%相同**的，所以内核可以’borrow'上一个被调用的**用户进程的mm中的页表**来访问**内核地址**，这个mm就记录在active_mm。
+
+简而言之就是，对于kernel thread,tsk\->mm == NULL表示自己内核线程的身份，而tsk\->active\_mm是借用上一个用户进程的mm，用mm的page table来访问内核空间。对于**用户进程**，tsk\->mm == tsk\->active\_mm。
 
 # 10 判断标志
 

@@ -560,15 +560,14 @@ UMA体系结构中，**free\_area\_init**函数在系统唯一的struct node对�
 | 页表	        | Page Table 			|
 | 页内偏移      | Page Offset		    |
 
-- **页全局目录**包含若干**页上级目录**的地址；
-- **页上级目录**又依次包含若干**页中间目录**的地址；
-- 而**页中间目录**又包含若干****页表****的地址；
+- **页全局目录**包含若干**页上级目录**的**地址**；
+- **页上级目录**又依次包含若干**页中间目录**的**地址**；
+- 而**页中间目录**又包含若干****页表****的**地址**；
 - 每一个**页表项**指向一个**页框**。
 
 **Linux页表管理**分为两个部分,第一个部分**依赖于体系结构**,第二个部分是**体系结构无关的**.
 
 所有**数据结构**几乎都定义在**特定体系结构的文件**中.这些数据结构的定义可以在**头文件arch/对应体系/include/asm/page.h**和**arch/对应体系/include/asm/pgtable.h**中找到. 但是对于**AMD64**和**IA\-32**已经统一为**一个体系结构**.但是在处理页表方面仍然有很多的区别,因为相关的定义分为**两个不同的文件**arch/x86/include/asm/page\_32.h和arch/x86/include/asm/page\_64.h, 类似的也有pgtable\_xx.h.
-
 
 对于不同的体系结构，Linux采用的**四级页表目录**的大小有所不同(**页大小**都是**4KB**情况下）：
 
@@ -732,6 +731,26 @@ linux中**每个进程**有它自己的**PGD**( Page Global Directory)，它是*
 | **pte\_offset** | 根据通过pmd\_offset获取的**pmd项**和**虚拟地址**，获取**相关的pte项(即物理页的起始地址！！！**) |
 
 根据**虚拟地址**获取**物理页**的示例代码详见mm/memory.c中的函数**follow\_page\_mask**
+
+## 5.6 swapper_pg_dir
+
+linux内核页全局目录变量
+
+swapper\_pg\_dir用于存放内核PGD页表的地方，赋给init\_mm.pgd。
+
+```c
+[mm/init-mm.c]
+struct mm_struct init_mm = {
+	.mm_rb		= RB_ROOT,
+	.pgd		= swapper_pg_dir,
+	.mm_users	= ATOMIC_INIT(2),
+	.mm_count	= ATOMIC_INIT(1),
+	.mmap_sem	= __RWSEM_INITIALIZER(init_mm.mmap_sem),
+	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
+	.mmlist		= LIST_HEAD_INIT(init_mm.mmlist),
+	INIT_MM_CONTEXT(init_mm)
+};
+```
 
 # 6 内存布局探测
 
@@ -4977,7 +4996,9 @@ kmalloc、vmalloc和malloc这 3 个常用的API函数具有相当的分量，三
 
 ## 18.2 vmalloc原理
 
-**伙伴管理算法**初衷是**解决外部碎片**问题，而**slab算法**则是用于**解决内部碎片**问题，但是内存使用的得不合理终究会产生碎片。碎片问题产生后，申请大块连续内存将可能持续失败，但是实际上内存的空闲空间却是足够的。这时候就引入了**不连续页面管理算法**，即我们常用的**vmalloc**申请分配的内存空间，它主要是用于将**不连续的页面**，通过内存映射到**连续的虚拟地址空间**中，提供给申请者使用，由此实现内存的高利用。
+**伙伴管理算法**初衷是**解决外部碎片**问题，而**slab算法**则是用于**解决内部碎片**问题，但是内存使用的得不合理终究会产生碎片。碎片问题产生后，申请大块连续内存将可能持续失败，但是实际上内存的空闲空间却是足够的。
+
+这时候就引入了**不连续页面管理算法**，即我们常用的**vmalloc**申请分配的内存空间，它主要是用于将**不连续的物理页面**，通过内存映射到**连续的虚拟地址空间**中，提供给申请者使用，由此实现内存的高利用。
 
 ## 18.3 vmalloc初始化
 
@@ -5057,7 +5078,7 @@ void __init vmalloc_init(void)
 \_\_insert\_vmap\_area()的实现
 
 ```c
-mm/vmalloc.c】
+[mm/vmalloc.c]
 static void __insert_vmap_area(struct vmap_area *va)
 {
     struct rb_node **p = &vmap_area_root.rb_node;
@@ -5189,7 +5210,7 @@ fail:
 
 首先对**申请内存的大小做对齐**后，如果大小为0或者大于总内存，则返回失败；
 
-继而调用\_\_**get\_vm\_area\_node**()向内核请求一个空间大小相匹配的**虚拟地址空间(！！！**)，返回**管理信息结构vm\_struct**；
+继而调用\_\_**get\_vm\_area\_node**()向内核请求一个**空间大小相匹配**的**虚拟地址空间(！！！**)，返回**管理信息结构vm\_struct**；
 
 而调用\_\_**vmalloc\_area\_node**()将根据**vm\_struct的信息**进行**内存空间申请**；
 
@@ -5290,13 +5311,29 @@ vmalloc不连续内存页面空间的申请分析完毕。
 
 # 19 VMA
 
-在 32 位系统中，**每个用户进程**可以拥有**3GB大小的虚拟地址空间**，通常要远大于物理内存，那么如何管理这些虚拟地址空间呢？**用户进程**通常会多次调用**malloc**()或使用**mmap**()接口**映射文件**到**用户空间**来进行**读写等操作**，这些操作都会要求在**虚拟地址空间(！！！**)中**分配内存块**，这些内存块基本上都是**离散的(！！！**)。
+在 32 位系统中，**每个用户进程**可以拥有**3GB大小的虚拟地址空间**，通常要远大于物理内存，那么如何管理这些虚拟地址空间呢？
+
+**用户进程**通常会多次调用**malloc**()或使用**mmap**()接口**映射文件**到**用户空间**来进行**读写等操作**，这些操作都会要求在**虚拟地址空间(！！！**)中**分配内存块**，这些内存块基本上都是**离散的(！！！**)。
 
 - **malloc**()是**用户态**常用的**分配内存的接口 API**函数，后面详细介绍其内核实现机制；
 
 - **mmap**()是**用户态**常用的用于**建立文件映射**或**匿名映射**的函数，后面详细介绍其内核实现机制。
 
-这些**进程地址空间(！！！**)在**内核**中使用**struct vm\_area\_struct数据结构**来描述，简称**VMA**，也被称为**进程地址空间**或**进程线性区**。由于**这些地址空间**归属于**各个用户进程**，所以在**用户进程**的**struct mm\_struct数据结构**中也有**相应的成员**，用于对这些VMA进行管理。
+这些**进程地址空间(！！！**)在**内核**中使用**struct vm\_area\_struct数据结构**来描述，简称**VMA**，也被称为**进程地址空间**或**进程线性区**。
+
+```c
+struct task_struct{
+    struct mm_struct *mm, *active_mm;
+}
+
+struct mm_struct {
+    // vma 链表
+	struct vm_area_struct *mmap;		/* list of VMAs */
+	struct rb_root mm_rb;
+}
+```
+
+由于**这些地址空间**归属于**各个用户进程**，所以在**用户进程**的**struct mm\_struct数据结构**中也有**相应的成员**，用于对这些VMA进行管理。
 
 ## 19.1 数据结构
 
@@ -5337,14 +5374,14 @@ struct vm_area_struct {
 ```
 
 - vm\_start和vm\_end: 指定VMA在**进程地址空间**的**起始地址**和**结束地址**。
-- vm\_next和vm\_prev: **进程的VMA**都连接成一个**链表**。
-- vm\_rb: **VMA 作为一个节点**加入**红黑树**中，**每个进程的struct mm\_struct**数据结构中都有这样一棵红黑树**mm\-\>mm\_rb**。
+- vm\_next和vm\_prev: **进程的VMA**都连接成一个**链表(！！！**)。
+- vm\_rb: **VMA 作为一个节点**加入**红黑树**中，**每个进程的struct mm\_struct**数据结构中都有这样一棵红黑树**mm\-\>mm\_rb(！！！**)。
 - vm\_mm: 指向该VMA所属的**进程struct mm\_struct数据结构**。
 - vm\_page\_prot: VMA的**访问权限**。
 - vm\_flags: 描述该VMA的一组**标志位**。
-- anon\_vma\_chain 和 anon\_vma: 用于管理**RMAP反向映射**。
-- vm\_ops: 指向许多方法的集合，这些方法用于在VMA中执行**各种操作**，通常用于**文件映射**。
-- vm\_pgoff: 指定**文件映射的偏移量**，这个变量的单位不是Byte，而是**页面的大小(PAGE\_SIZE**)。
+- anon\_vma\_chain 和 anon\_vma: 用于管理**RMAP反向映射(！！！**)。
+- vm\_ops: 指向许多方法的集合，这些方法用于在**VMA**中执行**各种操作**，通常用于**文件映射**。
+- vm\_pgoff: 指定**文件映射的偏移量**，这个变量的**单位不是Byte**，而是**页面的大小(PAGE\_SIZE**)。
 - vm\_file: 指向file的实例，描述**一个被映射的文件**。
 
 **struct mm\_struct**数据结构是描述**进程内存管理的核心数据结构**，该数据结构也提供了管理VMA所需要的信息，这些信息概况如下：
@@ -5356,9 +5393,9 @@ struct mm_struct {
 	struct rb_root mm_rb;
 ```
 
-**每个VMA**都要连接到**mm\_struct**中的**链表**和**红黑树**中，以方便查找。
+**每个VMA(！！！**)都要连接到**mm\_struct**中的**链表**和**红黑树**中，以方便查找。
 
-- **mmap**形成一个**单链表**, **进程**中**所有的VMA**都链接到这个**链表**中，**链表头**是**mm\_struct\-\>mmap**.
+- **mmap**形成一个**单链表**, **进程**中**所有的VMA(！！！**)都链接到这个**链表**中，**链表头**是**mm\_struct\-\>mmap**.
 - **mm\_rb**是**红黑树的根节点**，**每个进程**有一棵**VMA的红黑树**。
 
 VMA按照**起始地址**以**递增的方式**插入**mm\_struct\-\>mmap链表**中。当**进程**拥有**大量的VMA**时，**扫描链表**和**查找特定的VMA**是非常**低效**的操作，例如在云计算的机器中，所以内核中通常要靠**红黑树**来协助，以便提高查找速度。
@@ -5403,7 +5440,9 @@ insert\_vm\_struct()函数向**VMA链表**和**红黑树**插入一个**新的VM
 
 ## 19.4 合并VMA
 
-在**新的VMA**被加入到**进程的地址空间**时，**内核**会检查它是否可以**与一个或多个现存的VMA进行合并**。vma\_merge()函数实现将一个新的VMA和附近的VMA合并功能。
+在**新的VMA**被加入到**进程的地址空间**时，**内核**会检查它是否可以**与一个或多个现存的VMA进行合并**。
+
+vma\_merge()函数实现将一个**新的VMA**和**附近的VMA合并**功能。
 
 ![config](./images/42.png)
 
@@ -5480,9 +5519,9 @@ int munmap(void *addr, size_t length);
 - MAP\_FIXED: 使用参数addr创建映射，如果在内核中**无法映射**指定的地址addr，那mmap会返回失败，参数addr要求**按页对齐**。如果addr和length指定的进程地址空间和己有的VMA区域重叠，那么内核会调用do\_munmap()函数把这段重叠区域销毁，然后重新映射新的内容。
 - MAP\_POPULATE: 对于**文件映射**来说，会**提前预读文件内容到映射区域**，该特性**只支持私用映射**。
 
-参数fd可以看出mmap映射是否和文件相关联，因此在Linux内核中映射可以分成**匿名映射**和**文件映射**。
+参数fd可以看出mmap映射是否和文件相关联，因此在Linux内核中**映射**可以分成**匿名映射**和**文件映射**。
 
-- **匿名映射**：**没有映射对应的相关文件**，这种映射的**内存区域的内容会被初始化为 0**.
+- **匿名映射**：**没有映射对应的相关文件**，这种映射的**内存区域的内容会被初始化为0**.
 
 - **文件映射**：映射和实际文件相关联，通常是把**文件的内容**映射到**进程地址空间**，这样**应用程序**就可以像**操作进程地址空间**一样**读写文件**。
 
@@ -5492,11 +5531,13 @@ int munmap(void *addr, size_t length);
 
 ### 21.1.1 私有匿名映射
 
-当使用参数 **fd=\-1** 且 **flags=MAP\_ANONYMOUS | MAP\_PRIVATE**时，创建的mmap映射是**私有匿名映射**。私有匿名映射**最常见的用途**是在**glibc分配大块的内存**中，当需要分配的**内存大于MMAP\_THREASHOLD(128KB**)时，glibc会默认使用**mmap代替brk来分配内存**。
+当使用参数 **fd=\-1** 且 **flags=MAP\_ANONYMOUS | MAP\_PRIVATE**时，创建的mmap映射是**私有匿名映射**。
+
+私有匿名映射**最常见的用途**是在**glibc分配大块的内存**中，当需要分配的**内存大于MMAP\_THREASHOLD(128KB**)时，glibc会默认使用**mmap代替brk来分配内存**。
 
 ### 21.1.2 共享匿名映射
 
-当使用参数fd=\-1且flags=MAP\_ANONYMOUS | MAP\_SHARED时，创建的mmap映射是共享匿名映射。共享匿名映射让相关进程共享一块内存区域，通常用于父子进程之间通信。
+当使用参数fd=\-1且flags=MAP\_ANONYMOUS | MAP\_SHARED时，创建的mmap映射是共享匿名映射。**共享匿名映射**让相关进程**共享一块内存区域**，通常用于**父子进程之间通信**。
 
 创建**共享匿名映射**有如下**两种方式**。
 
@@ -5528,7 +5569,27 @@ mmap机制在Linux内核中的代码流程如图所示。
 
 # 22 缺页异常处理
 
-在之前介绍malloc()和 mmap()两个用户态API函数的内核实现时，
+在之前介绍**malloc**()和 **mmap**()两个用户态API函数的内核实现时，它们**只建立了进程地址空间**, 在**用户空间**里可以看到**虚拟内存**, 但**没有建立虚拟内存**和**物理内存之间的映射关系(！！！**).
+
+当**进程访问**这些**还没有建立映射关系的虚拟内存**时, 处理器自动触发一个**缺页异常(即缺页中断**), Linux内核必须处理此异常. 缺页异常是内存管理中最复杂和重要的一部分, 需要考虑很多细节, 包括**匿名页面**, **KSM页面**, **page cache页面**, **写时复制**, **私有映射**和**共享映射**等.
+
+缺页异常被触发通常有两种情况
+
+1. 程序设计的不当导致访问了**非法的地址**
+
+2. 访问的**地址是合法**的，但是该地址还**未分配物理页框**
+
+下面解释一下第二种情况，这是虚拟内存管理的一个特性。尽管**每个进程**独立拥有**3GB的私有可访问地址空间**，但是这些资源都是内核开出的空头支票，也就是说**进程**手握着和自己相关的**一个个虚拟内存区域(vma**)，但是这些虚拟内存区域并**不会在创建的时候就和物理页框挂钩(！！！**)，由于程序的局部性原理，程序在一定时间内所访问的内存往往是有限的，因此内核**只会在进程确确实实需要访问物理内存**时才会将**相应的虚拟内存区域**与**物理内存**进行**关联**(为相应的地址**分配页表项！！！**，并**将页表项映射到物理内存！！！**)，也就是说这种缺页异常是正常的，而第一种缺页异常是不正常的，内核要采取各种可行的手段将这种异常带来的破坏减到最小。
+
+**32位系统**中, 缺页异常的来源可分为两种，一种是**内核空间**(访问线性地址空间的第4个GB)，一种是**用户空间**(访问线性地址空间的0\~3GB)
+
+**用户空间**的**缺页异常**可以分为两种情况
+
+1. 触发异常的**线性地址**处于**用户空间的vma**中，但**还未分配物理页**，如果**访问权限OK**的话内核就**给进程分配相应的物理页**了
+
+2. 触发异常的**线性地址不处于用户空间的vma**中，这种情况得**判断**是不是因为**用户进程**的**栈空间消耗完**而触发的**缺页异常**，如果是的话则**在用户空间对栈区域进行扩展**，并且分配相应的**物理页**，如果**不是**则作为一次**非法地址**访问来处理，内核将**终结进程**
+
+缺页异常处理依赖于处理器的体系结构.
 
 ## 22.1 缺页异常初始化
 
@@ -5574,21 +5635,16 @@ set\_intr\_gate()是一个宏定义。
 
 ## 22.2 do\_page\_fault()
 
+**缺页中断处理**的核心函数是**do\_page\_fault**(),该函数的实现和**具体的体系结构**相关。
+
 ```c
 [arch/x86/mm/fault.c]
 dotraplinkage void notrace
 do_page_fault(struct pt_regs *regs, unsigned long error_code)
 {
+    //读取CR2寄存器获取触发异常的访问地址
 	unsigned long address = read_cr2(); /* Get the faulting address */
 	enum ctx_state prev_state;
-
-	/*
-	 * We must have this function tagged with __kprobes, notrace and call
-	 * read_cr2() before calling anything else. To avoid calling any kind
-	 * of tracing machinery before we've observed the CR2 value.
-	 *
-	 * exception_{enter,exit}() contain all sorts of tracepoints.
-	 */
 
 	prev_state = exception_enter();
 	__do_page_fault(regs, error_code, address);
@@ -5597,6 +5653,598 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 NOKPROBE_SYMBOL(do_page_fault);
 ```
 
+该函数传递两个参数
+
+- regs包含了各个寄存器的值
+- error\_code是触发异常的错误类型
+
+错误类型含义如下:
+
+```c
+[arch/x86/mm/fault.c]
+/*
+ * Page fault error code bits:
+ *
+ *   bit 0 ==	 0: no page found	1: protection fault
+ *   bit 1 ==	 0: read access		1: write access
+ *   bit 2 ==	 0: kernel-mode access	1: user-mode access
+ *   bit 3 ==				1: use of reserved bit detected
+ *   bit 4 ==				1: fault was an instruction fetch
+ *   bit 5 ==				1: protection keys block access
+ */
+enum x86_pf_error_code {
+
+	PF_PROT		=		1 << 0,
+	PF_WRITE	=		1 << 1,
+	PF_USER		=		1 << 2,
+	PF_RSVD		=		1 << 3,
+	PF_INSTR	=		1 << 4,
+	PF_PK		=		1 << 5,
+};
+```
+
+从CR2寄存器获取发生page fault的线性地址.
+
+\_\_do\_page\_fault()实现:
+
+```c
+[arch/x86/mm/fault.c]
+static noinline void
+__do_page_fault(struct pt_regs *regs, unsigned long error_code,
+		unsigned long address)
+{
+	struct vm_area_struct *vma;
+	struct task_struct *tsk;
+	struct mm_struct *mm;
+	int fault, major = 0;
+	unsigned int flags = FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_KILLABLE;
+    // 获取当前进程
+	tsk = current;
+	// 获取当前进程的地址空间
+	mm = tsk->mm;
+
+	if (kmemcheck_active(regs))
+		kmemcheck_hide(regs);
+	prefetchw(&mm->mmap_sem);
+
+	if (unlikely(kmmio_fault(regs, address)))
+		return;
+    // 判断address是否处于内核线性地址空间
+	if (unlikely(fault_in_kernel_space(address))) {
+	    // 判断是否处于内核态
+		if (!(error_code & (PF_RSVD | PF_USER | PF_PROT))) {
+			// 处理vmalloc异常
+			if (vmalloc_fault(address) >= 0)
+				return;
+
+			if (kmemcheck_fault(regs, address, error_code))
+				return;
+		}
+
+		/* Can handle a stale RO->RW TLB: */
+		/*异常发生在内核地址空间但不属于上面的情况或上面的方式无法修正， 
+          则检查相应的页表项是否存在，权限是否足够*/
+		if (spurious_fault(error_code, address))
+			return;
+
+		/* kprobes don't want to hook the spurious faults: */
+		if (kprobes_fault(regs))
+			return;
+
+		bad_area_nosemaphore(regs, error_code, address);
+
+		return;
+	}
+
+	/* kprobes don't want to hook the spurious faults: */
+	if (unlikely(kprobes_fault(regs)))
+		return;
+
+	if (unlikely(error_code & PF_RSVD))
+		pgtable_bad(regs, error_code, address);
+
+	if (unlikely(smap_violation(error_code, regs))) {
+		bad_area_nosemaphore(regs, error_code, address);
+		return;
+	}
+
+	if (unlikely(in_atomic() || !mm)) {
+		bad_area_nosemaphore(regs, error_code, address);
+		return;
+	}
+
+	if (user_mode_vm(regs)) {
+		local_irq_enable();
+		error_code |= PF_USER;
+		flags |= FAULT_FLAG_USER;
+	} else {
+		if (regs->flags & X86_EFLAGS_IF)
+			local_irq_enable();
+	}
+
+	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
+
+	if (error_code & PF_WRITE)
+		flags |= FAULT_FLAG_WRITE;
+
+	if (unlikely(!down_read_trylock(&mm->mmap_sem))) {
+		if ((error_code & PF_USER) == 0 &&
+		    !search_exception_tables(regs->ip)) {
+			bad_area_nosemaphore(regs, error_code, address);
+			return;
+		}
+retry:
+		down_read(&mm->mmap_sem);
+	} else {
+		/*
+		 * The above down_read_trylock() might have succeeded in
+		 * which case we'll have missed the might_sleep() from
+		 * down_read():
+		 */
+		might_sleep();
+	}
+    // 试图寻找到一个离address最近的vma，vma包含address或在address之后
+	vma = find_vma(mm, address);
+	/*没有找到这样的vma则说明address之后没有虚拟内存区域，因此该address肯定是无效的， 
+    通过bad_area()路径来处理,bad_area()的主体就是__bad_area()-->bad_area_nosemaphore()*/ 
+	if (unlikely(!vma)) {
+		bad_area(regs, error_code, address);
+		return;
+	}
+	/*如果该地址包含在vma之中，则跳转到good_area处进行处理*/
+	if (likely(vma->vm_start <= address))
+		goto good_area;
+	/*不是前面两种情况的话，则判断是不是由于用户堆栈所占的页框已经使用完，而一个PUSH指令 
+    引用了一个尚未和页框绑定的虚拟内存区域导致的一个异常，属于堆栈的虚拟内存区，其VM_GROWSDOWN位被置位*/
+	if (unlikely(!(vma->vm_flags & VM_GROWSDOWN))) {
+	    //不是堆栈区域，则用bad_area()来处理
+		bad_area(regs, error_code, address);
+		return;
+	}
+	//必须处于用户空间
+	if (error_code & PF_USER) {
+		/*这里检查address，只有该地址足够高(和堆栈指针的差不大于65536+32*sizeof(unsigned long)), 
+        才能允许用户进程扩展它的堆栈地址空间，否则bad_area()处理*/  
+		if (unlikely(address + 65536 + 32 * sizeof(unsigned long) < regs->sp)) {
+			bad_area(regs, error_code, address);
+			return;
+		}
+	}
+	//堆栈扩展不成功同样由bad_area()处理
+	if (unlikely(expand_stack(vma, address))) {
+		bad_area(regs, error_code, address);
+		return;
+	}
+
+good_area:
+    /*访问权限不够则通过bad_area_access_error()处理，该函数是对__bad_area()的封装，
+    只不过发送给用户进程的信号为SEGV_ACCERR*/
+	if (unlikely(access_error(error_code, vma))) {
+		bad_area_access_error(regs, error_code, address);
+		return;
+	}
+    /*分配新的页表和页框*/
+	fault = handle_mm_fault(mm, vma, address, flags);
+	major |= fault & VM_FAULT_MAJOR;
+
+	if (unlikely(fault & VM_FAULT_RETRY)) {
+		/* Retry at most once */
+		if (flags & FAULT_FLAG_ALLOW_RETRY) {
+			flags &= ~FAULT_FLAG_ALLOW_RETRY;
+			flags |= FAULT_FLAG_TRIED;
+			if (!fatal_signal_pending(tsk))
+				goto retry;
+		}
+
+		/* User mode? Just return to handle the fatal exception */
+		if (flags & FAULT_FLAG_USER)
+			return;
+
+		/* Not returning to user mode? Handle exceptions or die: */
+		no_context(regs, error_code, address, SIGBUS, BUS_ADRERR);
+		return;
+	}
+
+	up_read(&mm->mmap_sem);
+	if (unlikely(fault & VM_FAULT_ERROR)) {
+		mm_fault_error(regs, error_code, address, fault);
+		return;
+	}
+
+	if (major) {
+		tsk->maj_flt++;
+		perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MAJ, 1, regs, address);
+	} else {
+		tsk->min_flt++;
+		perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MIN, 1, regs, address);
+	}
+
+	check_v8086_mode(regs, address, tsk);
+}
+NOKPROBE_SYMBOL(__do_page_fault);
+```。
+
+## 22.3 内核空间异常处理
+
+```c
+[arch/x86/mm/fault.c]
+static noinline void
+__do_page_fault(struct pt_regs *regs, unsigned long error_code,
+		unsigned long address)
+{
+	struct vm_area_struct *vma;
+	struct task_struct *tsk;
+	struct mm_struct *mm;
+	int fault, major = 0;
+	unsigned int flags = FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_KILLABLE;
+    // 获取当前进程
+	tsk = current;
+	// 获取当前进程的地址空间
+	mm = tsk->mm;
+
+	if (kmemcheck_active(regs))
+		kmemcheck_hide(regs);
+	prefetchw(&mm->mmap_sem);
+
+	if (unlikely(kmmio_fault(regs, address)))
+		return;
+    // 判断address是否处于内核线性地址空间
+	if (unlikely(fault_in_kernel_space(address))) {
+	    // 判断是否处于内核态
+		if (!(error_code & (PF_RSVD | PF_USER | PF_PROT))) {
+			// 处理vmalloc异常
+			if (vmalloc_fault(address) >= 0)
+				return;
+
+			if (kmemcheck_fault(regs, address, error_code))
+				return;
+		}
+
+		/* Can handle a stale RO->RW TLB: */
+		/*异常发生在内核地址空间但不属于上面的情况或上面的方式无法修正， 
+          则检查相应的页表项是否存在，权限是否足够*/
+		if (spurious_fault(error_code, address))
+			return;
+
+		/* kprobes don't want to hook the spurious faults: */
+		if (kprobes_fault(regs))
+			return;
+
+		bad_area_nosemaphore(regs, error_code, address);
+
+		return;
+	}
+```
+
+首先要检查该**异常的触发地址**是不是位于**内核地址空间**, 也就是**address\>=TASK\_SIZE\_MAX**。然后要检查**触发异常时是否处于内核态**，满足**这两个条件**就尝试通过**vmalloc\_fault**()来**解决这个异常**
+
+```c
+struct mm_struct init_mm = {
+	.mm_rb		= RB_ROOT,
+	.pgd		= swapper_pg_dir,
+	.mm_users	= ATOMIC_INIT(2),
+	.mm_count	= ATOMIC_INIT(1),
+	.mmap_sem	= __RWSEM_INITIALIZER(init_mm.mmap_sem),
+	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
+	.mmlist		= LIST_HEAD_INIT(init_mm.mmlist),
+	INIT_MM_CONTEXT(init_mm)
+};
+
+#define pgd_offset(mm, address) ((mm)->pgd + pgd_index((address)))
+#define pgd_offset_k(address) pgd_offset(&init_mm, (address))
+
+static noinline int vmalloc_fault(unsigned long address)
+{
+	pgd_t *pgd, *pgd_ref;
+	pud_t *pud, *pud_ref;
+	pmd_t *pmd, *pmd_ref;
+	pte_t *pte, *pte_ref;
+
+	/* 确定触发异常的地址是否处于VMALLOC区域*/
+	if (!(address >= VMALLOC_START && address < VMALLOC_END))
+		return -1;
+
+	WARN_ON_ONCE(in_nmi());
+	// 对于内核线程, 仍然需要page table来访问kernel自己的空间。
+	// 对于任何用户进程来说，他们的内核空间都是100%相同的
+	// 可使用上一个被调用的用户进程的mm中的页表来访问内核地址
+	// current->active_mm就是上一个用户进程的mm
+    
+    // 记录当前页表pgd对应address的偏移
+	pgd = pgd_offset(current->active_mm, address);
+	// 记录内核页表对应address的偏移
+	pgd_ref = pgd_offset_k(address);
+	if (pgd_none(*pgd_ref))
+		return -1;
+    // 当前pgd项为空, 则设置其与内核页表的pgd_ref相同
+	if (pgd_none(*pgd)) {
+		set_pgd(pgd, *pgd_ref);
+		arch_flush_lazy_mmu_mode();
+	} else {
+		BUG_ON(pgd_page_vaddr(*pgd) != pgd_page_vaddr(*pgd_ref));
+	}
+    
+	pud = pud_offset(pgd, address);
+	pud_ref = pud_offset(pgd_ref, address);
+	if (pud_none(*pud_ref))
+		return -1;
+
+	if (pud_none(*pud) || pud_page_vaddr(*pud) != pud_page_vaddr(*pud_ref))
+		BUG();
+
+	pmd = pmd_offset(pud, address);
+	pmd_ref = pmd_offset(pud_ref, address);
+	if (pmd_none(*pmd_ref))
+		return -1;
+
+	if (pmd_none(*pmd) || pmd_page(*pmd) != pmd_page(*pmd_ref))
+		BUG();
+    //获取pmd_ref对应address的pte项
+	pte_ref = pte_offset_kernel(pmd_ref, address);
+	// 判断pte项是否存在，不存在则失败
+	if (!pte_present(*pte_ref))
+		return -1;
+
+	pte = pte_offset_kernel(pmd, address);
+    
+	if (!pte_present(*pte) || pte_pfn(*pte) != pte_pfn(*pte_ref))
+		BUG();
+
+	return 0;
+}
+NOKPROBE_SYMBOL(vmalloc_fault);
+```
+
+执行到了bad\_area\_nosemaphore()，那么就表明这次异常是由于对非法的地址访问造成的。在内核中产生这样的结果的情况一般有两种:
+
+1.内核通过用户空间传递的系统调用参数，访问了无效的地址
+
+2.内核的程序设计缺陷
+
+第一种情况内核尚且能通过异常修正机制来进行修复，而第二种情况就会导致OOPS错误了，内核将强制用SIGKILL结束当前进程。
+
+内核态的bad\_area\_nosemaphore()的实际处理函数为bad\_area\_nosemaphore()\-\-\>\_\_bad\_area\_nosemaphore()\-\-\>no\_context()
+
+## 22.4 用户空间异常处理
+
+**用户空间**的**缺页异常**可以分为两种情况
+
+1. 触发异常的**线性地址**处于**用户空间的vma**中，但**还未分配物理页**，如果**访问权限OK**的话内核就**给进程分配相应的物理页**了
+
+2. 触发异常的**线性地址不处于用户空间的vma**中，这种情况得**判断**是不是因为**用户进程**的**栈空间消耗完**而触发的**缺页异常**，如果是的话则**在用户空间对栈区域进行扩展**，并且分配相应的**物理页**，如果**不是**则作为一次**非法地址**访问来处理，内核将**终结进程**
+
+```c
+[arch/x86/mm/fault.c]
+static noinline void
+__do_page_fault(struct pt_regs *regs, unsigned long error_code,
+		unsigned long address)
+{
+	struct vm_area_struct *vma;
+	struct task_struct *tsk;
+	struct mm_struct *mm;
+	int fault, major = 0;
+	unsigned int flags = FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_KILLABLE;
+    // 获取当前进程
+	tsk = current;
+	// 获取当前进程的地址空间
+	mm = tsk->mm;
+	
+    // 试图寻找到一个离address最近的vma，vma包含address或在address之后
+	vma = find_vma(mm, address);
+	/*没有找到这样的vma则说明address之后没有虚拟内存区域，因此该address肯定是无效的， 
+    通过bad_area()路径来处理,bad_area()的主体就是__bad_area()-->bad_area_nosemaphore()*/ 
+	if (unlikely(!vma)) {
+		bad_area(regs, error_code, address);
+		return;
+	}
+	/*如果该地址包含在vma之中，则跳转到good_area处进行处理*/
+	if (likely(vma->vm_start <= address))
+		goto good_area;
+	/*不是前面两种情况的话，则判断是不是由于用户堆栈所占的页框已经使用完，而一个PUSH指令 
+    引用了一个尚未和页框绑定的虚拟内存区域导致的一个异常，属于堆栈的虚拟内存区，其VM_GROWSDOWN位被置位*/
+	if (unlikely(!(vma->vm_flags & VM_GROWSDOWN))) {
+	    //不是堆栈区域，则用bad_area()来处理
+		bad_area(regs, error_code, address);
+		return;
+	}
+	//必须处于用户空间
+	if (error_code & PF_USER) {
+		/*这里检查address，只有该地址足够高(和堆栈指针的差不大于65536+32*sizeof(unsigned long)), 
+        才能允许用户进程扩展它的堆栈地址空间，否则bad_area()处理*/  
+		if (unlikely(address + 65536 + 32 * sizeof(unsigned long) < regs->sp)) {
+			bad_area(regs, error_code, address);
+			return;
+		}
+	}
+	//堆栈扩展不成功同样由bad_area()处理
+	if (unlikely(expand_stack(vma, address))) {
+		bad_area(regs, error_code, address);
+		return;
+	}
+
+good_area:
+    /*访问权限不够则通过bad_area_access_error()处理，该函数是对__bad_area()的封装，
+    只不过发送给用户进程的信号为SEGV_ACCERR*/
+	if (unlikely(access_error(error_code, vma))) {
+		bad_area_access_error(regs, error_code, address);
+		return;
+	}
+    /*分配新的页表和页框*/
+	fault = handle_mm_fault(mm, vma, address, flags);
+	major |= fault & VM_FAULT_MAJOR;
+
+	if (unlikely(fault & VM_FAULT_RETRY)) {
+		/* Retry at most once */
+		if (flags & FAULT_FLAG_ALLOW_RETRY) {
+			flags &= ~FAULT_FLAG_ALLOW_RETRY;
+			flags |= FAULT_FLAG_TRIED;
+			if (!fatal_signal_pending(tsk))
+				goto retry;
+		}
+
+		/* User mode? Just return to handle the fatal exception */
+		if (flags & FAULT_FLAG_USER)
+			return;
+
+		/* Not returning to user mode? Handle exceptions or die: */
+		no_context(regs, error_code, address, SIGBUS, BUS_ADRERR);
+		return;
+	}
+
+	up_read(&mm->mmap_sem);
+	if (unlikely(fault & VM_FAULT_ERROR)) {
+		mm_fault_error(regs, error_code, address, fault);
+		return;
+	}
+
+	if (major) {
+		tsk->maj_flt++;
+		perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MAJ, 1, regs, address);
+	} else {
+		tsk->min_flt++;
+		perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MIN, 1, regs, address);
+	}
+
+	check_v8086_mode(regs, address, tsk);
+}    
+```
+
+bad\_area()函数的主体函数为\_\_bad\_area()\-\-\>\_\_bad\_area\_nosemaphore(): 错误发生在用户态，则向用户进程发送一个SIGSEG信号
+
+确定了这次异常是因**为物理页没分配而导致**后，就通过good\_area路径来处理，可想而知，该路径在确定了访问权限足够后，将完成页表和物理页的分配，这个任务有handle\_mm\_fault()函数来完成
+
+```c
+int handle_mm_fault(struct mm_struct *mm, struct vm_area_struct *vma,
+		    unsigned long address, unsigned int flags)
+{
+	int ret;
+
+	__set_current_state(TASK_RUNNING);
+
+	count_vm_event(PGFAULT);
+	mem_cgroup_count_vm_event(mm, PGFAULT);
+
+	/* do counter updates before entering really critical section. */
+	check_sync_rss_stat(current);
+
+	if (flags & FAULT_FLAG_USER)
+		mem_cgroup_oom_enable();
+
+	ret = __handle_mm_fault(mm, vma, address, flags);
+
+	if (flags & FAULT_FLAG_USER) {
+		mem_cgroup_oom_disable();
+                if (task_in_memcg_oom(current) && !(ret & VM_FAULT_OOM))
+                        mem_cgroup_oom_synchronize(false);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(handle_mm_fault);
+```
+
+handle\_pte\_fault()函数的处理比较复杂，因为它要根据pte页表项对应的物理页的不同状态来做各种不同的处理
+
+## 22.x 小结
+
+整个缺页异常的处理过程非常复杂，我们这里只简单介绍一下缺页涉及到的函数。
+ 
+当CPU产生一个**异常**时，将会跳转到异常处理的整个处理流程中。对于缺页异常，CPU将跳转到page\_fault异常处理程序中，该异常处理程序会调用do\_page\_fault()函数，该函数通过读取CR2寄存器获得引起缺页的线性地址，通过**各种条件**判断以便确定一个**合适的方案**来处理这个异常。
+ 
+do\_page\_fault()该函数通过**各种条件**来检测当前发生异常的情况，但至少do\_page\_fault()会区分出**引发缺页的两种情况**：
+
+- 由**编程错误**引发异常
+- 由**进程地址空间**中还**未分配物理内存**的**线性地址**引发
+
+对于**后一种情况**，通常还分为**用户空间所引发的缺页异常**和**内核空间引发的缺页异常**。
+
+**内核**引发的异常是由**vmalloc**()产生的，它**只用于内核空间内存的分配**。
+
+我们这里需要关注的是**用户空间所引发的异常**情况。这部分工作从do\_page\_fault()中的**good\_area标号**处开始执行，主要通过**handle\_mm_fault**()完成。
+ 
+**handle\_mm\_fault**()该函数的主要功能是**为引发缺页的进程**分配**一个物理页框**，它先确定与**引发缺页的线性地址**对应的**各级页目录项是否存在**，如果**不存在则进行分配**。具体如何分配这个页框是通过调用**handle\_pte\_fault**()完成的。
+ 
+**handle\_pte\_fault**()该函数根据**页表项pte**所描述的**物理页框**是否在**物理内存**中，分为**两大类**：
+
+- **请求调页**：**被访问的页框不在主存**中，那么此时**必须分配一个页框**。
+- **写时复制**：被访问的**页存在**，但是该**页是只读**的，内核**需要对该页进行写**操作，此时内核将这个**已存在的只读页中的数据**复制到一个**新的页框**中。
+
+用户进程访问由**malloc**()分配的内存空间属于第一种情况。
+
+对于**请求调页**，handle\_pte\_fault()仍然将其细分为三种情况：
+ 
+1.如果**页表项确实为空（pte\_none(entry**)），那么**必须分配页框**。如果**当前进程**实现了vma操作函数集合中的**fault钩子**函数，那么这种情况属于**基于文件的内存映射**，它调用**do\_linear\_fault**()进行**分配物理页框**。否则，内核将调用针对**匿名映射分配物理页框**的函数**do\_anonymous\_page**()。
+ 
+2.如果检测出该**页表项为非线性映射（pte\_file(entry**)），则调用**do\_nonlinear\_fault**()分配**物理页**。
+ 
+3.如果**页框事先被分配**，但是此刻已经由**主存**换出到了**外存**，则调用**do\_swap\_page**()完成**页框分配**。
+ 
+在以上三个函数中缺页异常处理函数通过alloc\_zeroed\_user\_highpage\_movable()来完成**物理页的分配**过程。alloc\_zeroed\_user\_highpage\_movable()函数最终调用了**alloc\_pages**()。 经过这样一个复杂的过程，用户进程所访问的**线性地址**终于对应到了一块**物理内存**。
+
+缺页异常在linux内核处理中占有非常重要的位置，很多linux特性，如写时复制，页框延迟分配，内存回收中的磁盘和内存交换，都需要借助缺页异常来进行，缺页异常处理程序主要处理以下四种情形：
+
+1. 请求调页: 当进程调用malloc()之类的函数调用时，并未实际上分配物理内存，而是仅仅分配了一段线性地址空间，在实际访问该页框时才实际去分配物理页框，这样可以节省物理内存的开销，还有一种情况是在内存回收时，该物理页面的内容被写到了磁盘上，被系统回收了，这时候需要再分配页框，并且读取其保存的内容。
+2. 写时复制:当fork()一个进程时，子进程并未完整的复制父进程的地址空间，而是共享相关的资源，父进程的页表被设为只读的，当子进程进行写操作时，会触发缺页异常，从而为子进程分配页框。
+3. 地址范围外的错误:内核访问无效地址，用户态进程访问无效地址等。
+4. 内核访问非连续性地址：用于内核的高端内存映射，高端内存映射仅仅修改了主内核页表的内容，当进程访问内核态时需要将该部分的页表内容复制到自己的进程页表里面。
+
+缺页异常处理程序有可能发生在用户态或者内核态的代码中，在这两种形态下，有可能访问的是内核空间或者用户态空间的内存地址，因此，按照排列组合，需要考虑下列的四种情形，如图所示：
+
+缺页异常发生在内核态:
+
+![config](./images/48.png)
+
+缺页异常发生在用户态:
+
+![config](./images/49.png)
+
+缺页中断流程图
+
+![config](./images/50.png)
+
+缺页中断发生后，根据pte页表项中的PRESENT位、pte内容是否为空（pte\_none()宏）以及是否文件映射等条件，相应的处理函数如下。
+
+1. 匿名页面缺页中断do\_anonymous\_page()
+
+(1)判断条件：pte页表项中PRESENT没有置位、pte内容为空且没有指定vma\->vm\_ops\->fault()函数指针。
+
+(2)应用场合：malloc()分配内存。
+
+![config](./images/51.png)
+
+2. 文件映射缺页中断do\_fault()
+
+(1) 判断条件：pte页表项中的PRESENT没有置位、pte内容为空且指定了 vma->vm_
+ops->fault〇函数指针。do_fault()属于在文件映射中发生的缺页中断的情况。
+
+- 如果仅发生读错误，那么调用do\_read\_fault()函数去读取这个页面。
+- 如果在私有映射VMA中发生写保护错误，那么发生写时复制，新分配一个页面new\_page, 旧页面的内容要复制到新页面中，利用新页面生成一个PTE entry并设置到硬件页表项中，这就是所谓的写时复制COW 。
+- 如果写保护错误发生在共享映射VMA中，那么就产生了脏页，调用系统的回写机制来回写这个脏页。
+
+(2) 应用场合：
+
+- 使用mmap读文件内容，例如驱动中使用mmap映射设备内存到用户空间等。
+- 动态库映射 ，例如不同的进程可以通过文件映射来共享同一个动态库。
+
+3. swap缺页中断do\_swap\_page()
+
+判断条件：pte页表项中的PRESENT没有置位且pte页表项内容不为空。
+
+4. 写时复制COW缺页中断do\_wp\_page()
+
+![config](./images/52.png)
+
+(1) do\_wp\_page最终有两种处理情况。
+
+- reuse复用old\_page: 单身匿名页面和可写的共享页面。
+
+- gotten写时复制：非单身匿名页面、只读或者非共享的文件映射页面。
+
+(2) 判断条件：pte页表项中的PRESENT置位了且发生写错误缺页中断。
+
+(3)  应用场景：fork。父进程fork子进程，父子进程都共享父进程的匿名页面，当其中一方需要修改内容时，COW便会发生。
+
+总之，缺页中断是内存管理中非常重要的一种机制，它和内存管理中大部分的模块都有联系，例如brk、mmap、反向映射等。学习和理解缺页中断是理解内存管理的基石，其中 Dirty C O W 是学习和理解缺页中断的最好的例子之一
 
 # 23 Page引用计数
 
@@ -5706,23 +6354,199 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 
 **用户进程**在使用**虚拟内存**过程中，从**虚拟内存页面**映射到**物理内存页面**，PTE页表项保留着这个记录，**page数据结构**中的\_**mapcount**成员记录有**多少个用户PTE页表项映射了物理页面**。
 
-**用户PTE页表项**是指**用户进程地址空间**和**物理页面**建立映射的PTE页表项，**不包括内核地址空间映射物理页面产生的PTE页表项**。
+**用户PTE页表项**是指**用户进程地址空间**和**物理页面**建立映射的**PTE页表项**，**不包括内核地址空间映射物理页面产生的PTE页表项**。
 
 有的**页面**需要**被迁移**，有的页面长时间不使用需要**被交换到磁盘**。在交换之前，必须找出**哪些进程使用这个页面**，然后**断开这些映射的PTE**。
 
 **一个物理页面**可以同时被**多个进程的虚拟内存映射**，**一个虚拟页面**同时**只能有一个物理页面与之映射**。
 
-之前, 为确定**某一个页面**是否被**某个进程映射**，必须**遍历每个进程的页表**，工作量相当大，效率很低。后续提出反向映射(the object\-based
-reverse\-mapping VM, RMAP), 资料: https://lwn.net/Articles/23732/ 
+之前, 为确定**某一个页面**是否被**某个进程映射**，必须**遍历每个进程的页表**，工作量相当大，效率很低。后续提出**反向映射(the object\-based
+reverse\-mapping VM, RMAP**), 资料: https://lwn.net/Articles/23732/ 
+
+## 24.1 父进程分配匿名页面
+
+**父进程**为自己的**进程地址空间VMA**分配**物理内存**时，通常会产生**匿名页面**。
+
+例如**do\_anonymous\_page**()会分配**匿名页面**，**do\_wp\_page**()发生**写时复制COW(！！！**)时也会产生一个**新的匿名页面**。
+
+以do\_anonymous\_page()分配一个**新的匿名页面**为例：
+
+```c
+[用户态malloc()分配内存 -> 写入该内存 -> 内核缺页中断 -> do_anonymous_page()]
+[mm/memory.c]
+static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+		unsigned long address, pte_t *page_table, pmd_t *pmd,
+		unsigned int flags)
+{
+    ......
+    // 位置1
+    if (unlikely(anon_vma_prepare(vma)))
+		goto oom;
+	// 位置2
+	page = alloc_zeroed_user_highpage_movable(vma, address);
+	if (!page)
+		goto oom;
+	....
+	// 位置3
+	page_add_new_anon_rmap(page, vma, address, false);
+	......
+}
+```
+
+在**分配匿名页面**时，调用**RMAP反向映射系统**的**两个API接口**来完成**初始化**，一个是**anon\_vma\_prepare**()函数，另一个**page\_add\_new\_anon\_rmap**()函数。
+
+**anon\_vma\_prepare**()函数实现:
+
+```c
+[do_anonymous_page() -> anon_vma_prepare()]
+[mm/rmap.c]
+int anon_vma_prepare(struct vm_area_struct *vma)
+{
+    // VMA数据结构中有一个成员anon_vma用于指向anon_vma数据结构，
+    // 如果VMA还没有分配过匿名页面，那么vma->anon_vma为NULL。
+	struct anon_vma *anon_vma = vma->anon_vma;
+	struct anon_vma_chain *avc;
+
+	might_sleep();
+	if (unlikely(!anon_vma)) {
+		struct mm_struct *mm = vma->vm_mm;
+		struct anon_vma *allocated;
+        // 分配一个struct anon_vma_chain数据结构ac
+		avc = anon_vma_chain_alloc(GFP_KERNEL);
+		if (!avc)
+			goto out_enomem;
+        // 位置1
+		anon_vma = find_mergeable_anon_vma(vma);
+		allocated = NULL;
+		if (!anon_vma) {
+			anon_vma = anon_vma_alloc();
+			if (unlikely(!anon_vma))
+				goto out_enomem_free_avc;
+			allocated = anon_vma;
+		}
+
+		anon_vma_lock_write(anon_vma);
+		/* page_table_lock to protect against threads */
+		spin_lock(&mm->page_table_lock);
+		if (likely(!vma->anon_vma)) {
+			vma->anon_vma = anon_vma;
+			// 位置1
+			anon_vma_chain_link(vma, avc, anon_vma);
+			/* vma reference or self-parent link for new root */
+			anon_vma->degree++;
+			allocated = NULL;
+			avc = NULL;
+		}
+		spin_unlock(&mm->page_table_lock);
+		anon_vma_unlock_write(anon_vma);
+
+		if (unlikely(allocated))
+			put_anon_vma(allocated);
+		if (unlikely(avc))
+			anon_vma_chain_free(avc);
+	}
+	return 0;
+
+ out_enomem_free_avc:
+	anon_vma_chain_free(avc);
+ out_enomem:
+	return -ENOMEM;
+}
+```
+
+**anon\_vma\_prepare**()函数主要**为进程地址空间VMA**准备**struct anon\_vma数据结构**和一些管理用的**链表**。
+
+分配一个struct anon\_vma\_chain数据结构avc; 
+
+检查是否可以复用当前vma的前继和后继者的anon\_vma. 如果相邻VMA无法复用, 从新分配一个anon\_vma数据结构;
+
+将vma\-\>anon\_vma指向刚分配的anon\_vma, 将刚分配的avc添加到vma的anon\_vma\_chain链表中, 另外把avc添加到anon\_vma\-\>rb\_root红黑树中. 
+
+**RMAP反向映射系统**中有两个重要的**数据结构**，
+
+- 一个是**anon\_vma**, 简称**AV**; 
+- 另一个是**anon\_vma\_chain**，简称**AVC**。
+
+struct anon\_vma数据结构定义如下：
+
+```c
+[include/linux/rmap.h]
+struct anon_vma {
+	struct anon_vma *root;		/* Root of this anon_vma tree */
+	struct rw_semaphore rwsem;	/* W: modification, R: walking the list */
+	atomic_t refcount;
+	unsigned degree;
+	struct anon_vma *parent;	/* Parent of this anon_vma */
+	struct rb_root rb_root;	/* Interval tree of private "related" vmas */
+};
+```
+
+- root: 指向anon\_vma数据结构中的**根节点**。
+- rwsem: 保护anon\_vma中链表的**读写信号量**。
+- refcount: **引用计数**。
+- parent: 指向**父anon\_vma数据结构**。
+- rb\_root: **红黑树根节点**。**anon\_vma**内部有一棵**红黑树(！！！**)。
+
+struct **anon\_vma\_chain**数据结构是**连接父子进程中的枢纽**.
+
+```c
+[include/linux/rmap.h]
+struct anon_vma_chain {
+	struct vm_area_struct *vma;
+	struct anon_vma *anon_vma;
+	struct list_head same_vma;   /* locked by mmap_sem & page_table_lock */
+	struct rb_node rb;			/* locked by anon_vma->rwsem */
+	unsigned long rb_subtree_last;
+};
+```
+
+- vma: **指向VMA**, 可以指向**父进程**的VMA, 也可以指向**子进程**的VMA，具体情况需要具体分析。
+- anon\_vma: 指向**anon\_vma**数据结构，可以指向**父进程**的anon\_vma 数据结构，也可以指向**子进程**的anon\_vma数据结构，具体情况需要具体分
+- same\_vma: **链表节点**，通常把 **anon\_vma\_chain** 添加到 **vma\-\> anon\_vma\_chain 链表**中。
+- rb: **红黑树节点**，通常把anon\_vma\_chain添加到**anon\_vma\-\>rb\_root的红黑树**中。
+
+
+
+父进程分配匿名页面的状态如图, 归纳:
+
+![config](./images/47.png)
+
+- **父进程**的**每个VMA**中有一个**anon\_vma**数据结构（下文用**AVp来表示**），vma\-\>anon\_vma指向AVp.
+- 和VMAp相关的**物理页面page\-\>mapping都指向AVp**。
+- 有一个**anon\_vma\_chain数据结构AVC**，其中**avc\-\>vma指向VMA**，**avc\-\>av指向AVp**。
+- AVC添加到VMAp\-\>anon\_vma\_chain链表中。
+- AVC添加到AVp\-\>anon\_vma红黑树中。
+
+## 24.2 父进程创建子进程
+
+**父进程**通过**fork系统调用**创建**子进程**时，**子进程**会**复制父进程的进程地址空间VMA数据结构的内容**作为自己的**进程地址空间**，并且会**复制父进程的pte页表项内容**到**子进程的页表**中，实现**父子进程共享页表**。多个**不同子进程**中的**虚拟页面**会同时映射到**同一个物理页面**，另外多个**不相干的进程**的**虚拟页面**也可以通过**KSM机制**映射到**同一个物理页面**中，这里暂时只讨论前者。
+
+为了实现**RMAP反向映射系统**，在**子进程复制父进程的VMA**时，需要添加**hook钩子**。
+
+**fork系统调用**实现在kernel/fork.c文件中，在**dup\_mmap**()中**复制父进程的进程地址空间**函数
+
+## 24.3 子进程发生COW
+
+如果**子进程的VMA**发生**COW**，那么会使用**子进程VMA创建的anon\_vma数据结构**，即**page\-\>mmaping**指针指向**子进程VMA对应的anon\_vma数据结构**。在 do\_wp\_page()函数中处理COW场景的情况。
+
+```c
+子进程和父进程共享的匿名页面，子进程的 VMA 发生 COW
+
+->缺页中断发生
+    ->handle_pte_fault
+        ->do_wp_page
+        ->分配一个新的匿名页面
+            -> __page_set_anon_rmap使用子进程的anon_vma来设置page->mapping
+```
 
 ## 24.4 RMAP应用
 
-内核中经常有通过struc page数据结构找到所有映射这个page的VMA的需求。早期的Linux内核的实现通过扫描所有进程的VMA,这种方法相当耗时。在Linux2.5开发期间,反向映射的概念已经形成，经过多年的优化形成现在的版本。
+内核中经常有**通过struc page数据结构**找到**所有映射这个page的VMA**的需求。早期的Linux内核的实现通过**扫描所有进程的VMA**,这种方法相当耗时。在Linux2.5开发期间,反向映射的概念已经形成，经过多年的优化形成现在的版本。
 
 反向映射的典型应用场景如下。
 
-- kswapd内核线程回收页面需要断开所有映射了该匿名页面的用户PTE页表项。
-- 页面迁移时 ，需要断开所有映射到匿名页面的用户PTE页表项。
+- **kswapd内核线程回收页面**需要**断开所有映射**了该**匿名页面**的**用户PTE页表项**。
+- **页面迁移**时，需要**断开所有映射**到**匿名页面**的**用户PTE页表项**。
 
 反向映射的核心函数是try\_to\_unmap(),内核中的其他模块会调用此函数来断开一个页面的所有映射。
 
@@ -5809,22 +6633,273 @@ rmap\_walk\_anon\_lock()获取页面 page\-\>mapping 指向的 anon\_vma 数据�
 
 ![config](./images/45.png)
 
-Linux 2.6.34内核对R M A P 反向映射系统进行了优化，模型和现在Linux 4.0内核中的模型相似，如图2.26所示，新增加了AVC数据结构（struct anon\_vma\_chain),父进程和子进程都有各自的AV数据结构且都有一棵红黑树（简称AV红黑树），此外，父进程和子进程都有各自的AVC挂入进程的AV红黑树中。还有一个AVC作为纽带来联系父进程和子进程，我们暂且称它为AVC枢纽。AVC枢纽挂入父进程的AV红黑树中，因此所有子进程都有一个AVC枢纽用于挂入父进程的AV红黑树。需要反向映射遍历时，只需要扫描父进程中的AV红黑树即可。当子进程VMA发生COW时，新分配的匿名页面cow\_page\->mapping指向子进程自己的AV数据结构，而不是指向父进程的AV数据结构，因此在反向映射遍历时不需要扫描所有的子进程。
+Linux 2.6.34内核对RMAP反向映射系统进行了优化，模型和现在Linux 4.0内核中的模型相似，如图2.26所示，新增加了AVC数据结构（struct anon\_vma\_chain),父进程和子进程都有各自的AV数据结构且都有一棵红黑树（简称AV红黑树），此外，父进程和子进程都有各自的AVC挂入进程的AV红黑树中。还有一个AVC作为纽带来联系父进程和子进程，我们暂且称它为AVC枢纽。AVC枢纽挂入父进程的AV红黑树中，因此所有子进程都有一个AVC枢纽用于挂入父进程的AV红黑树。需要反向映射遍历时，只需要扫描父进程中的AV红黑树即可。当子进程VMA发生COW时，新分配的匿名页面cow\_page\->mapping指向子进程自己的AV数据结构，而不是指向父进程的AV数据结构，因此在反向映射遍历时不需要扫描所有的子进程。
 
 ![config](./images/46.png)
 
 # 25 回收页面
 
+在 Linux系统中，当**内存有盈余**时，内核会**尽量多**地使用内存作为**文件缓存（page cache**)，从而提高**系统的性能**。**文件缓存页面**会加入到**文件类型的LRU链表**中，当系统**内存紧张**时，**文件缓存页面会被丢弃**，或者**被修改的文件缓存会被回写到存储设备**中，**与块设备同步**之后便可**释放出物理内存**。现在的**应用程序**越来越转向**内存密集型**，无论系统中有**多少物理内存都是不够用**的，因此Limix系统会使用**存储设备**当作**交换分区**，内核将**很少使用的内存**换出到**交换分区**，以便**释放出物理内存**，这个机制称为**页交换（swapping**)，这些**处理机制**统称为**页面回收（page reclaim**)。
+
+## 25.1 LRU链表
+
+有很多**页面交换算法**，其中每个算法都有各自的优点和缺点。Linux内核中采用的**页交换算法**主要是**LRU算法**和**第二次机会法（second chance**).
+
+### 25.1.1 LRU链表
+
+**LRU是least recently used(最近最少使用**）的缩写，LRU假定**最近不使用的页**在较短的时间内也**不会频繁使用**。在**内存不足**时，这些页面将成为被换出的候选者。内核使用**双向链表**来定义LRU链表，并且根据**页面的类型**分为**LRU\_AN0N**和**LRU\_FILE**。**每种类型**根据**页面的活跃性**分为**活跃LRU**和**不活跃LRU**，所以内核中一共有如下**5个LRU链表**。
+
+- **不活跃匿名页面链表**LRU\_INACTIVE\_ANON。
+- **活跃匿名页面链表**LRU\_ACTIVE\_ANON。
+- **不活跃文件映射页面链表**LRU\_INACTIVE\_FILE。
+- **活跃文件映射页面链表**LRU\_ACTIVE\_FILE。
+- **不可回收页面链表**LRU\_UNEVTCTABLE。
+
+LRU链表之所以要**分成这样**，是因为当**内存紧缺**时总是**优先换出page cache页面**，而**不是匿名页面**。因为**大多数**情况**page cache页面**下**不需要回写磁盘**，除非**页面内容被修改**了，而**匿名页面**总是要被**写入交换分区**才能**被换出**。LRU链表按照**zone**来配置也就是**每个zone**中都有一整套**LRU链表**，因此zone数据结构中有一个成员**lruvec**指向这些链表。**枚举类型变量lru\_list**列举出**上述各种LRU链表的类型**，struct lruvec数据结构中定义了上述各种LRU类型的链表。
+
+```c
+[include/linux/mmzone.h]
+#define LRU_BASE 0
+#define LRU_ACTIVE 1
+#define LRU_FILE 2
+
+enum lru_list {
+	LRU_INACTIVE_ANON = LRU_BASE,
+	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE,
+	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE,
+	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE,
+	LRU_UNEVICTABLE,
+	NR_LRU_LISTS
+};
+
+struct lruvec {
+	struct list_head		lists[NR_LRU_LISTS];
+	struct zone_reclaim_stat	reclaim_stat;
+};
+
+struct zone{
+    struct lruvec lruvec;
+}
+```
+
+LRU链表是如何实现页面老化的?
+
+LRU链表实现先进先出(FIFO)算法. 最先进入LRU链表的页面, 在LRU中时间会越长, 老化时间也越长.
+
+在**系统运行**过程中, **页面**总是在**活跃LRU链表**和**不活跃LRU链表**之间**转移**，**不是每次访问内存页面**都会发生这种**转移**。而是**发生的时间间隔比较长**，随着时间的推移，导致一种**热平衡**，**最不常用的页面**将慢慢移动到**不活跃LRU链表的末尾**，这些页面正是**页面回收**中最合适的候选者。
+
+经典LRU链表算法如图
+
+![config](./images/53.png)
+
+### 25.1.2 第二次机会法
+
+**第二次机会法（second chance**) 在经典LRU算法基础上做了一些改进。在**经典LRU链表(FIFO**)中, **新产生的页面**加入到**LRU链表的开头**，将LRU链表中**现存的页面向后移动了一个位置**。当**系统内存短缺**时，**LRU链表尾部的页面**将会**离开并被换出**。当系统**再需要这些页面**时，这些页面会重新置于**LRU链表的开头**。
+
+但是，在**换出页面**时，没有考虑该页面的使用情况是**频繁使用**，还是**很少使用**。也就是说，**频繁使用的页面**依然会因为在**LRU链表末尾**而被**换出**。
+
+第二次机会算法的改进是为了避免把经常使用的页面置换出去。当**选择置换页面**时，依然和LRU算法一样，选择最早置入链表的页面，即在**链表末尾的页面**。
+
+**二次机会法**设置了一个**访问状态位（硬件控制的比特位**）,所以要**检查页面的访问位**。如果**访问位是0**, 就**淘汰**这页面；如果**访问位是1**, 就给它**第二次机会**，并**选择下一个页面来换出**。当该页面得到**第二次机会**时，它的**访问位被清0**, 如果**该页**在此期间**再次被访问**过，则访问位**置为1**。这样给了第二次机会的页面将不会被淘汰，直至所有其他页面被淘汰过（或者也给了第二次机会)。因此，如果**一个页面经常被使用**，其访问位总保持为1，它一直不会被淘汰出去。
+
+Linux内核使用**PG\_active**和**PG\_referenced**这两个标志位来实现**第二次机会法**。
+
+对于Linux内核来说, **PTE\_YOUNG**标志位是**硬件的比特位**，**PG\_active**和**PG\_referenced**是**软件比特位**。
+
+**PG\_active**表示该**页是否活跃**，**PG\_referenced**表示该**页是否被引用过**，主要函数如下。
+
+- mark\_page\_accessed()
+- page\_referenced()
+- page\_check\_referenced()
+
+### 25.1.6 例子
+
+以用户进程读文件为例来说明第二次机会法。从用户空间的读函数到内核VFS层的vfs\_read()，透过文件系统之后，调用**read方法**的**通用**函数**do\_generic\_file\_read**()，第一次读和第二次读的情况如下。
+
+**第一次读**：
+
+- do\_generic\_file\_read() \-\> page\_cache\_sync\_readahead() \-\> \_do\_page\_cache\_readahead () \-\> read\_pages() \-\> add\_to\_page\_cache\_lru()把该页清PG\_active且添加到**不活跃链表**中，**PG\_active=0**
+
+- do\_generic\_file\_read() \-\> **mark\_page\_accessed**()因为PG\_referenced \=\= 0，设置**PG\_referenced = 1**
+
+第二次读:
+
+- do\_geieric\_file\_read() \-\> **mark\_page\_accessed**()因为(PG\_referenced\=\=l \&\& PG\_active =0),
+
+置**PG\_active=1**，**PG_referenced=0**, 把该页**从不活跃链表加入活跃链表**。
+
+从上述读文件的例子可以看到，**page cache**从**不活跃链表**加入到**活跃链表**，需要**mark\_page\_accessed()两次**。
+
+下面以另外一个常见的**读取文件内容的方式mmap**为例，来看**page cache**在**LRU链表**中的表现，假设文件系统是ext4。
+
+(1) 第一次读，即建立mmap映射时:
+
+mmap文件 \-\> ext4\_file\_mmap() \-\> filemap\_fault() \-\> do\_sync\_mmap\_readahead() \-\> ra\_submit() \-\> read\_pages() \-\> ext4\_readpages() \-\> mpage\_readpages() \-\> add\_to\_page\_cache\_lru()
+
+把**页面**加入到**不活跃文件LRU链表**中，然后**PG\_active = 0** \&\& **PG\_referenced = 0**
+
+(2) 后续的读写**和直接读写内存一样**，**没有**设置PG\_active和PG\_referenced标志位
+
+(3) **kswapd第一次扫描**：
+
+当kswapd内核线程第一次扫描不活跃文件LRU链表时，shrink\_inactive\_list() \-\> shrink\_page\_list() \-\> page\_check\_references()
+
+检查到这个page cache页面有映射PTE且PG\_referenced = 0，然后设置PG\_referenced =1，并且继续保留在不活跃链表中。
+
+(4) **kswapd第二次扫描**：
+
+当kswapd内核线程第二次扫描不活跃文件LRU链表时，page\_check\_references()检查到page cache页面有映射PTE且PG\_referenced = 1，则将其迁移到活跃链表中.
+
+下面来看从LRU链表换出页面的情况。
+
+(1) 第一次扫描**活跃链表**：shrink\_active\_list() \-\> page\_referenced()
+
+这里基本上会把有访问引用pte的和没有访问引用pte的页都加入到不活跃链表中。
+
+(2) 第二次扫描**不活跃链表**：shrink\_inactive\_list() \-\> page\_check\_references()读取该页的PG\_referenced并且清PG\_referenced 。
+
+= > 如果该页没有访问引用pte，回收的最佳候选者。
+
+= > 如果该页有访问引用pte的情况，需要具体问题具体分析 。
+
+## 25.2 kswapd内核线程
+
+Linux内核中有一个非常重要的内核线程kswapd，负责在**内存不足**的情况下**回收页面**。
+
+kswapd内核线程**初始化**时会为系统中**每个NUMA内存节点**创建一个名为“**kswapd%d”的内核线程**。
+
+```c
+[mm/vmscan.c]
+static int __init kswapd_init(void)
+{
+	int nid;
+
+	swap_setup();
+	for_each_node_state(nid, N_MEMORY)
+ 		kswapd_run(nid);
+	hotcpu_notifier(cpu_callback, 0);
+	return 0;
+}
+module_init(kswapd_init)
+
+int kswapd_run(int nid)
+{
+	pg_data_t *pgdat = NODE_DATA(nid);
+	int ret = 0;
+	
+	pgdat->kswapd = kthread_run(kswapd, pgdat, "kswapd%d", nid);
+	if (IS_ERR(pgdat->kswapd)) {
+		...
+	}
+	return ret;
+}
+```
+
+kswapd传递的**参数是pg\_data\_t数据结构 **。
+
+```c
+[include/linux/mmzone.h]
+typedef struct pglist_data
+{
+    /* 交换守护进程的等待队列 */
+    wait_queue_head_t kswapd_wait;
+    /* 指向负责该结点的交换守护进程的task_struct, 在将页帧换出结点时会唤醒该进程 */
+    struct task_struct *kswapd; /* Protected by mem_hotplug_begin/end() */
+    int kswapd_max_order;
+    enum zone_type classzone_idx;
+}pg_data_t;
+```
+
+**kswapd\_wait**是一个**等待队列**，每个pg\_data\_t数据结构都有这样一个等待队列，它是在**free\_area\_init\_core**()函数中初始化的。页面分配路径上的**唤醒函数wakeup\_kswapd**()把 **kswapd\_max\_order**和 **classzone\_idx**作为参数传递给**kswapd内核线程**。
+
+在分配内存路径上，如果在**低水位（ALLOC\_WMARK\_LOW**)的情况下无法成功分配内存，那么会通过**wakeup\_kswapd**()函数**唤醒kswapd内核线程**来回收页面，以便释放一些内存。
+
+kswapd内核线程的执行函数是kswapd(). 系统启动时会在kswapd\_try\_to\_sleep()函数中睡眠并且让出CPU控制权, **唤醒点**在**kswapd\_try\_to\_sleep()函数**中。kswapd内核线程被唤醒之后，调用**balance\_pgdat**()来**回收页面**。调用逻辑如下：
+
+```c
+alloc_pages ：
+    _alloc_pages_nodemask()
+        ->If fail on ALLOC_WMARK_LOW
+            ->_alloc_pages_slowpath()
+                ->wakeup_kswapd()
+                    -> wake_up(kswapd_wait)
+
+kswapd 内核线程被唤醒kswapd():
+    ->balancejpgdat()
+```
+
+## 25.3 balance\_pgdat()函数
+
+balance\_pgdat()函数是回收页面的主函数
+
+页面分配路径page allocator和页面回收路径kswapd之间有很多交互的地方，如图所示，总结如下。
+
+![config](./images/54.png)
+
+- 当页面分配路径page allocator在低水位中分配内存失败时，会**唤醒kswapd内核线程**，把order和preferred\_zone传递给kswapd, 这两个参数是它们之间联系的纽带。
+- 页面**分配路径page allocator**和页面**回收路径kswapd**在**扫描zone**时的**方向是相反**的，页面**分配路径 page allocator**从**ZONE\_HIGHMEM**往**ZONE\_NORMAL**方向扫描zone，kswapd则相反。
+- 如何判断 kswapd应该**停止页面回收**呢？ 一个重要的条件是从**zone\_normal**到**preferred\_zone**处于平衡状态时，那么就认为这个内存节点处于平衡状态，可以停止页面回收。
+- 页面分配路径page allocator和页面回收路径kswapd采用**zone的水位标不同**，page allocator采用**低水位**，即在低水位中无法分配内存，就唤醒kswapd; 而 kswapd判断是否停止页面回收釆用的**高水位**。
+
+........
+
+## 25.9 小结
+
+Linux内核页面回收的示意图如图所示，可以看到一个页面是如何添加到LRU链表的，如何在活跃LRU链表和不活跃LRU链表中移动的，以及如何让一个页面真正回收并被释放的过程。
+
+![config](./images/55.png)
+
+- kswapd内核线程何时会被唤醒？
+
+答：分配内存时，当在zone的WMARK\_LOW水位分配失败时，会去唤醒kswapd内
+核线程来回收页面。
+
+- LRU链表如何知道page的活动频繁程度？
+
+答：LRU链表按照先进先出的逻辑，页面首先进入LRU链表头，然后慢慢挪动到链表尾，这有一个老化的过程。另外，page中有PG\_reference/PG\_active标志位和页表的PTE\_YOUNG位来实现第二次机会法。
+
+- kswapd按照什么原则来换出觅面？
+
+答：页面在活跃LRU链表，需要从链表头到链表尾的一个老化过程才能迁移到不活跃LRU链表。在不活跃LRU链表中又经过一个老化过程后，首先剔除那些脏页面或者正在回写的页面，然后那些在不活跃LRU链表老化过程中没有被访问引用的页面是最佳的被换出的候选者，具体请看shrink\_page\_list()函数。
+
+- kswapd按照什么方向来扫描zone?
+
+答：从低zone到高zone，和分配页面的方向相反。
+
+- kswapd以什么标准来退出扫描L R U ?
+
+答：判断当前内存节点是否处于“生态平衡”，详见pgdat\_balanced函数。另外也考虑扫描优先级priority, 需要注意classzone\_idx变量。
+
+- 手持设备（例如Android系统）没有swap分区，kswapd会扫描匿名页面LRU吗？
+
+答：没有swap分区不会扫描匿名页面LRU链表，详见get\_scan_count()函数。
+
+- swappiness的含义是什么？ kswapd如何计算匿名页面和page cache之间的扫描比重？
+
+答：swappiness用于设置向swap分区写页面的活跃程度，详见get\_scan\_count()函数。
+
+- 当系统中充斥着大量只访问一次的文件访问（use\-one streaming IO) 时，kswapd如何来规避这种风暴？
+
+答：page\_check\_reference()函数设计了一个简易的过滤那些短时间只访问一次的page cache 的过滤器，详见 page\_check\_references()函数。
+
+- 在回收page cache时，对于dirty的 page cache，iswapd会马上回写吗？
+
+答：不会，详见shrink\_page\_list()函数。
+
+- 内核中有哪些觅面会被kswapd写到交换分区？
+
+答：匿名页面，还有一种特殊情况，是利用shmem机制建立的文件映射，其实也是使用的匿名页面，在内存紧张时，这种页面也会被swap到交换分区。
+
 # 26 匿名页面生命周期
 
-匿名页面简称anon\_page
+**匿名页面(anonymous page**), 简称anon\_page
 
 ## 26.1 匿名页面的产生
 
 从内核的角度来看，在如下情况下会出现匿名页面。
 
 1. **用户空间**通过**malloc/mmap**接口函数来分配内存，在**内核空间**中发生**缺页中断**时，**do\_anonymous\_page**()会产生**匿名页面**。
-2. 发生**写时复制**。当缺页中断出现写保护错误时，新分配的页面是匿名页面，下面又分两种情况。
+2. 发生**写时复制**。当缺页中断出现**写保护错误**时，新分配的页面是**匿名页面**，下面又分两种情况。
 
 (1) do\_wp\_page()
 
@@ -5835,19 +6910,466 @@ Linux 2.6.34内核对R M A P 反向映射系统进行了优化，模型和现在
 
 (2) do\_cow_page()
 
-- 共 享 的 匿 名 页 面 （shared anonymous mapping，shmm)〇
-上述这些情况在发生写时复制时会新分配匿名页面。
+- 共享的匿名页面（shared anonymous mapping，shmm)
 
-3. do\_swap\_page()，从 swap分区读回数据时会新分配匿名页面。
+上述这些情况在发生**写时复制**时会新分配匿名页面。
+
+3. do\_swap\_page()，从 **swap分区读回数据**时会新分配匿名页面。
 4. 迁移页面。
 
+以do\_anonymous\_page()分配一个匿名页面anon\_page为例，anon\_page刚分配时的状态如下:
+
+- page\-\>\_count = l
+- page\-\>\_mapcount = 0 。
+- 设置PG\_swapbacked 标志位。
+- 加入LRU\_ACTIVE\_ANON链表中, 并设置PG\_lru标志位。
+- page\-\>mapping指向VMA中的anon\_vma数据结构。
+
+## 26.2 匿名页面的使用
+
+**匿名页面**在**缺页中断中分配完成**之后，就建立了**进程虚拟地址空间VMA** 和**物理页面的映射**关系，**用户进程**访问**虚拟地址**即访问到**匿名页面**的内容。
+
+## 26.3 匿名页面的换出
+
+假设现在系统内存紧张，需要回收一些页面来释放内存。**anon\_page刚分配时**会**加入活跃LRU链表（LRU\_ACTIVE\_ANON)的头部**，在经历了**活跃LRU链表的一段时间的移动**，该**anon\_page**到达**活跃LRU链表的尾部**，**shrink\_active\_list**()函数**把该页加入不活跃LRU链表（LRU\_INACTIVE\_ANON**).
+
+**shrink\_inactive\_list**()函数**扫描不活跃链表**。
+
+(1) **第一扫描不活跃链表**时，shrink\_page\_list()->add\_to\_swap()函数会为该页**分配swap分区空间**
+
+(2) shrink\_page\_list()\-\>try\_to\_unmap()会通过RMAP反向映射系统去寻找映射该页的所有的VMA和相应的pte，并将这些pte解除映射。
+
+(3) shrink\_page\_list()\-\>pageout()函数把该页写回交换分区
+
+pageout()函数的作用如下。
+
+- 检查该页面是否可以释放，见 is\_page\_cache\_freeable()函数。
+- 清PG\_dirty标志位。
+- 设置PG\_reclaim标志位。
+- swap\_writepage()设置 PG\_writeback 标志位，清 PG\_locked，向 swap 分区写内容。
+
+在向swap分区写内容时，kswapd不会一直等到该页面写完成的，所以该页将继续返回到**不活跃LRU链表的头部**。
+
+(4)第二次扫描不活跃链表。
+
+经历一次**不活跃LRU链表的移动**过程，从**链表头**移动到**链表尾**。如果这时**该页还没有写入完成**，即 PG\_writeback标志位还在，那么**该页**会继续被**放回到不活跃LRU链表头**，kswapd会继续扫描其他页，从而继续等待写完成。
+
+假设**第二次扫描不活跃链表**时，该页**写入swap分区己经完成**。Block layer层的回调函数 end\_swap\_bio\_write()\-〉end\_page\_writeback()会完成如下动作。
+
+- 清 PG_writeback 标志位。
+- 唤醒等待在该页 PG\_writeback 的线程，见 wake\_up\_page(page, PG\_writeback)函数。
+
+shrink\_page\_list()\-\>\_\_remove\_mapping()函数的作用如下。
+
+- page\_freeze\_refs(page, 2)判断当前page\->\_count是否为2，并且将该计数设置为0。
+- 清 PG\_swapcache 标志位。
+- 清 PG\_locked标志位。
+
+最后把**page**加入**free\_page链表**中，释放该页。因此该**anon\_page页**的状态是**页面内容已经写入swap分区**，实际**物理页面己经释放**。
+
+## 26.4 匿名页面的换入
+
+匿名页面被换出到swap分区后，如果应用程序需要读写这个页面，缺页中断发生，因为 pte中的present比特位显示该页不在内存中，但pte表项不为空，说明该页在swap分区中，因此调用do\_swap\_page()函数重新读入该页的内容。
+
+## 26.5 匿名页面的销毁
+
+当用户进程关闭或者退出时，会扫描这个用户进程所有的VMAs, 并会清除这些VMA上所有的映射，如果符合释放标准，相关页面会被释放。本例中的amm\_page只映射了父进程的VMA, 所以这个页面也会被释放。如图所示是匿名页面的生命周期图。
+
+![config](./images/56.png)
 
 # 27 页面迁移
 
+Linux为页面迁移提供了一个系统调用migrate\_pages, 可以**迁移一个进程的所有页面**到指定**内存节点**上。该系统调用在**用户空间**的函数接口如下：
+
+```c
+#include<numaif.h>
+long migrate_pages (int pid, unsigned long maxnode,
+                        const unsigned long *old_nodes,
+                        const unsigned long *new_nodes);
+```
+
+该系统调用最早是为了在NUMA系统上提供一种能迁移进程到任意内存节点的能力。现在内核除了为NUMA系统提供页迁移能力外，其他的一些模块也可以利用页迁移功能做一些事情，例如内存规整和内存热插拔等。
+
+内核中有多处使用到页的迁移的功能，列出如下。
+
+- 内存规整（memory compaction)
+- 内存热插拔（memory hotplug)。
+- NUMA系统，系统有一个sys\_migrate\_pages的系统调用。
+
 # 28 内存规整(memory compaction)
+
+**伙伴系统**以**页为单位**来管理内存，**内存碎片**也是**基于页面**的，即由**大量离散且不连续的页面导致**的。从内核角度来看，内存碎片不是好事情，有些情况下物理设备需要**大段的连续的物理内存**，如果内核无法满足，则会发生**内核panic**。这里称为**内存规整**，也叫**内存紧凑**，它是为了**解决内核碎片化**而出现的一个功能。
+
+内核中去碎片化的基本原理是**按照页的可移动性将页面分组**。迁移内核本身使用的物理内存的实现难度和复杂度都很大，因此目前的内核是不迁移内核本身使用的物理页面。对于应用户进程使用的页面，实际上通过用户页表的映射来访问。用户页表可以移动和修改映射关系，不会影响用户进程，因此内存规整是基于页面迁移实现的。
+
+## 28.1 内存规整实现
+
+内存规整的一个重要的应用场景是在**分配大块内存时(order>l**), 在**WMARK\_LOW低水位**情况下**分配失败**，**唤醒kswapd内核线程**后**依然无法分配出内存**，这时调用\_\_**alloc\_pages\_direct\_compact**()来**压缩内存尝试分配出所需要的内存**。
+
+适合被内存规整迁移的页面总结如下。
+
+- 必须在**LRU链表**中的页面，还在**伙伴系统中的页面不适合**。
+- **正在回写中的页面不适合**，即标记有PG\_writeback的页面。
+- 标记有**PG\_unevictable的页面不适合**。
+- 没有定义mapping\-\>a\_ops\-\>migratepage()方法的**脏页面不合适**。
+
+## 28.2 小结
+
+核心思想是把**内存页面**按照**可移动**、**可回收**、**不可移动**等特性进行分类。**可移动的页面**通常是指**用户态程序分配的内存**，**移动这些页面**仅仅是**修改页表映射关系**，代价很低；**可回收的页面**是指**不可以移动**但**可以释放的页面**。按照这些类型来分类页面后，就容易释放出大块的连续物理内存。
+
+内存规整机制归纳起来也比较简单，如图所示。有**两个方向的扫描者**，一个是**从zone头部向zone尾部方向扫描**，查找**哪些页面是可以迁移的**；另一个是**从zone尾部**向**zone头部方面扫描**，查找**哪些页面是空闲页面**。当**这两个扫描者在zone中间碰头**时，或者**己经满足分配大块内存的需求**时（能**分配出所需要的大块内存**并且**满足最低的水位要求**)，就可以**退出扫描**了。
+
+内存规整机制除了**人为地主动触发**以外，一般是在**分配大块内存失败时**，首先**尝试内存规整机制**去尝试整理出大块连续的物理内存，然后才**调用直接内存回收机制(Direct Reclaim**)。
+
+![config](./images/57.png)
 
 # 29 KSM
 
-# 30 Dirty COW内存漏洞
+有一些内存页面在它们生命周期里某个瞬间页面内容完全一致呢？
 
-# 31 总结内存管理数据结构和API
+KSM全称**Kernel SamePage Merging**，用于**合并内容相同的页面**。KSM的出现是为了**优化虚拟化中产生的冗余页面**，因为虚拟化的实际应用中在**同一台宿主机上**会有许多**相同的操作系统和应用程序**，那么**许多内存页面的内容**有可能都是**相同**的，因此它们可以被合并，从而释放内存供其他应用程序使用。
+
+KSM允许合并**同一个进程**或**不同进程**之间**内容相同的匿名页面**，这对应用程序来说是**不可见**的。把这些**相同的页面**被合并成一个**只读的页面**，从而释放出来物理页面，当应用程序需要**改变页面内容**时，会发生**写时复制（copy\-on\-write, COW**)。
+
+## 29.1 KSM实现
+
+初始化时候会创建一个"ksmd"的内核线程
+
+```c
+[mm/ksm.c]
+static int __init ksm_init(void)
+{
+	struct task_struct *ksm_thread;
+	int err;
+
+	err = ksm_slab_init();
+	if (err)
+		goto out;
+
+	ksm_thread = kthread_run(ksm_scan_thread, NULL, "ksmd");
+	err = sysfs_create_group(mm_kobj, &ksm_attr_group);
+	if (err) {
+		pr_err("ksm: register sysfs failed\n");
+		kthread_stop(ksm_thread);
+		goto out_free;
+	}
+	return 0;
+}
+subsys_initcall(ksm_init);
+```
+
+**KSM**只会处理通过**madvise系统调用显式**指定的用户进程空间内存，因此用户程序想使用这个功能就必须在**分配内存时显式地调用**“**madvise(addr, length, MADV\_MERGEABLE**)”，如果用户想在**KSM中取消某一个用户进程地址空间的合并功能**，也需要显式地调用“madvise(addr，length，MADV\_UNMERGEABLE)”。
+
+## 29.2 匿名页面和KSM页面的区别
+
+如果**多个VMA的虚拟页面**同时映射了**同一个匿名页面**，那么page\-\>index应该等于多少？
+
+虽然**匿名页面**和**KSM页面**可以通过**PageAnon**()和**PageKsm**()宏来区分，但是这两种页面究竟有什么区别呢？是不是**多个VMA的虚拟页面**共享**同一个匿名页面**的情况就**一定是KSM页面呢？**这是一个非常好的问题，可以从中窥探出匿名页面和KSM页面的区别。这个问题要分**两种情况**，一是**父子进程的VMA**共享**同一个匿名页面**，二是**不相干的进程**的VMA共享**同一个匿名页面**。
+
+第一种情况, **父进程**在**VMA映射匿名页面**时会创建**属于这个VMA的RMAP 反向映射的设施**，在\_\_**page\_set\_anon\_rmap**()里会设置**page\-\>index值**为**虚拟地址在VMA中的offset**。
+
+**子进程fork**时，复制了**父进程的VMA内容到子进程的VMA**中，并且**复制父进程的页表到子进程**中，因此对于**父子进程**来说，**page\-\>index值是一致**的。
+
+当需要从**page**找到**所有映射page的虚拟地址**时，在**rmap\_walk\_anon**()函数中，**父子进程**都使用**page\-\>index**值来计算**在VMA中的虚拟地址**，详见rmap\_walk\_anon()\-\>vma\_address()函数。
+
+第二种情况是**KSM页面**. KSM页面由**内容相同**的**两个匿名页面合并**而成，它们可以是**不相干的进程**的**VMA**, 也可以是**父子进程的VMA**, 那么它的page\-\>index值应该等于多少呢？
+
+```c
+[mm/rmap.c]
+void do_page_add_anon_rmap(struct page *page,
+	struct vm_area_struct *vma, unsigned long address, int exclusive)
+{
+    // 重点
+    int first = atomic_inc_and_test(&page->_mapcount);
+    ...
+    if (first)
+		__page_set_anon_rmap(page, vma, address, exclusive);
+	else
+		__page_check_anon_rmap(page, vma, address);
+}
+```
+
+在do\_page\_add\_anon\_rmap()函数中有这样一个判断，只有**当\_mapcount等于\- 1时**才会调用\_\_page\_set\_anon\_rmap()去**设置page\-\>index值**，那就是**第一次映射该页面的用户pte**才会去**设置page\-\>index值**。
+
+当需要**从page**中找到**所有映射page的虚拟地址**时，因为page是 **KSM页面**，所以使用 rmap\_walk\_ksm()函数，
+
+```c
+[mm/ksm.c]
+int rmap_walk_ksm(struct page *page, struct rmap_walk_control *rwc)
+{
+    ...
+    hlist_for_each_entry(rmap_item, &stable_node->hlist, hlist) {
+		struct anon_vma *anon_vma = rmap_item->anon_vma;
+		anon_vma_interval_tree_foreach(vmac, &anon_vma->rb_root,
+					       0, ULONG_MAX) {
+			vma = vmac->vma;
+			// 这里使用rmap_item->address来获取虚拟地址
+			ret = rwc->rmap_one(page, vma,
+					rmap_item->address, rwc->arg);		           
+		}
+    ...
+}
+```
+
+这里使用**rmap\_item\-\>address**来**获取每个VMA对应的虚拟地址**，而**不是像父子进程共享的匿名页面**那样使用**page\-\>index来计算虚拟地址**。因此对于**KSM页面**来说，page\-\>index等于**第一次映射该页的VMA中的offset**。
+
+## 29.3 小结
+
+KSM的实现流程如图. 核心设计思想是基于**写时复制机制COW**，也就是**内容相同的页面**可以**合并**成一个**只读页面**，从而**释放出来空闲页面**。首先要思考**怎么去查找**，以及**合并什么样类型的页面**？哪些应用场景会有比较丰富的冗余的页面？
+
+KSM最早是为了**KVM虚拟机**而设计的，**KVM虚拟机**在**宿主机**上使用的内存**大部分是匿名页面**，并且它们在宿主机中存在大量的冗余内存。对于**典型的应用程序**，KSM只考虑**进程分配使用的匿名页面**，暂时不考虑page cache的情况。
+
+一个典型的**应用程序**可以由以下**5个内存部分**组成。
+
+- **可执行文件的内存映射（page cache**)。
+- 程序分配使用的**匿名页面**。
+- 进程打开的**文件映射**（包括常用或者不常用，甚至只用一次page cache)。
+- 进程**访问文件系统产生的cache**。
+- 进程访问内核产生的内核buffer (如slab) 等。
+
+![config](./images/58.png)
+
+设计的关键是**如何寻找**和**比较两个相同的页面**，如何让这个过程变得高效而且占用系统资源最少，这就是一个好的设计人员应该思考的问题。
+
+首先要**规避用哈希算法**来**比较两个页面**的**专利问题**。KSM虽然使用了**memcmp**来比较，**最糟糕的情况**是**两个页面**在**最后的4Byte不一样**，但是**KSM**使用**红黑树**来设计了**两棵树**，分别是**stable树**和**unstable树**，可以**有效地减少最糟糕**的情况。另外KSM也巧妙地利用**页面的校验值**来比较**unstable树的页面最近是否被修改**过，从而避开了该专利的“魔咒”。
+
+**页面**分为**物理页面**和**虚拟页面**，**多个虚拟页面**可以同时映射到**一个物理页面**，因此需要**把映射到该页的所有的pte都解除**后，才是算**真正释放**（这里说的**pte**是指**用户进程地址空间VMA**的**虚拟地址映射到该页的pte**，简称**用户pte**，因此**page\-\>\_mapcount**成员里描述的pte数量**不包含内核线性映射的pte！！！**)。
+
+目前有**两种做法**，
+
+一种做法是**扫描每个进程中VMA**，由**VMA的虚拟地址**查询**MMU页表**找到**对应的page数据结构**，这样就找到了**用户pte**。然后对比**KSM**中的**stable树**和**unstable树**，如果找到**页面内容相同**的，就**把该pte设置成COW**，映射到**KSM页面**中，从而**释放出一个pte**，注意这里是**释放出一个用户pte**,而**不是一个物理页面！！！（如果该物理页面只有一个pte映射，那就是释放该页**）。
+
+另外一种做法是**直接扫描系统中的物理页面**，然后通过**反向映射**来**解除该页所有的用户pte**，从而**一次性地释放出物理页面**。
+
+显然，目前kernel的**KSM是基于第一种做法**。
+
+在实际项目中，有很多人抱怨KSM 的效率低，在很多项目上是关闭该特性的。也有很多人在思考如何提高KSM的效率，包括新的软件算法或者利用硬件机制。
+
+# 30 Linux Cache 机制
+
+## 30.1 内存管理基础
+
+创建进程fork()、程序载入execve()、映射文件mmap()、动态内存分配malloc()/brk()等进程相关操作都需要**分配内存**给进程。不过这时进程申请和获得的还**不是实际内存**，而是**虚拟内存**，准确的说是“内存区域”。**Linux除了内核以外**，App都**不能直接使用内存**，因为Linux采用Memory Map的管理方式，App拿到的**全部是内核映射自物理内存的一块虚拟内存**。malloc分配很少会失败，因为malloc只是通知内存App需要内存，在没有正式使用之前，这段内存其实只在真正开始使用的时候才分配，所以malloc成功了并不代表使用的时候就真的可以拿到这么多内存。
+
+进程对内存区域的分配最终多会归结到do\_mmap()函数上来（brk调用被单独以系统调用实现，不用do\_mmap()）。内核使用do\_mmap()函数创建一个新的线性地址区间，如果创建的地址区间和一个已经存在的地址区间相邻，并且它们具有相同的访问权限的话，那么两个区间将合并为一个。如果不能合并，那么就确实需要创建一个新的VMA了。但无论哪种情况， do\_mmap()函数都会将一个地址区间加入到进程的地址空间中，无论是扩展已存在的内存区域还是创建一个新的区域。同样释放一个内存区域使用函数do\_ummap()，它会销毁对应的内存区域。
+
+另一个重要的部分是SLAB分配器。在Linux中以页为最小单位分配内存对于内核管理系统物理内存来说是比较方便的，但内核自身最常使用的内存却往往是很小（远远小于一页）的内存块，因为大都是一些描述符。一个整页中可以聚集多个这种这些小块内存，如果一样按页分配，那么会被频繁的创建/销毁，开始是非常大的。
+
+为了满足内核对这种小内存块的需要，Linux系统采用了SLAB分配器。Slab分配器的实现相当复杂，但原理不难，其核心思想就是Memory Pool。内存片段（小块内存）被看作对象，当被使用完后，并不直接释放而是被缓存到Memory Pool里，留做下次使用，这就避免了频繁创建与销毁对象所带来的额外负载。
+
+Slab技术不但避免了内存内部分片带来的不便，而且可以很好利用硬件缓存提高访问速度。但Slab仍然是建立在页面基础之上，Slab将页面分成众多小内存块以供分配，Slab中的对象分配和销毁使用kmem\_cache\_alloc与kmem\_cache\_free。
+
+## 30.2 Linux Cache的体系
+
+在 Linux 中，当App需要**读取Disk文件中的数据**时，Linux先**分配一些内存**，将**数据**从**Disk读入到这些内存**中，然后再将**数据传给App**。当需要往**文件中写数据**时，Linux**先分配内存接收用户数据**，然后再将**数据从内存写到Disk**上。**Linux Cache 管理**指的就是对这些由Linux分配，并用来存储文件数据的内存的管理。
+
+下图描述了 Linux 中文件 Cache 管理与内存管理以及文件系统的关系。从图中可以看到，在 Linux 中，**具体的文件系统**，如 **ext2/ext3/ext4** 等，负责在**文件 Cache**和**存储设备**之间**交换数据**，位于具体文件系统之上的**虚拟文件系统VFS**负责在**应用程序**和**文件 Cache** 之间通过 **read/write 等接口交换数据**，而**内存管理系统**负责**文件 Cache 的分配和回收**，同时**虚拟内存管理系统(VMM)**则允许应用程序和文件 Cache 之间通过 memory map的方式交换数据，FS Cache底层通过SLAB管理器来管理内存。
+
+![config](./images/59.jpg)
+
+下图则非常清晰的描述了Cache所在的位置，磁盘与VFS之间的纽带。
+
+![config](./images/60.jpg)
+
+## 30.3 Linux Cache的结构
+
+在 Linux 中，**文件 Cache** 分为**两层**，一是 **Page Cache**，另一个 **Buffer Cache**，**每一个 Page Cache** 包含**若干 Buffer Cache**。
+
+**内存管理系统**和 **VFS** 只与 **Page Cache 交互**，
+
+- **内存管理系统**负责维护**每项 Page Cache** 的**分配**和**回收**，同时在使用 **memory map 方式**访问时负责**建立映射**；
+- **VFS** 负责 **Page Cache** 与**用户空间**的**数据交换**。
+
+而**具体文件系统**则一般只与 **Buffer Cache 交互**，它们负责在**外围存储设备**和 **Buffer Cache 之间交换数据**。**读缓存**以**Page Cache为单位**，每次读取若干个Page Cache，**回写磁盘**以**Buffer Cache**为单位，每次回写若干个Buffer Cache。
+
+Page Cache、Buffer Cache、文件以及磁盘之间的关系如下图所示。
+
+![config](./images/61.jpg)
+
+**Page 结构**和 **buffer\_head 数据结构**的关系如下图所示。**Page**指向**一组Buffer的头指针**，Buffer的头指针指向**磁盘块**。在这两个图中，假定了 Page 的大小是 4K，磁盘块的大小是 1K。
+
+![config](./images/62.jpg)
+
+在 Linux 内核中，**文件的每个数据块**最多只能对应**一个 Page Cache 项**，它通过**两个数据结构**来管理这些 Cache 项，一个是 **Radix Tree**，另一个是**双向链表**。Radix Tree 是一种**搜索树**，Linux 内核利用这个数据结构来**通过文件内偏移快速定位 Cache 项**，图 4 是 radix tree的一个示意图，该 radix tree 的分叉为4(22)，树高为4，用来快速定位8位文件内偏移。Linux(2.6.7) 内核中的分叉为 64(26)，树高为 6(64位系统)或者 11(32位系统)，用来快速定位 32 位或者 64 位偏移，Radix tree 中的**每一个到叶子节点的路径**上的**Key**所拼接起来的**字串都是一个地址**，指向文件内相应偏移所对应的Cache项。
+
+![config](./images/63.gif)
+
+查看**Page Cache**的核心数据结构**struct address\_space**就可以看到上述结构
+
+```c
+[include/linux/fs.h]
+struct address_space  {
+    struct inode *host;              /* owner: inode, block_device */
+    struct radix_tree_root page_tree;   /* radix tree of all pages */
+    unsigned long nrpages;  /* number of total pages */
+    struct address_space *assoc_mapping;      /* ditto */
+    ......
+} __attribute__((aligned(sizeof(long))));
+```
+
+
+
+
+# 31 Dirty COW内存漏洞
+
+# 32 总结内存管理数据结构和API
+
+## 32.1 内存管理数据结构的关系图
+
+在大部分Linux系统中，内存设备的初始化一般是在BIOS或 bootloader中，然后把DDR的大小传递给Linux内核，因此从Linux内核角度来看DDR , 其实就是一段物理内存空间。在 Linux 内核中，和内存硬件物理特性相关的一些数据结构主要集中在 MMU  (处理器中内存管理单元）中，例如页表、 cache/TLB 操作等。因此大部分的 Linux 内核中关于内存管理的相关数据结构都是软件的概念中，例如mm、vma、zone、page、pg\_data等。 Linux内核中的内存管理中的数据结构错综复杂，归纳总结如图
+
+![config](./images/64.png)
+
+(1) 由mm数据结构和虚拟地址vaddr找到对应的VMA。
+
+内核提供相当多的API来查找VMA。
+
+```c
+
+```
+
+由VMA得出MM数据结构，struct vm\_area\_struct数据结构有一个指针指向struct mm\_struct
+
+```c
+
+```
+
+(2) 由 page 和 VMA 找到虚拟地址 vaddr。
+
+```c
+
+```
+
+(3) 由page找到所有映射的VMA。
+
+```c
+
+```
+
+由VMA和虚拟地址vaddr, 找出相应的page数据结构。
+
+```c
+
+```
+
+(4) page和 pfh之间的互换
+
+```c
+
+```
+
+(5)  pfn和 paddr之间的互换
+
+```c
+
+```
+
+(6) page和 pte之间的互换
+
+```c
+
+```
+
+(7) zone和 page之间的互换
+
+```c
+
+```
+
+(8) zone和 pg\_data之间的互换
+
+```c
+
+```
+
+## 32.2 内存管理中常用API
+
+### 32.2.1 页表相关
+
+页表相关的API可以概括为如下4类
+
+- 查询页表
+- 判断页表项的状态位
+- 修改页表
+- page和pfn的关系
+
+```c
+
+```
+
+### 32.2.2 内存分配
+
+常用内存分配API如下:
+
+```c
+
+```
+
+### 32.2.3 VMA操作相关
+
+```c
+
+```
+
+### 32.2.4 页面相关
+
+- PG\_XXX标志位操作。
+- page引用计数操作。
+- 匿名页面和KSM页面。
+- 页面操作。
+- 页面映射。
+- 缺页中断。
+- LRU和页面回收。
+
+```c
+//PG__xxx标志位操作
+PageXXX()
+SetPageXXX()
+ClearPageXXXO
+TestSetPageXXXO
+TestClearPageXXX()
+void lock_page(struct page *page)
+int trylock_page(struct page *page)
+void wait_on_page_bit(struct page *page, int bit_nr ) ；
+void wake_up_page(struct page *page, int bit)
+static inline void wait_on_page_locked(struct page *page)
+static inline void wait_on_page_writeback(struct page *page)
+
+//page 引用计数操作
+void get_page(struct page *page)
+void put_page(struct page *page);
+#define page_cache_get(page)
+#define page_cache_release(page)
+static inline int page_count(struct page *page)
+static inline int page_mapcount(struct page *page)
+static inline int page_mapped(struct page *page)
+static inline int put_page_testzero(struct page *page)
+get_page(page)
+put_page(page)
+
+//匿名页面和KSM页面
+static inline int PageAnon(struct page *page)
+static inline int PageKsm(struct page *page)
+struct address_space *page_mapping(struct page *page)
+void page_add_new_anon_rmap(struct page *page,
+    struct vm_area_struct *vma, unsigned long address)
+
+//页面操作
+struct page *follow_page(struct vm_area_struct *vma,
+		unsigned long address, unsigned int foll_flags)
+struct page *vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
+		pte_t pte);
+long get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
+		    unsigned long start, unsigned long nr_pages,
+		    int write, int force, struct page **pages,
+		    struct vm_area_struct **vmas);
+
+// 页面映射
+
+
+// 缺页中断
+
+
+// LRU和页面回收
+
+```
