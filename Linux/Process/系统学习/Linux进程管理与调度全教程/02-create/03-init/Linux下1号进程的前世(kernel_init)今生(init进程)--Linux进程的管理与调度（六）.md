@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 1号进程
     - 1.1 kernel\_init
     - 1.2 init进程
@@ -14,7 +16,7 @@ Linux系统中的init进程(pid=1)是除了idle进程(pid=0，也就是init\_tas
 
 前面我们了解到了0号进程是系统所有进程的先祖,它的进程描述符init\_task是内核静态创建的,而它在进行初始化的时候,通过kernel\_thread的方式创建了两个内核线程，分别是kernel\_init和kthreadd，其中kernel\_init进程号为1
 
-start\_kernel在其最后一个函数rest\_init的调用中，会通过**kernel\_thread来生成一个内核进程**，后者则会在新进程环境下**调用kernel\_init**函数，kernel\_init一个让人感兴趣的地方在于它会调用**run\_init\_process**来**执行根文件系统下的 /sbin/init等程序**：
+start\_kernel在其最后一个函数rest\_init的调用中，会通过**kernel\_thread来生成一个内核进程**，后者则会在新进程环境下**调用kernel\_init**函数，kernel\_init一个让人感兴趣的地方在于它会调用**run\_init\_process**来**执行根文件系统下的/sbin/init等程序**：
 
 ## 1.1 kernel\_init
 
@@ -226,9 +228,9 @@ static int __ref kernel_init(void *unused)
 ```
 
 | 执行流程 | 说明 |
-| ------------- |:-------------|
-| kernel\_init\_freeable | 调用kernel\_init\_freeable完成初始化工作，准备文件系统，准备模块信息 |
-| async\_synchronize\_full | 用以同步所有非同步函式呼叫的执行,在这函数中会等待List async\_running与async_pending都清空后,才会返回. Asynchronously called functions主要设计用来加速Linux Kernel开机的效率,避免在开机流程中等待硬体反应延迟,影响到开机完成的时间 |
-| free\_initmem| free\_initmem(in arch/arm/mm/init.c),释放Linux Kernel介於\_\_init\_begin到 \_\_init\_end属于init Section的函数的所有内存.并会把Page个数加到变量totalram\_pages中,作为后续Linux Kernel在配置记忆体时可以使用的Pages. (在这也可把TCM范围(\_\_tcm\_start到\_\_tcm\_end)释放加入到总Page中,但TCM比外部记忆体有效率,适合多媒体,中断,…etc等对效能要求高的执行需求,放到总Page中,成为可供一般目的配置的存储范围 |
-| system\_state | 设置运行状态SYSTEM_RUNNING |
+| ------ |:-----|
+| **kernel\_init\_freeable** | 调用kernel\_init\_freeable完成**初始化工作**，准备**文件系统**，准备**模块信息** |
+| **async\_synchronize\_full** | 用以同步所有非同步函式呼叫的执行,在这函数中会等待List async\_running与async_pending都清空后,才会返回. Asynchronously called functions主要设计用来**加速Linux Kernel开机的效率**,避免在开机流程中等待硬体反应延迟,影响到开机完成的时间 |
+| free\_initmem| free\_initmem(in arch/arm/mm/init.c),释放Linux Kernel介于\_\_init\_begin到 \_\_init\_end属于init Section的函数的所有内存.并会把Page个数加到变量totalram\_pages中,作为后续Linux Kernel在配置记忆体时可以使用的Pages. (在这也可把TCM范围(\_\_tcm\_start到\_\_tcm\_end)释放加入到总Page中,但TCM比外部记忆体有效率,适合多媒体,中断,…etc等对效能要求高的执行需求,放到总Page中,成为可供一般目的配置的存储范围 |
+| system\_state | **设置运行状态SYSTEM_RUNNING** |
 | 加载init进程，进入用户空间 | a,如果ramdisk\_execute\_command不為0,就执行该命令成為init User Process.<br>b,如果execute\_command不為0,就执行该命令成為init User Process.<br>c,如果上述都不成立,就依序執行如下指令<br>run\_init\_process(“/sbin/init”);<br>run\_init\_process(“/etc/init”);<br>run\_init\_process(“/bin/init”);<br>run\_init\_process(“/bin/sh”);<br>也就是说会按照顺序从/sbin/init, /etc/init, /bin/init 與 /bin/sh依序执行第一个 init User Process.<br> 如果都找不到可以執行的 init Process,就會進入Kernel Panic.如下所示panic(“No init found.  Try passing init= option to kernel. ”“See Linux Documentation/init.txt for guidance.”); |

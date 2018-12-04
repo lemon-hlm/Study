@@ -1,3 +1,4 @@
+[TOC]
 - 1 命名空间概念
 - 2 Linux内核命名空间描述
 - 3 命名空间的创建
@@ -10,7 +11,9 @@
 
 Linux Namespaces机制提供一种**资源隔离**方案。
 
-PID,IPC,Network等**系统资源不再是全局性**的，而是**属于特定的Namespace**。每个Namespace里面的资源对其他Namespace都是透明的。要**创建新的Namespace**，只需要在**调用clone时指定相应的flag**。**Linux Namespaces机制**为实现**基于容器的虚拟化技术**提供了很好的基础，**LXC（Linux containers**）就是利用这一特性实现了资源的隔离。**不同Container内的进程属于不同的Namespace**，彼此透明，互不干扰。下面我们就**从clone系统调用的flag出发，来介绍各个Namespace**。
+PID, IPC, Network等**系统资源不再是全局性**的，而是**属于特定的Namespace**。每个Namespace里面的资源对其他Namespace都是透明的。要**创建新的Namespace**，只需要在**调用clone时指定相应的flag**。
+
+**Linux Namespaces机制**为实现**基于容器的虚拟化技术**提供了很好的基础，**LXC（Linux containers**）就是利用这一特性实现了资源的隔离。**不同Container内的进程属于不同的Namespace**，彼此透明，互不干扰。下面我们就**从clone系统调用的flag出发，来介绍各个Namespace**。
 
 命名空间提供了虚拟化的一种轻量级形式，使得我们可以从不同的方面来查看运行系统的全局属性。该机制类似于Solaris中的zone或 FreeBSD中的jail。对该概念做一般概述之后，我将讨论命名空间框架所提供的基础设施。
 
@@ -24,9 +27,9 @@ PID,IPC,Network等**系统资源不再是全局性**的，而是**属于特定�
 
 但有些情况下，这种效果可能是不想要的。如果提供Web主机的供应商打算**向用户提供Linux计算机的全部访问权限，包括root权限在内**。传统上，这需要为**每个用户准备一台计算机**，代价太高。使用KVM或VMWare提供的**虚拟化**环境是一种解决问题的方法，但**资源分配做得不是非常好**。计算机的**各个用户**都需要一个**独立的内核**，以及一份**完全安装好的配套的用户层应用**。
 
-**命名空间**提供了一种不同的解决方案，**所需资源较少**。在**虚拟化**的系统中，一台物理计算机可以运行**多个内核**，可能是并行的多个不同的操作系统。而**命名空间**则**只使用一个内核**在一台物理计算机上运作，前述的**所有全局资源都通过命名空间抽象**起来。这使得可以将**一组进程放置到容器中**，各个容器彼此隔离。隔离可以使容器的成员与其他容器毫无关系。但也可以通过允许容器**进行一定的共享**，来降低容器之间的分隔。例如，容器可以设置为使用自身的PID集合，但仍然与其他容器共享部分文件系统。
+**命名空间**提供了一种不同的解决方案，**所需资源较少**。在**虚拟化**的系统中，一台物理计算机可以运行**多个内核**，可能是并行的多个不同的操作系统。而**命名空间**则**只使用一个内核**在一台物理计算机上运作，前述的**所有全局资源都通过命名空间抽象**起来。这使得可以将**一组进程放置到容器中**，**各个容器彼此隔离**。隔离可以使容器的成员与其他容器毫无关系。但也可以通过允许容器**进行一定的共享**，来降低容器之间的分隔。例如，容器可以设置为使用自身的PID集合，但仍然与其他容器共享部分文件系统。
 
-本质上，命名空间建立了**系统的不同视图**。此前的**每一项全局资源**都必须**包装到容器数据结构**中，只有**资源和包含资源的命名空间**构成的**二元组仍然是全局唯一(！！！**)的。虽然在给定容器内部资源是自足的，但**无法提供在容器外部具有唯一性的ID(资源在容器外不具有唯一性的ID！！！**)。
+本质上，**命名空间**建立了**系统的不同视图**。此前的**每一项全局资源**都必须**包装到容器数据结构**中，只有**资源和包含资源的命名空间**构成的**二元组仍然是全局唯一(！！！**)的。虽然在给定容器内部资源是自足的，但**无法提供在容器外部具有唯一性的ID(资源在容器外不具有唯一性的ID！！！**)。
 
 考虑系统上有3个不同命名空间的情况。**命名空间可以组织为层次**，我会在这里讨论这种情况。一个命名空间是父命名空间，衍生了两个子命名空间。假定容器用于虚拟主机配置中，其中的每个容器必须看起来像是单独的一台Linux计算机。因此其中**每一个都有自身的init进程**，**PID为0**，其他进程的PID以递增次序分配。两个子命名空间都有PID为0的init进程，以及PID分别为2和3的两个进程。由于相同的PID在系统中出现多次，**PID号不是全局唯一的**。
 
@@ -39,13 +42,12 @@ PID,IPC,Network等**系统资源不再是全局性**的，而是**属于特定�
 # 2 Linux内核命名空间描述
 
 在Linux内核中提供了**多个namespace**，其中包括fs (mount), uts, network, sysvipc等。**一个进程可以属于多个namesapce**,既然namespace和进程相关，那么在task\_struct结构体中就会包含和namespace相关联的变量。在task\_struct 结构中有一个指向**namespace结构体的指针nsproxy**。
+
 ```c
 struct task_struct
 {
-……
     /* namespaces */
     struct nsproxy *nsproxy;
-……
 }
 ```
 
@@ -79,7 +81,7 @@ struct nsproxy
 
 5. struct net包含所有**网络相关**的命名空间参数。
 
-系统中有一个**默认的nsproxy**，[init\_nsproxy](http://lxr.free-electrons.com/source/include/linux/init_task.h#L232)，该结构**在task初始化是也会被初始化**，定义在[include/linux/init\_task.h](http://lxr.free-electrons.com/source/include/linux/init_task.h#L190)
+系统中有一个**默认的nsproxy**，init\_nsproxy，该结构**在task初始化是也会被初始化**，定义在include/linux/init\_task.h
 
 ```c
 #define INIT_TASK(tsk)  \
@@ -106,7 +108,7 @@ struct nsproxy init_nsproxy = {
 #endif
 };
 ```
-对于.**mnt\_ns没有进行初始化**，其余的namespace都进行了系统默认初始
+对于.**mnt\_ns没有进行初始化**，其余的namespace都进行了系统默认初始化
 
 # 3 命名空间的创建
 
@@ -128,17 +130,17 @@ struct nsproxy init_nsproxy = {
 
 - CLONE\_NEWNET    网络命名空间，用于隔离网络资源（/proc/net、IP地址、网卡、路由等）。后台进程可以运行在不同命名空间内的相同端口上，用户还可以虚拟出一块网卡。
 
-- CLONE\_NEWNS     挂载命名空间，进程运行时可以将挂载点与系统分离，使用这个功能时，我们可以达到 chroot 的功能，而在安全性方面比 chroot 更高。
+- CLONE\_NEWNS     **挂载命名空间**，进程运行时可以将挂载点与系统分离，使用这个功能时，我们可以达到 chroot 的功能，而在安全性方面比 chroot 更高。
     
-- CLONE\_NEWUTS    UTS命名空间，主要目的是独立出主机名和网络信息服务（NIS）。
+- CLONE\_NEWUTS    **UTS命名空间**，主要目的是独立出主机名和网络信息服务（NIS）。
 
-- CLONE\_NEWUSER   用户命名空间，同进程ID一样，用户ID和组ID在命名空间内外是不一样的，并且在不同命名空间内可以存在相同的ID。
+- CLONE\_NEWUSER   **用户命名空间**，同进程ID一样，**用户ID**和**组ID**在命名空间内外是不一样的，并且在不同命名空间内可以存在相同的ID。
 
 ## 3.1 PID Namespace
 
 当调用clone时，设定了**CLONE\_NEWPID**，就会创建一个新的PID Namespace，clone出来的**新进程**将成为**Namespace里的第一个进程**。一个PID Namespace为进程提供了一个独立的PID环境，**PID Namespace内的PID将从1开始**，在Namespace内调用fork，vfork或clone都将产生一个在该Namespace内独立的PID。新创建的Namespace里的第一个进程在该Namespace内的PID将为1，就像一个独立的系统里的init进程一样。该Namespace内的**孤儿进程都将以该进程为父进程**，当该进程被结束时，该Namespace内所有的进程都会被结束。
 
-**PID Namespace是层次性**，新创建的Namespace将会是创建该Namespace的进程属于的Namespace的**子Namespace**。子Namespace中的**进程**对于**父Namespace是可见的**，**一个进程**将拥有**不止一个PID**，而是在**所在的Namespace**以及**所有直系祖先Namespace**中都**将有一个PID(所有直系祖先里面都有一个相应的PID,所以可能不止2个！！！**)。
+**PID Namespace是层次性**，新创建的Namespace将会是创建该Namespace的进程属于的Namespace的**子Namespace**。子Namespace中的**进程**对于**父Namespace是可见的**，**一个进程**将拥有**不止一个PID**，而是在**所在的Namespace**以及**所有直系祖先Namespace**中都**将有一个PID(所有直系祖先！！！**)。
 
 系统启动时，内核将创建一个**默认的PID Namespace**，该Namespace是所有以后创建的Namespace的祖先，因此**系统所有的进程在该Namespace都是可见**的。
 

@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 用户空间创建进程/线程的三种方法
 - 2 fork, vfork, clone系统调用的实现
     - 2.1 关于do\_fork和\_do\_frok
@@ -137,7 +139,6 @@ SYSCALL_DEFINE0(fork)
 #ifdef CONFIG_MMU
         return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0);
 #else
-        /* can not support in nommu mode */
         return -EINVAL;
 #endif
 }
@@ -285,12 +286,6 @@ long _do_fork(unsigned long clone_flags,
     int trace = 0;
     long nr;
   
-    /*
-     * Determine whether and which event to report to ptracer.  When
-     * called from kernel_thread or CLONE_UNTRACED is explicitly
-     * requested, no event is reported; otherwise, report if the event
-     * for the type of forking is enabled.
-     */
     if (!(clone_flags & CLONE_UNTRACED)) {
     if (clone_flags & CLONE_VFORK)
         trace = PTRACE_EVENT_VFORK;
@@ -305,10 +300,7 @@ long _do_fork(unsigned long clone_flags,
   	/*  复制进程描述符，copy_process()的返回值是一个 task_struct 指针  */
     p = copy_process(clone_flags, stack_start, stack_size,
          child_tidptr, NULL, trace, tls);
-    /*
-     * Do this prior waking up the new thread - the thread pointer
-     * might get invalid after that point, if the thread exits quickly.
-     */
+
     if (!IS_ERR(p)) {
     struct completion vfork;
     struct pid *pid;
@@ -523,7 +515,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
         p->tgid = p->pid;
     }
 
-    p->nr_dirtied = 0;
+    p->nr_dirtied = 0; 
     p->nr_dirtied_pause = 128 >> (PAGE_SHIFT - 10);
     p->dirty_paused_when = 0;
 
@@ -614,6 +606,31 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 
 	//  将子进程状态设置为 TASK_RUNNING
 	p->state = TASK_RUNNING;
+	
+	p->prio = current->normal_prio;
+
+    if (unlikely(p->sched_reset_on_fork)) {
+		if (task_has_dl_policy(p) || task_has_rt_policy(p)) {
+			p->policy = SCHED_NORMAL;
+			p->static_prio = NICE_TO_PRIO(0);
+			p->rt_priority = 0;
+		} else if (PRIO_TO_NICE(p->static_prio) < 0)
+			p->static_prio = NICE_TO_PRIO(0);
+
+		p->prio = p->normal_prio = __normal_prio(p);
+		set_load_weight(p);
+
+		p->sched_reset_on_fork = 0;
+	}
+
+	if (dl_prio(p->prio)) {
+		put_cpu();
+		return -EAGAIN;
+	} else if (rt_prio(p->prio)) {
+		p->sched_class = &rt_sched_class;
+	} else {
+		p->sched_class = &fair_sched_class;
+	}
 
 	//  ……
 
@@ -627,7 +644,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 
 我们可以看到sched\_fork大致完成了两项重要工作，
 
-- 一是将子进程状态设置为TASK\_RUNNING
+- 一是将子进程状态设置为TASK\_RUNNING, 并设置调度相关字段
 
 - 二是**为其分配CPU**
 
@@ -773,7 +790,9 @@ fork系统调用对应的kernel函数是sys\_fork，此函数简单的调用kern
 
 ## 7.2 进程退出
 
-此外**应用程序**使用**系统调用exit()来结束一个进程**，此**系统调用接受一个退出原因代码**，**父进程**可以**使用wait()系统调用**来**获取此代码**，从而**知道子进程退出的原因**。对应到kernel，此系统调用sys\_exit\_group()，它的基本流程如下：
+此外**应用程序**使用**系统调用exit()来结束一个进程**，此**系统调用接受一个退出原因代码**，**父进程**可以**使用wait()系统调用**来**获取此退出代码**，从而**知道子进程退出的原因**。
+
+对应到kernel，此系统调用**sys\_exit\_group**()，它的基本流程如下：
 
 1. 将信号SIGKILL加入到其他线程的信号队列中，并唤醒这些线程。
 

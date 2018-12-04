@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 2号进程
 - 2 2号进程的创建
 - 3 2号进程的事件循环
@@ -129,13 +131,13 @@ static void create_kthread(struct kthread_create_info *create)
 ```
 pid = kernel_thread(kthread, create, CLONE_FS | CLONE_FILES | SIGCHLD);
 ```
-我们可以看到，创建的内核线程执行的事件[**kthread**](http://lxr.free-electrons.com/source/kernel/kthread.c#L177)
+我们可以看到，创建的内核线程执行的事件**kthread**
 
 此时回到kthreadd thread,它在完成了进程的创建后继续循环，检查kthread\_create\_list链表，如果为空，则 kthreadd 内核线程昏睡过去
 
 那么我们现在回想我们的操作
 
-我们在内核中**通过kernel\_create或者其他方式创建一个内核线程**,然后**kthreadd内核线程被唤醒**,来**执行内核线程创建的真正工作**，于是这里有**三个线程**
+我们在内核中**通过kernel\_create或者其他方式创建一个内核线程**, 然后**kthreadd内核线程被唤醒**, 来**执行内核线程创建的真正工作**, 于是这里有**三个线程**
 
 1. kthreadd已经光荣完成使命(接手**执行真正的创建工作**)，**睡眠**
 

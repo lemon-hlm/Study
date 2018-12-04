@@ -36,7 +36,7 @@ Linux内核通过一个被称为进程描述符的[task\_struct](http://lxr.free
 
 下面来慢慢介绍这些复杂成员
 
-# 1 [进程状态](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1390) 
+# 1 进程状态 
 
 ```c
 volatile long state;    /* -1 unrunnable, 0 runnable, >0 stopped */
@@ -89,7 +89,7 @@ volatile long state;    /* -1 unrunnable, 0 runnable, >0 stopped */
 state域能够取5个互为排斥的值（通俗一点就是这五个值任意两个不能一起使用，只能单独使用）。系统中的每个进程都必然处于以上所列进程状态中的一种。
 
 | 状态| 描述 | 
-| ------------- |:-------------|
+| ---- |:----|
 | TASK\_RUNNING | 表示进程要么**正在执行**，要么正要**准备执行**（已经就绪），正在等待cpu时间片的调度 |
 | TASK\_INTERRUPTIBLE | **阻塞态**.进程因为**等待一些条件**而**被挂起（阻塞**）而**所处的状态**。这些条件主要包括：**硬中断、资源、一些信号**……，**一旦等待的条件成立**，进程就会从该状态（阻塞）迅速**转化成为就绪状态TASK\_RUNNING** |
 | TASK\_UNINTERRUPTIBLE | 意义与TASK\_INTERRUPTIBLE类似，除了**不能通过接受一个信号来唤醒**以外，对于处于TASK\_UNINTERRUPIBLE状态的进程，哪怕我们**传递一个信号或者有一个外部中断都不能唤醒他们**。**只有它所等待的资源可用**的时候，他才会被唤醒。这个标志很少用，但是并不代表没有任何用处，其实他的作用非常大，特别是对于驱动刺探相关的硬件过程很重要，这个刺探过程不能被一些其他的东西给中断，否则就会让进城进入不可预测的状态 |
@@ -98,7 +98,7 @@ state域能够取5个互为排斥的值（通俗一点就是这五个值任意�
 
 ## 1.2 2个终止状态
 
-其实还有**两个附加的进程状态**既可以**被添加到state域**中，又可以被添加到[**exit\_state**](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1461)域中。只有**当进程终止**的时候，才会达到这两种状态.
+其实还有**两个附加的进程状态**既可以**被添加到state域**中，又可以被添加到**exit\_state**域中。只有**当进程终止**的时候，才会达到这两种状态.
 
 ```c
 /* task state */
@@ -107,9 +107,9 @@ int exit_code, exit_signal;
 ```
 
 | 状态| 描述 | 
-| ------------- |:-------------|
-| EXIT\_ZOMBIE | 进程的执行被终止，但是其**父进程还没有使用wait()等系统调用来获知它的终止信息**，此时进程成为僵尸进程 |
-| EXIT\_DEAD | 进程的最终状态 |
+| ----- |:------|
+| **EXIT\_ZOMBIE** | 进程的执行被终止，但是其**父进程还没有使用wait()等系统调用来获知它的终止信息**，此时进程成为**僵尸进程** |
+| EXIT\_DEAD | 进程的**最终状态** |
 
 而int exit\_code, exit\_signal;我们会在后面进程介绍
 
@@ -125,13 +125,13 @@ int exit_code, exit_signal;
 
 Linux 内核提供了**两种方法**将进程置为**睡眠状态**。
 
-将进程置为睡眠状态的**普通方法**是将**进程状态设置**为TASK\_INTERRUPTIBLE 或 TASK\_UNINTERRUPTIBLE并**调用调度程序的schedule**()函数。这样会**将进程从CPU运行队列中移除**。
+将进程置为睡眠状态的**普通方法**是将**进程状态设置**为TASK\_INTERRUPTIBLE或TASK\_UNINTERRUPTIBLE并**调用调度程序的schedule**()函数。这样会**将进程从CPU运行队列中移除**。
 
 - 如果进程处于**可中断模式的睡眠状态**（通过将其状态设置为**TASK\_INTERRUPTIBLE**），那么可以通过**显式的唤醒呼叫**（wakeup\_process()）或**需要处理的信号来唤醒**它。
 
 - 但是，如果进程处于**非可中断模式的睡眠状态**（通过将其状态设置为**TASK\_UNINTERRUPTIBLE**），那么**只能通过显式的唤醒呼叫**将其唤醒。除非万不得已，否则我们**建议将进程置为可中断睡眠模式**，而不是不可中断睡眠模式（比如说在设备I/O期间，处理信号非常困难时）。
 
-当处于**可中断睡眠模式的任务接收到信号**时，它**需要处理该信号（除非它已被屏蔽**），离开之前正在处理的任务（此处需要**清除**代码），并**将-EINTR** 返回给**用户空间**。再一次，**检查这些返回代码和采取适当操作**的工作将由程序员完成。
+当处于**可中断睡眠模式的任务接收到信号**时，它**需要处理该信号（除非它已被屏蔽**），离开之前正在处理的任务（此处需要**清除**代码），并**将-EINTR**返回给**用户空间**。再一次，**检查这些返回代码和采取适当操作**的工作将由程序员完成。
 
 因此，懒惰的程序员可能比较喜欢将进程置为不可中断模式的睡眠状态，因为信号不会唤醒这类任务。
 
@@ -166,9 +166,9 @@ Linux Kernel 2.6.25 引入了一种新的进程睡眠状态，
 
 ![进程状态转换图](./images/state.gif)
 
-# 2 [进程标识符(PID)](http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1492)
+# 2 进程标识符(PID)
 
-```
+```c
 pid_t pid;  
 pid_t tgid;  
 ```
@@ -185,7 +185,7 @@ Unix系统通过**pid来标识进程**，linux把不同的pid与系统中每个�
 
 在Linux系统中，一个线程组中的所有线程使用和该线程组的领头线程（该组中的第一个轻量级进程）相同的PID，并被存放在**tgid成员**中。只有**线程组的领头线程**的**pid**成员才会被设置为**与tgid相同**的值。注意，getpid()系统调用返回的是当前进程的tgid值而不是pid值。
 
-# 3 [进程内核栈](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1391)
+# 3 进程内核栈
 
 ```c
 void *stack;  
@@ -202,6 +202,7 @@ void *stack;
 Linux把**thread\_info**（线程描述符）和**内核态**的**线程堆栈**存放在一起，**这块区域**通常是8192Byte（占**两个页框**），其实地址必须是8192的整数倍。
 
 在linux/arch/x86/include/asm/page\_32\_types.h中，
+
 ```c
 #define THREAD_SIZE_ORDER    1
 #define THREAD_SIZE        (PAGE_SIZE << THREAD_SIZE_ORDER)
@@ -213,7 +214,7 @@ Linux把**thread\_info**（线程描述符）和**内核态**的**线程堆栈**
 
 **用户态进程**所用的**栈**，是在进程**线性地址空间**中；
 
-而**内核栈**是当进程**从用户空间进入内核空间**时，**特权级发生变化**，需要**切换堆栈**，那么内核空间中使用的就是这个内核栈。因为内核控制路径使用**很少的栈空间**，所以只需要几千个字节的内核态堆栈。
+而**内核栈**是当进程**从用户空间进入内核空间**时，**特权级发生变化**，需要**切换堆栈**，那么内核空间中使用的就是这个内核栈。因为内核控制路径使用**很少的栈空间**，所以**只需要几千个字节的内核态堆栈**。
 
 >需要注意的是，**内核态堆栈**仅用于**内核例程**，Linux内核另外为中断提供了单独的**硬中断栈**和**软中断栈**
 
@@ -246,6 +247,7 @@ Linux把**thread\_info**（线程描述符）和**内核态**的**线程堆栈**
 | arm64 | [linux/4.5/arch/arm64/include/asm/thread_info.h, line 47](http://lxr.free-electrons.com/source/arch/arm64/include/asm/thread_info.h#L47) |
 
 Linux内核中使用一个**联合体**来表示一个**进程的线程描述符**和**内核栈**：
+
 ```c
 union thread_union
 {
@@ -278,7 +280,7 @@ union thread_union
 >
 >\~(THREAD\_SIZE\-1)的结果刚好为1111 1111 1111 1111 1110 0000 0000 0000，第十三位是全为零，也就是刚好屏蔽了esp的低十三位，最终得到的是thread\_info的地址。
 
-进程最常用的是进程描述符结构task\_struct而不是thread\_info结构的地址。为了获取当前CPU上运行进程的task\_struct结构，内核提供了current宏，由于task\_struct \*task在thread\_info的起始位置，该宏本质上等价于current\_thread\_info()->task，在[include/asm-generic/current.h](http://lxr.free-electrons.com/source/include/asm-generic/current.h?v=4.5#L6)中定义：
+进程最常用的是进程描述符结构task\_struct而不是thread\_info结构的地址。为了获取当前CPU上运行进程的task\_struct结构，内核提供了current宏，由于task\_struct \*task在thread\_info的起始位置，该宏本质上等价于current\_thread\_info()\->task，在[include/asm-generic/current.h](http://lxr.free-electrons.com/source/include/asm-generic/current.h?v=4.5#L6)中定义：
 ```c
 #define get_current() (current_thread_info()->task)
 #define current get_current()
@@ -290,7 +292,7 @@ union thread_union
 
 ## 3.4 分配和销毁thread\_info
 
-进程通过[alloc\_thread\_info\_node](http://lxr.free-electrons.com/source/kernel/fork.c?v=4.5;#L161)函数分配它的内核栈，通过[free\_thread\_info](http://lxr.free-electrons.com/source/kernel/fork.c?v=4.5#L170)函数释放所分配的内核栈。 
+进程通过**alloc\_thread\_info\_node**()函数**分配它的内核栈**，通过**free\_thread\_info**()函数释放所分配的内核栈。 
 
 ```c
 # if THREAD_SIZE >= PAGE_SIZE
@@ -329,7 +331,7 @@ static void free_thread_info(struct thread_info *ti)
 | x86 | 4.5 | [arch/x86/include/asm/page_32_types.h, line 20](http://lxr.free-electrons.com/source/arch/x86/include/asm/page_32_types.h?v=4.5#L20) | #define THREAD\_SIZE\_ORDER       1 | \_\_get\_free\_pages函数分配2个页的内存（它的首地址是8192字节对齐的）|
 | x86\_64 | 4.5 | [arch/x86/include/asm/page_64_types.h, line 10](http://lxr.free-electrons.com/source/arch/x86/include/asm/page_64_types.h?v=4.5#L10)|#define THREAD\_SIZE\_ORDER       (2 + KASAN\_STACK\_ORDER)
 
-# 4 [进程标记](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1393) 
+# 4 进程标记
 
 ```
 unsigned int flags; /* per process flags, defined below */  
@@ -383,7 +385,7 @@ flags成员的可能取值如下，这些宏以PF(ProcessFlag)开头
 #define PF_SUSPEND_TASK 0x80000000      /* this thread called freeze_processes and should not be frozen */
 ```
 
-# 5 [表示进程亲属关系的成员](http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1499)
+# 5 表示进程亲属关系的成员
 
 ```c
 struct task_struct __rcu *real_parent; /* real parent process */
@@ -400,11 +402,11 @@ struct task_struct *group_leader;       /* threadgroup leader */
 | ------------- |:-------------:|
 | real\_parent | 指向其父进程，如果创建它的**父进程不再存在**，则指向**PID为1的init进程** |
 | parent | 指向其父进程，**当它终止时，必须向它的父进程发送信号**。它的值通常与real\_parent相同 |
-| children | 表示**链表的头部**，链表中的所有元素都是它的子进程 |
+| children | 表示**链表的头部**，链表中的**所有元素**都是它的**子进程** |
 | sibling | 用于**把当前进程插入到兄弟链表**中 |
 | group\_leader | 指向其所在**进程组的领头进程** |
 
-# 6 [ptrace系统调用](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1394)
+# 6 ptrace系统调用
 
 ptrace提供了一种**父进程可以控制子进程运行**，并可以检查和改变它的核心image。
 
@@ -473,9 +475,9 @@ Performance Event是一款随Linux内核代码一同发布和维护的**性能�
 #endif
 ```
 
-关于Performance Event工具的介绍可参考文章http://www.ibm.com/developerworks/cn/linux/l-cn-perf1/index.html?ca=drs-#major1和http://www.ibm.com/developerworks/cn/linux/l-cn-perf2/index.html?ca=drs-#major1。
+关于Performance Event工具的介绍可参考文章 http://www.ibm.com/developerworks/cn/linux/l-cn-perf1/index.html?ca=drs-#major1 和 http://www.ibm.com/developerworks/cn/linux/l-cn-perf2/index.html?ca=drs-#major1。
 
-# 8 [进程调度](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1394)
+# 8 进程调度
 
 ## 8.1 优先级
 
@@ -486,12 +488,12 @@ unsigned int rt_priority;
 
 | 字段 | 描述 |
 | ------------- |:-------------:|
-| static\_prio | 用于保存**静态优先级**，可以通过nice系统调用来进行修改 |
+| static\_prio | 用于保存**静态优先级**，可以通过**nice系统调用**来进行修改 |
 | rt\_priority | 用于保存**实时优先级** |
 | normal\_prio | 值取决于**静态优先级和调度策略** |
 | prio | 用于保存**动态优先级** |
 
-**实时优先级**范围是0到MAX\_RT\_PRIO\-1（即99），而普通进程的静态优先级范围是从MAX\_RT\_PRIO到MAX\_PRIO-1（即100到139）。**值越大静态优先级越低**。
+**实时优先级**范围是0到MAX\_RT\_PRIO\-1（即99），而**普通进程**的**静态优先级范围**是从**MAX\_RT\_PRIO到MAX\_PRIO-1（即100到139**）。**值越大静态优先级越低**。
 
 ```c
 /*  http://lxr.free-electrons.com/source/include/linux/sched/prio.h#L21  */
@@ -514,13 +516,14 @@ struct sched_rt_entity rt;
 
 cpumask_t cpus_allowed;
 ```
+
 | 字段 | 描述 |
 | ------------- |:-------------:|
 | policy | **调度策略** |
 | sched\_class | **调度类** |
 | se | **普通进程**的调度实体，每个进程都有其中之一的实体 |
 | rt | **实时进程**的调度实体，每个进程都有其中之一的实体 |
-| cpus\_allowed | 用于控制进程可以在哪里处理器上运行 |
+| cpus\_allowed | 用于控制进程可以在**哪些处理器**上运行 |
 
 ## 8.3 调度策略
 
@@ -578,7 +581,6 @@ extern const struct sched_class idle_sched_class;
 # 9 进程地址空间
 
 ```c
-/*  http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1453 */
 struct mm_struct *mm, *active_mm;
 /* per-thread vma caching */
 u32 vmacache_seqnum;
@@ -587,7 +589,6 @@ struct vm_area_struct *vmacache[VMACACHE_SIZE];
 struct task_rss_stat    rss_stat;
 #endif
 
-/*  http://lxr.free-electrons.com/source/include/linux/sched.h?V=4.5#L1484  */
 #ifdef CONFIG_COMPAT_BRK
 unsigned brk_randomized:1;
 #endif
@@ -626,6 +627,7 @@ unsigned :0; /* force alignment to the next boundary */
 unsigned in_execve:1; /* bit to tell LSMs we're in execve */
 unsigned in_iowait:1;
 ```
+
 | 字段 | 描述 |
 | ------------- |:-------------|
 | exit\_code | 用于设置**进程的终止代号**，这个值要么**是\_exit()或exit\_group()系统调用参数**（**正常终止**），要么是由**内核提供的一个错误代号（异常终止**）。|
@@ -636,7 +638,7 @@ unsigned in_iowait:1;
 | in\_iowait | 用于判断是否**进行iowait计数** |
 | sched\_reset\_on\_fork | 用于判断是否**恢复默认的优先级或调度策略** |
 
-# 11 [时间](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.5#L1530)
+# 11 时间
 
 ```c
 cputime_t utime, stime, utimescaled, stimescaled;
@@ -694,7 +696,7 @@ unsigned long last_switch_count;
 | nvcsw/nivcsw | 是**自愿（voluntary）/非自愿（involuntary）上下文切换计数** |
 | last\_switch\_count | nvcsw和nivcsw的总和 |
 | start\_time/real\_start\_time | 进程**创建时间**，real\_start\_time还包含了**进程睡眠时间**，常用于/proc/pid/stat，补丁说明请参考[LKML](http://lkml.indiana.edu/hypermail/linux/kernel/0705.0/2094.html) |
-| cputime\_expires | 用来统计**进程或进程组被跟踪的处理器时间**，其中的三个成员对应着cpu\_timers[3]的三个链表 |
+| cputime\_expires | 用来统计**进程或进程组被跟踪的处理器时间**，其中的三个成员对应着cpu\_timers\[3\]的三个链表 |
 
 # 12 信号处理
 
@@ -702,17 +704,15 @@ unsigned long last_switch_count;
 /* signal handlers */
 struct signal_struct *signal;
 struct sighand_struct *sighand;
-1583 
 sigset_t blocked, real_blocked;
 sigset_t saved_sigmask; /* restored if set_restore_sigmask() was used */
 struct sigpending pending;
-1587 
 unsigned long sas_ss_sp;
 size_t sas_ss_size;
 ```
 
 | 字段 | 描述 |
-| ------------- |:-------------|
+| --- |:---|
 | signal | 指向进程的**信号描述符** |
 | sighand | 指向进程的**信号处理程序描述符** |
 | blocked | 表示**被阻塞信号的掩码**，real\_blocked表示临时掩码 |

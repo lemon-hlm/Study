@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 进程ID概述
     - 1.1 进程ID类型
     - 1.2 PID命名空间
@@ -46,7 +48,7 @@ enum pid_type
 
 之所以**不包括线程组ID**，是因为内核中已经有指向到**线程组**的**task\_struct**指针**group\_leader**，线程组ID无非就是**group\_leader的PID**。
 
-- **PID**    内核唯一区分**每个进程的标识**
+- **PID**   内核唯一区分**每个进程的标识**
 
 pid是 Linux 中在其**命名空间**中**唯一标识进程**而分配给它的一个号码，称做**进程ID号，简称PID**。在使用 fork 或 clone 系统调用时产生的进程均会由内核分配一个新的唯一的PID值
 
@@ -54,7 +56,7 @@ pid是 Linux 中在其**命名空间**中**唯一标识进程**而分配给它�
 
 >注意它并不是我们用户空间通过getpid()所获取到的那个进程号，至于原因么，接着往下看
 
-- **TGID**    **线程组（轻量级进程组**）的ID标识
+- **TGID**  **线程组（轻量级进程组**）的ID标识
 
 在一个进程中，如果以**CLONE\_THREAD标志**来调用clone建立的进程就是**该进程的一个线程**（即**轻量级进程**，Linux其实**没有严格的线程概念**），它们处于一个线程组，
 
@@ -82,28 +84,26 @@ PID命名空间的层次关系图:
 
 ![命名空间的层次关系图](./images/namespace-level.jpg)
 
-在上图有四个命名空间，一个父命名空间衍生了两个子命名空间，其中的一个子命名空间又衍生了一个子命名空间。以PID命名空间为例，由于各个命名空间彼此隔离，所以每个命名空间都可以有 PID 号为 1 的进程；但又由于命名空间的层次性，父命名空间是知道子命名空间的存在，因此子命名空间要映射到父命名空间中去，因此上图中 level 1 中两个子命名空间的六个进程分别映射到其父命名空间的PID 号5~10。
+在上图有四个命名空间，一个父命名空间衍生了两个子命名空间，其中的一个子命名空间又衍生了一个子命名空间。以PID命名空间为例，由于各个命名空间彼此隔离，所以每个命名空间都可以有 PID 号为 1 的进程；但又由于命名空间的层次性，父命名空间是知道子命名空间的存在，因此子命名空间要映射到父命名空间中去，因此上图中 level 1 中两个子命名空间的六个进程分别映射到其父命名空间的PID号5\~10。
 
 ### 1.2.2 局部ID和全局ID
 
 命名空间增加了**PID管理的复杂性**。
 
-回想一下，PID命名空间按**层次组织**。在建立一个新的命名空间时，**子命名空间中的所有PID**对**父命名空间都是可见**的，但子命名空间无法看到父命名空间的PID。但这意味着某些进程具有多个PID，凡可以看到该进程的命名空间，都会为其分配一个PID。 这必须反映在数据结构中。我们必须区分**局部ID**和**全局ID**
+回想一下，PID命名空间按**层次组织**。在建立一个新的命名空间时，**子命名空间中的所有PID**对**父命名空间都是可见**的，但子命名空间无法看到父命名空间的PID。但这意味着某些进程具有多个PID，凡可以看到该进程的命名空间，都会为其分配一个PID。这必须反映在数据结构中。我们必须区分**局部ID**和**全局ID**
 
 - **全局ID**    在内核本身和**初始命名空间中唯一的ID(初始命名空间中！！！**)，在系统启动期间开始的init进程即属于该初始命名空间。系统中**每个进程**都对应了该命名空间的一个**PID**，叫**全局ID**，保证在整个系统中唯一。
 
 - **局部ID**    对于属于**某个特定的命名空间**，它在其命名空间内分配的ID为局部ID，该ID也可以出现在其他的命名空间中。
 
-**全局PID和全局TGID**直接保存在[`task_struct`](http://lxr.free-electrons.com/source/include/linux/sched.h#L1389)中，分别是task\_struct的**pid和tgid成员**：
+**全局PID和全局TGID**直接保存在task\_struct中，分别是task\_struct的**pid和tgid成员**：
 
 ```c
 <sched.h> 
 struct task_struct
-{  
-		//...  
-        pid_t pid;  
-        pid_t tgid;  
-		//...  
+{
+    pid_t pid;  
+    pid_t tgid; 
 }
 ```
  
@@ -134,7 +134,6 @@ struct task_struct
 ```c
 struct pid_namespace
 {  
-
     struct kref kref;  
     struct pidmap pidmap[PIDMAP_ENTRIES];  
     int last_pid;  
@@ -169,9 +168,9 @@ struct pid_namespace
 
 **PID的管理**围绕两个数据结构展开：
 
-- [struct pid](http://lxr.free-electrons.com/source/include/linux/pid.h#L57)是**内核对PID的内部表示**
+- struct pid是**内核对PID的内部表示**
 
-- [struct upid](http://lxr.free-electrons.com/source/include/linux/pid.h#L50)则表示**特定的命名空间中可见**的信息。
+- struct upid则表示**特定的命名空间中可见**的信息。
 
 两个结构的定义在[include/linux/pid.h](include/linux/pid.h)中
 
@@ -196,17 +195,18 @@ struct upid是一个**特定namespace**里面的进程的信息,包含该namespa
 **所有的upid实例**都保存在一个**散列表**中，稍后我们会看到该结构。
 
 ```c
+[include/linux/pid.h]
 struct pid  
 {  
     atomic_t count;  
-    /* 使用该pid的进程的列表， lists of tasks that use this pid  */
+    /* 使用该pid的进程的列表  */
     struct hlist_head tasks[PIDTYPE_MAX];  
     int level;  
     struct upid numbers[1];  
 };
 ```
 
-srtuct pid是局部ID类,对应一个
+srtuct pid是**局部ID类**,对应一个
 
 | 字段| 描述 | 
 | ------------- |:-------------|
@@ -215,7 +215,7 @@ srtuct pid是局部ID类,对应一个
 | tasks[PIDTYPE\_MAX] | 是一个**数组**，每个**数组项**都是一个**散列表头**,分别对应以下三种类型
 | numbers[1] | 一个**upid**的**实例数组**，每个数组项代表一个**命名空间**，用来表示**一个PID**可以属于**不同的命名空间**，该元素放在末尾，**可以向数组添加附加的项**。|
 
-tasks是一个数组，**每个数组项**都是一个**散列表头**，对应于一个ID类型,PIDTYPE\_PID,PIDTYPE\_PGID,PIDTYPE\_SID（PIDTYPE\_MAX表示**ID类型的数目**）这样做是必要的，因为**一个ID可能用于几个进程(task\_struct)！！！**。所有**共享同一ID**的**task\_struct实例**，都**通过该列表连接起来(这个列表就是使用这个pid的进程<task\_struct>的列表！！！**)。这个枚举常量PIDTYPE\_MAX，正好是pid\_type类型的数目，这里linux内核使用了一个小技巧来由编译器来自动生成id类型的数目
+tasks是一个数组，**每个数组项**都是一个**散列表头**，对应于一个ID类型, PIDTYPE\_PID,PIDTYPE\_PGID,PIDTYPE\_SID（PIDTYPE\_MAX表示**ID类型的数目**）这样做是必要的，因为**一个ID可能用于几个进程(task\_struct)！！！**。所有**共享同一ID**的**task\_struct实例**，都**通过该列表连接起来(这个列表就是使用这个pid的进程<task\_struct>的列表！！！**)。这个枚举常量PIDTYPE\_MAX，正好是pid\_type类型的数目，这里linux内核使用了一个小技巧来由编译器来自动生成id类型的数目
 
 此外，还有两个结构我们需要说明，就是pidmap和pid\_link
 
@@ -471,7 +471,9 @@ struct upid
 };
 ```
 
-在pid结构体中增加了一个表示该**进程所处的命名空间的层次level**，以及一个**可扩展的upid结构体**。对于struct upid，nr表示在**该命名空间**所分配的**进程的ID**，ns指向是该ID所属的命名空间，**pid\_chain 表示在该命名空间的散列表**。
+在pid结构体中增加了一个表示该**进程所处的命名空间的层次level**，以及一个**可扩展的upid结构体**。
+
+对于struct upid，nr表示在**该命名空间**所分配的**进程的ID**，ns指向是该ID所属的命名空间，**pid\_chain 表示在该命名空间的散列表**。
 
 - 进程的结构体是task\_struct,**一个进程对应一个task\_struct结构体(一对一**).**一个进程**会有**PIDTYPE\_MAX个(3个)pid\_link结构体(一对多**),这**三个结构体中的pid**分别指向①该进程对应的**进程本身(PIDTYPE\_PID**)的真实的pid结构体();②该进程的**进程组(PIDTYPE\_PGID)的组长本身**的pid结构体;③该进程的**会话组(PIDTYPE\_SID)的组长**本身的pid结构体,所以**一个真实的进程只会有一个自身真实的pid结构体**
 - 这三个pid\_link结构体里面有个哈希节点node,因为进程组、会话组等的存在,这个**node用来链接同一个组的进程task\_struct**,指向的是task\_struct中的pid\_link的node
@@ -507,7 +509,7 @@ struct pid *find_get_pid(pid_t nr)
 
 find\_pid\_ns获得pid实体的实现原理，**主要使用哈希查找**。内核使用**哈希表组织struct pid**，每创建一个**新进程**，给进程的struct pid都会**插入到哈希表**中，这时候就需要使用进程的**进程pid**和pid命名空间ns在哈希表中将相对应的struct pid索引出来，现在可以看下find\_pid\_ns的传入参数，也是通过nr和ns找到struct pid。
 
-根据**局部PID**以及**命名空间**计算在**pid\_hash数组中的索引**，然后**遍历散列表**找到**所要的upid**， 再根据内核的 container\_of 机制找到 pid 实例。
+根据**局部PID**以及**命名空间**计算在**pid\_hash数组中的索引**，然后**遍历散列表**找到**所要的upid**，再根据内核的 container\_of 机制找到 pid 实例。
 
 代码如下：
 
@@ -557,9 +559,9 @@ struct pid *find_get_pid(pid_t nr)
 
 ## 4.2 获得局部ID
 
-根据进程的 task_struct、ID类型、命名空间，可以很容易获得其在命名空间内的局部ID
+根据进程的 task\_struct、ID类型、命名空间，可以很容易获得其在命名空间内的局部ID
 
-获得与task_struct 关联的pid结构体。辅助函数有 task_pid、task_tgid、task_pgrp和task_session，分别用来获取不同类型的ID的pid 实例，如获取 PID 的实例：
+获得与task\_struct 关联的pid结构体。辅助函数有 task\_pid、task\_tgid、task\_pgrp和task\_session，分别用来获取不同类型的ID的pid 实例，如获取 PID 的实例：
 
 ```c
 static inline struct pid *task_pid(struct task_struct *task)
@@ -576,7 +578,7 @@ static inline struct pid *task_tgid(struct task_struct *task)
 }
 ```
 
-而获得PGID和SID，首先需要找到该线程组组长的task_struct，再获得其相应的 pid：
+而获得PGID和SID，首先需要找到该线程组组长的task\_struct，再获得其相应的 pid：
 
 ```c
 static inline struct pid *task_pgrp(struct task_struct *task)
@@ -591,7 +593,6 @@ static inline struct pid *task_session(struct task_struct *task)
 ```
 
 获得 pid 实例之后，再根据 pid 中的numbers 数组中 uid 信息，获得局部PID。
-
 
 ```c
 pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
@@ -610,7 +611,8 @@ pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
 
 这里值得注意的是，由于PID命名空间的层次性，父命名空间能看到子命名空间的内容，反之则不能，因此，函数中需要确保当前命名空间的level 小于等于产生局部PID的命名空间的level。
 
-除了这个函数之外，内核还封装了其他函数用来从 pid 实例获得 PID 值，如 pid_nr、pid_vnr 等。在此不介绍了。
+除了这个函数之外，内核还封装了其他函数用来从 pid 实例获得 PID 值，如 pid\_nr、pid\_vnr 等。在此不介绍了。
+
 结合这两步，内核提供了更进一步的封装，提供以下函数：
 
 ```c
@@ -664,13 +666,15 @@ struct task_struct *find_task_by_pid(pid_t vnr);
 
 ## 4.4 生成唯一的PID
 
-内核中使用下面两个函数来实现分配和回收PID的：
+内核中使用下面两个函数来实现**分配和回收PID**的：
+
 ```c
 static int alloc_pidmap(struct pid_namespace *pid_ns);
 static void free_pidmap(struct upid *upid);
 ```
 
-在这里我们不关注这两个函数的实现，反而应该关注分配的 PID 如何在多个命名空间中可见，这样需要在每个命名空间生成一个局部ID，函数 alloc_pid 为新建的进程分配PID，简化版如下：
+在这里我们不关注这两个函数的实现，反而应该关注分配的 PID 如何在多个命名空间中可见，这样需要在每个命名空间生成一个局部ID，函数 alloc\_pid 为新建的进程分配PID，简化版如下：
+
 ```c
 struct pid *alloc_pid(struct pid_namespace *ns)
 {
@@ -700,7 +704,6 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		hlist_add_head_rcu(&upid->pid_chain, &pid_hash[pid_hashfn(upid->nr, upid->ns)]);
     	upid->ns->nr_hashed++;
 	}
-	
     return pid;
 }
 ```
