@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 前景回顾
     - 1.1 进程调度
     - 1.2 进程的分类
@@ -208,7 +210,7 @@ linux针对**实时进程**实现了**Roound\-Robin**, **FIFO**和**Earliest-Dea
 
 调度器使用一系列数据结构来排序和管理系统中的进程. 调度器的工作方式的这些结构的涉及密切相关, 几个组件在许多方面
 
-## 3.1 [task\_struct中调度相关的成员](http://lxr.free-electrons.com/source/include/linux/sched.h?v=4.6#L1410)
+## 3.1 task\_struct中调度相关的成员
 
 ```c
 struct task_struct
@@ -365,7 +367,7 @@ cpus\_allows是一个位域, 在多处理器系统上使用, 用来限制进程�
 
 ## 3.2 调度类
 
-**sched\_class结构体表示调度类**,类提供了**通用调度器和各个调度器之间的关联**,调度器类和特定数据结构中汇集地几个函数指针表示,全局调度器请求的各个操作都可以用一个指针表示,这使得无需了解调度器类的内部工作原理即可创建通用调度器,定义在[kernel/sched/sched.h](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L1184)
+**sched\_class结构体表示调度类**, 类提供了**通用调度器和各个调度器之间的关联**, 调度器类和特定数据结构中汇集地几个函数指针表示, 全局调度器请求的各个操作都可以用一个指针表示, 这使得无需了解调度器类的内部工作原理即可创建通用调度器, 定义在[kernel/sched/sched.h](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L1184)
 
 ```c
 struct sched_class {
@@ -899,8 +901,6 @@ struct cfs_rq {
     struct rb_node *rb_leftmost;
 
     /*
-     * 'curr' points to currently running entity on this cfs_rq.
-     * It is set to NULL otherwise (i.e when none are currently running).
 	 * curr: 当前正在运行的sched_entity（对于组虽然它不会在cpu上运行，但是当它的下层有一个task在cpu上运行，那么它所在的cfs_rq就把它当做是该cfs_rq上当前正在运行的sched_entity）
      * next: 表示有些进程急需运行，即使不遵从CFS调度也必须运行它，调度时会检查是否next需要调度，有就调度next
      *
@@ -944,14 +944,6 @@ struct cfs_rq {
     /* 所属于的CPU rq */
     struct rq *rq;  /* cpu runqueue to which this cfs_rq is attached */
 
-    /*
-     * leaf cfs_rqs are those that hold tasks (lowest schedulable entity in
-     * a hierarchy). Non-leaf lrqs hold other higher schedulable entities
-     * (like users, containers etc.)
-     *
-     * leaf_cfs_rq_list ties together list of leaf cfs_rq's in a cpu. This
-     * list is used during load balance.
-     */
     int on_list;
     struct list_head leaf_cfs_rq_list;
     /* 拥有该CFS运行队列的进程组 */
@@ -1067,9 +1059,10 @@ struct dl_rq {
 
 我们可以先看看sched\_entity结构，其定义在[include/linux/sched.h](http://lxr.free-electrons.com/source/include/linux/sched.h#L1256), 如下：
 
-### 3.4.1 sched\_entity调度实体
+### 3.4.1 普通进程调度实体sched\_entity
 
 ```c
+[include/linux/sched.h]
 /* 一个调度实体(红黑树的一个结点)，其包含一组或一个指定的进程，包含一个自己的运行队列，一个父亲指针，一个指向需要调度的运行队列指针 */
 struct sched_entity {
     /* 权重，在数组prio_to_weight[]包含优先级转权重的数值 */
@@ -1116,12 +1109,6 @@ struct sched_entity {
 #endif
 
 #ifdef CONFIG_SMP
-    /*
-     * Per entity load average tracking.
-     *
-     * Put into separate cache line so it does not
-     * collide with read-mostly values above.
-     */
 	struct sched_avg        avg ____cacheline_aligned_in_smp;
 #endif
 };

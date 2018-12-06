@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 前景回顾
     - 1.1 Linux的调度器组成
         - 1.1.1 2个调度器
@@ -180,7 +182,7 @@ do {
 
 **内核如何检查一个进程是否需要被调度**呢?
 
-内核在即将返回用户空间时检查进程是否需要重新调度，如果设置了，就会发生调度, 这被称为**用户抢占**, 因此**内核在thread\_info的flag中设置了一个标识来标志进程是否需要重新调度,即重新调度need\_resched标识TIF\_NEED\_RESCHED**
+内核在**即将返回用户空间**时**检查进程是否需要重新调度**，如果设置了，就会**发生调度**, 这被称为**用户抢占**, 因此**内核在thread\_info**的**flag**中设置了**一个标识来标志**进程是否需要**重新调度**, 即重新调度need\_resched标识TIF\_NEED\_RESCHED**
 
 并提供了一些设置可检测的函数
 
@@ -359,8 +361,8 @@ asmlinkage __visible void __sched notrace preempt_schedule(void)
 
     preempt_schedule_common();
 }
-NOKPROBE\_SYMBOL(preempt\_schedule);
-EXPORT\_SYMBOL(preempt\_schedule);
+NOKPROBE_SYMBOL(preempt\_schedule);
+EXPORT_SYMBOL(preempt\_schedule);
 
 // http://lxr.free-electrons.com/source/include/linux/preempt.h?v=4.6#L159
  #define preemptible()   (preempt_count() == 0 && !irqs_disabled())

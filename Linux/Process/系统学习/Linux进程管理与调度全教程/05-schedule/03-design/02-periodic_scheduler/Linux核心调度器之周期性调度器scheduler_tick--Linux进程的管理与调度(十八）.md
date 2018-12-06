@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 两个调度器
 - 2 周期性调度器
     - 2.1 周期性调度器主流程
@@ -25,7 +27,7 @@
 
 # 2 周期性调度器
 
-周期性调度器在**scheduler\_tick**中实现.如果系统正在活动中,内核会**按照频率HZ自动调用该函数**.如果**没有进程在等待调度**, 那么在计算机电力供应不足的情况下,内核**将关闭该调度器以减少能耗(！！！**).这对于我们的嵌入式设备或者手机终端设备的电源管理是很重要的.
+周期性调度器在**scheduler\_tick**()中实现.如果系统正在活动中,内核会**按照频率HZ自动调用该函数**.如果**没有进程在等待调度**, 那么在计算机电力供应不足的情况下,内核**将关闭该调度器以减少能耗(！！！**).这对于我们的嵌入式设备或者手机终端设备的电源管理是很重要的.
 
 ## 2.1 周期性调度器主流程
 
@@ -40,11 +42,7 @@ scheduler\_tick函数定义在[kernel/sched/core.c, L2910](http://lxr.free-elect
 **检查进程执行的时间**是否超过了它**对应的ideal\_runtime**，如果超过了，则告诉系统，需要**启动主调度器(schedule)进行进程切换**。(注意thread\_info:preempt\_count、thread\_info:flags (TIF\_NEED\_RESCHED))
 
 ```c
-/*
- * This function gets called by the timer code, with HZ frequency.
- * We call it with interrupts disabled.
- */
-
+[kernel/sched/core.c]
 void scheduler_tick(void)
 {
     /*  1.  获取当前cpu上的全局就绪队列rq和当前运行的进程curr  */

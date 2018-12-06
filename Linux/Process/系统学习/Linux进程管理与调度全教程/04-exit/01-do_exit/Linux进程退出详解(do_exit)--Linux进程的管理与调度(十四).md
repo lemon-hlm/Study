@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 Linux进程的退出
     - 1.1 linux下进程退出的方式
         - 1.1.1 正常退出
@@ -63,7 +65,7 @@
 
 ## 2.1 \_exit和exit\_group系统调用
 
-**\_exit系统调用**
+\_**exit系统调用**
 
 **进程退出**由\_exit**系统调用**来完成,这使得**内核**有机会将**该进程所使用的资源释放回系统**中
 
@@ -185,6 +187,7 @@ do_group_exit(int exit_code)
         或者current->sig->group_exit_task是否不为NULL
     */
     if (signal_group_exit(sig))
+    
         exit_code = sig->group_exit_code;   /*  group_exit_code存放的是线程组终止代码  */
     else if (!thread_group_empty(current)) {    /*  检查线程组链表是否不为空  */
         struct sighand_struct *const sighand = current->sighand;
@@ -348,7 +351,7 @@ static inline void set_fs(mm_segment_t fs)
 
 首先是**检查PF\_EXITING标识**, 此标识表示**进程正在退出**,　
 
-如果**此标识已被设置**,则**进一步设置PF\_EXITPIDONE标识**,并将进程的状态设置为**不可中断状态TASK\_UNINTERRUPTIBLE**,　并**进程一次进程调度**
+如果**此标识已被设置**,则**进一步设置PF\_EXITPIDONE标识**,并将进程的状态设置为**不可中断状态TASK\_UNINTERRUPTIBLE**,　并**进行一次进程调度**
 
 ```c
     /*current->flags的PF_EXITING标志表示进程正在被删除  */

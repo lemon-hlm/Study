@@ -146,10 +146,10 @@ sys\_execve() > do\_execve() > do\_execveat\_common > search\_binary\_handler() 
 ## 3.1 execve的入口函数sys\_execve
 
 | 描述 | 定义 | 链接 |
-| ------------- |:-------------:|:-------------|
-| **系统调用号(体系结构相关**) | 类似与如下的形式<br>#define \_\_NR\_execve                             117<br>\_\_SYSCALL(117, sys\_execve, 3) | [arch/对应体系结构/include/uapi/asm/unistd.h, line 265](http://lxr.free-electrons.com/ident?v=4.5;i=__NR_execve) |
-| 入口函数声明 |asmlinkage long sys\_execve(const char \_\_user *filename,<br>const char \_\_user *const \_\_user *argv,<br>const char \_\_user *const \_\_user *envp); | [include/linux/syscalls.h, line 843](http://lxr.free-electrons.com/source/include/linux/syscalls.h?v=4.5#L843) |
-| 系统调用实现 | SYSCALL\_DEFINE3(execve,<br>const char \_\_user *, filename,<br>const char \_\_user *const \_\_user *, argv,<br>const char \_\_user *const \_\_user *, envp)<br>{<br>return do\_execve(getname(filename), argv, envp);<br>} | [fs/exec.v 1710](http://lxr.free-electrons.com/source/fs/exec.c?v=4.5#L1710) |
+| ------- |:--------|:------|
+| **系统调用号(体系结构相关**) | 类似与如下的形式<br>#define \_\_NR\_execve                             117<br>\_\_SYSCALL(117, sys\_execve, 3) | arch/对应体系结构/include/uapi/asm/unistd.h |
+| 入口函数声明 |asmlinkage long sys\_execve(const char \_\_user *filename,<br>const char \_\_user *const \_\_user *argv,<br>const char \_\_user *const \_\_user *envp); | include/linux/syscalls.h |
+| 系统调用实现 | SYSCALL\_DEFINE3(execve,<br>const char \_\_user *, filename,<br>const char \_\_user *const \_\_user *, argv,<br>const char \_\_user *const \_\_user *, envp)<br>{<br>return do\_execve(getname(filename), argv, envp);<br>} | fs/exec.c |
 
 execve系统调用的的入口点是**体系结构相关的sys\_execve**,该函数很快将工作委托给系统无关的**do\_execve函数**
 
@@ -195,7 +195,7 @@ do\_execve的定义在**fs/exec.c**中，参见 http://lxr.free-electrons.com/so
 >
 >[linux-3.19~至今引入execveat之后do\_execve调用**do\_execveat\_common**来完成程序的加载和运行](http://lxr.free-electrons.com/source/fs/exec.c?v=4.5#L1481)
 
-在Linux中提供了一系列的**函数**，这些函数能用可执行文件所描述的**新上下文代替进程的上下文**。这样的函数名以**前缀exec开始**。**所有的exec函数**都是调用了**execve()系统调用**。
+在Linux中提供了一系列的**函数**，这些函数能用**可执行文件**所描述的**新上下文代替进程的上下文**。这样的函数名以**前缀exec开始**。**所有的exec函数**都是调用了**execve()系统调用**。
 
 sys\_execve接受参数：1.**可执行文件的路径**  2.**命令行参数字符串** 3.**环境变量字符串**
 
@@ -397,7 +397,7 @@ out_ret:
 }
 ```
 
-## 3.4 exec\_binprm识别并加载二进程程序
+## 3.4 exec\_binprm()识别并加载二进程程序
 
 **每种格式的二进制文件**对应一个struct **linux\_binprm结构体**，每种可执行的程序类型都对应一个数据结构struct linux\_binfmt,**load\_binary成员**负责**识别该二进制文件的格式**；
 
@@ -518,11 +518,11 @@ int search_binary_handler(struct linux_binprm *bprm)
 }
 ```
 
-## 3.6 load\_binary加载可执行程序
+## 3.6 load\_binary()加载可执行程序
 
 我们前面提到了,linux内核支持多种可执行程序格式, **每种格式**都被注册为一个**linux\_binfmt结构**, 其中存储了对应可执行程序格式加载函数等
 
-| 格式 | linux_binfmt定义 | load_binary  | load_shlib | core_dump  |
+| 格式 | linux\_binfmt定义 | load\_binary  | load\_shlib | core\_dump  |
 | ------------- |:-------------|:-------------|:-------------|:-------------|
 | a.out | [aout\_format](http://lxr.free-electrons.com/source/fs/binfmt_aout.c#L116) | [load\_aout\_binary](http://lxr.free-electrons.com/source/fs/binfmt_aout.c#L197)|  [load\_aout\_library](http://lxr.free-electrons.com/source/fs/binfmt_aout.c#L197) | [aout\_core\_dump](http://lxr.free-electrons.com/source/fs/binfmt_aout.c#L36) |
 | flat style executables | [flat\_format](http://lxr.free-electrons.com/source/fs/binfmt_flat.c#L94)  |[load\_flat\_binary](http://lxr.free-electrons.com/source/fs/binfmt_flat.c#L855) |  [load\_flat\_shared\_library](http://lxr.free-electrons.com/source/fs/binfmt_flat.c#L801) | [flat\_core\_dump](http://lxr.free-electrons.com/source/fs/binfmt_flat.c#L107) |

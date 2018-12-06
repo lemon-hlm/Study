@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 前景回顾
     - 1.1 进程调度
     - 1.2 进程的分类
@@ -112,9 +114,11 @@ linux中针对当前**可调度的实时**和**非实时进程**, 定义了类�
 
 # 2 主调度器
 
-在内核中的许多地方, 如果要将CPU分配给与当前活动进程不同的另一个进程,都会直接调用主调度器函数schedule; 从系统调用返回后, 内核也会检查当前进程是否设置了重调度标志TLF\_NEDD\_RESCHED
+在内核中的许多地方, 如果要将CPU分配给与当前活动进程不同的另一个进程,都会**直接调用主调度器函数schedule**(); 
 
-例如, 前述的**周期性调度器的scheduler\_tick就会设置该标志**,如果是这样则**内核会调用schedule**,该函数假定当前活动进程一定会被另一个进程取代.
+从**系统调用返回**后, 内核也会检查当前进程是否设置了**重调度标志TLF\_NEDD\_RESCHED**
+
+例如, 前述的**周期性调度器的scheduler\_tick()就会设置该标志**,如果是这样则**内核会调用schedule**,该函数假定当前活动进程一定会被另一个进程取代.
 
 ## 2.1 调度函数的\_\_sched前缀
 
@@ -144,7 +148,7 @@ void __sched some_function(args, ...)
 
 ### 2.2.1 schedule主框架
 
-schedule就是**主调度器的函数**, 在内核中的许多地方,如果要将CPU分配给与当前活动进程不同的另一个进程, 都会直接调用主调度器函数schedule.
+schedule()就是**主调度器的函数**, 在内核中的许多地方,如果要将CPU分配给与当前活动进程不同的另一个进程, 都会直接调用主调度器函数schedule().
 
 该函数完成**如下工作**
 
@@ -152,9 +156,9 @@ schedule就是**主调度器的函数**, 在内核中的许多地方,如果要�
 
 2. **检查死锁**, **关闭内核抢占**后**调用\_\_schedule完成内核调度**
 
-3. **恢复内核抢占**, 然后检查**当前进程是否设置了重调度标志TLF\_NEDD\_RESCHED**,如果该进程被其他进程设置了TIF\_NEED\_RESCHED标志, 则**函数重新执行进行调度**
+3. **恢复内核抢占**, 然后检查**当前进程是否设置了重调度标志TLF\_NEDD\_RESCHED**, 如果该进程被其他进程设置了**TIF\_NEED\_RESCHED标志**, 则**函数重新执行进行调度**
 
-该函数定义在[kernel/sched/core.c, L3243](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3243), 如下所示
+该函数定义在[kernel/sched/core.c], 如下所示
 
 ```c
 asmlinkage __visible void __sched schedule(void)
@@ -166,30 +170,31 @@ asmlinkage __visible void __sched schedule(void)
     /*  避免死锁 */
     sched_submit_work(tsk);
     do {
-        preempt_disable();									/*  关闭内核抢占  */
-        __schedule(false);									/*  完成调度  */
-        sched_preempt_enable_no_resched();	                /*  开启内核抢占  */
-    } while (need_resched());	/*  如果该进程被其他进程设置了TIF_NEED_RESCHED标志，则函数重新执行进行调度    */
+        /* 关闭内核抢占 */
+        preempt_disable();									
+        /* 完成调度 */
+        __schedule(false);									
+        /* 开启内核抢占 */
+        sched_preempt_enable_no_resched();	 
+    /* 如果该进程被其他进程设置了TIF_NEED_RESCHED标志，则函数重新执行进行调度 */
+    } while (need_resched());
 }
 EXPORT_SYMBOL(schedule);
 ```
 
-### 2.2.2 sched\_submit\_work避免死锁
+### 2.2.2 sched\_submit\_work()避免死锁
 
-该函数定义在[kernel/sched/core.c, L3231](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3231), 如下所示
+该函数定义在[kernel/sched/core.c], 如下所示
 
 ```c
 static inline void sched_submit_work(struct task_struct *tsk)
 {
-	/*  检测tsk->state是否为0 （runnable）, 若为运行态时则返回，
-	 *	 tsk_is_pi_blocked(tsk),检测tsk的死锁检测器是否为空，若非空的话就return
+	/* 检测tsk->state是否为0 （runnable）, 若为运行态时则返回，
+	 * tsk_is_pi_blocked(tsk),检测tsk的死锁检测器是否为空，若非空的话就return */
     if (!tsk->state || tsk_is_pi_blocked(tsk))
         return;
-    /*
-     * If we are going to sleep and we have plugged IO queued,
-     * make sure to submit it to avoid deadlocks.
-     */
-    if (blk_needs_flush_plug(tsk))  /*  然后检测是否需要刷新plug队列，用来避免死锁  */
+    /* 然后检测是否需要刷新plug队列，用来避免死锁 */
+    if (blk_needs_flush_plug(tsk))
         blk_schedule_flush_plug(tsk);
 }
 ```
@@ -245,14 +250,6 @@ static void __sched notrace __schedule(bool preempt)
     rq = cpu_rq(cpu);
     prev = rq->curr;
 
-    /*
-     * do_exit() calls schedule() with preemption disabled as an exception;
-     * however we must fix that up, otherwise the next task will see an
-     * inconsistent (higher) preempt count.
-     *
-     * It also avoids the below schedule_debug() test from complaining
-     * about this.
-     */
     if (unlikely(prev->state == TASK_DEAD))
         preempt_enable_no_resched_notrace();
     
@@ -270,11 +267,6 @@ static void __sched notrace __schedule(bool preempt)
      *  标识当前CPU发生上下文的切换  */
     rcu_note_context_switch();
 
-    /*
-     * Make sure that signal_pending_state()->signal_pending() below
-     * can't be reordered with __set_current_state(TASK_INTERRUPTIBLE)
-     * done by the caller to avoid the race with signal_wake_up().
-     */
     smp_mb__before_spinlock();
     /*  锁住该队列  */
     raw_spin_lock(&rq->lock);
@@ -396,9 +388,6 @@ next = pick_next_task(rq);
 其定义在[kernel/sched/core.c, line 3068](http://lxr.free-electrons.com/source/kernel/sched/core.c?v=4.6#L3064), 如下所示
 
 ```c
-/*
- * Pick up the highest-prio task:
- */
 static inline struct task_struct *
 pick_next_task(struct rq *rq, struct task_struct *prev)
 {
@@ -406,9 +395,6 @@ pick_next_task(struct rq *rq, struct task_struct *prev)
     struct task_struct *p;
 
     /*
-     * Optimization: we know that if all tasks are in
-     * the fair class we can call that function directly:
-     *
      * 如果待被调度的进程prev是隶属于CFS的普通非实时进程
      * 而当前cpu的全局就绪队列rq中的进程数与cfs_rq的进程数相等
      * 则说明当前cpu上的所有进程都是由cfs调度的普通非实时进程
@@ -540,7 +526,7 @@ Linux相比与其他操作系统（包括其他类Unix系统）有很多的优�
 
 ### 2.4.2 context\_switch流程
 
-context\_switch函数完成了进程上下文的切换, 其定义在[kernel/sched/core.c#L2711](http://lxr.free-electrons.com/source/kernel/sched/core.c#L2711)
+context\_switch函数完成了进程上下文的切换, 其定义在[kernel/sched/core.c]
 
 context\_switch( )函数**建立next进程的地址空间**。进程描述符的**active\_mm**字段指向进程所使用的**内存描述符**，而**mm字段**指向进程所拥有的**用户空间内存描述符**。对于**一般的进程**，这**两个字段有相同的地址**，但是，**内核线程**没有它自己的**地址空间**而且它的**mm字段总是被设置为 NULL;active\_mm成员被初始化为前一个运行进程的active\_mm值,如果当前内核线程被调度之前运行的也是另外一个内核线程时候，那么其mm和avtive\_mm都是NULL**.
 
@@ -548,11 +534,11 @@ context\_switch( )函数保证：**如果next是一个内核线程**, 它**使�
 
 它主要执行如下操作
 
-- 调用switch\_mm(), 把虚拟内存从一个进程映射切换到新进程中
+- 调用**switch\_mm**(), 把**虚拟内存**从**一个进程**映射切换到**新进程**中
 
-- 调用switch\_to(),从上一个进程的处理器状态切换到新进程的处理器状态。这包括保存、恢复栈信息和寄存器信息
+- 调用**switch\_to**(), 从上一个进程的**处理器状态**切换到新进程的处理器状态。这包括保存、恢复栈信息和寄存器信息
 
-由于不同架构下地址映射的机制有所区别,而寄存器等信息弊病也是依赖于架构的,因此switch\_mm和switch\_to两个函数均是体系结构相关的
+由于不同架构下地址映射的机制有所区别,而寄存器等信息弊病也是依赖于架构的,因此**switch\_mm**和**switch\_to**两个函数均是**体系结构相关**的
 
 ### 2.4.3 switch\_mm切换进程虚拟地址空间
 
@@ -586,7 +572,6 @@ switch\_mm主要完成了进程prev到next虚拟地址空间的映射, 由于**�
 
 在**新进程被选中**时, **底层的进程切换例程**必须将**此前执行的进程**提供给**context\_switch例程**,由于**控制流会回到该函数的中间(！！！**),这无法用普通的函数返回值来做到, 因此提供了**3个参数的宏 **
 
-在新进程被选中执行时,内核恢复到进程被切换出去的点继续执行,此时内核只知道谁之前将新进程抢占了,但是却不知道新进程再次执行是抢占了谁,因此底层的进程切换机制必须将此前执行的进程(即新进程抢占的那个进程)提供给context\_switch.由于控制流会回到函数的该中间,因此无法通过普通函数的返回值来完成.因此使用了一个3个参数
 
 ```c
 /*

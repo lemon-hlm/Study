@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 对象文件格式
     - 1.1 对象文件
     - 1.2 文件格式
@@ -72,7 +74,7 @@
 
 适于**链接**的可重定位文件(relocatable file)，包含**二进制代码和数据**，能**与其他可重定位对象文件**在**编译**时**合并创建出一个可执行文件**。
 
-这是由**汇编器汇编**生成**的 .o 文件**。后面的**链接器(link editor**)拿一个或一些Relocatable object files作为输入，经**链接处理**后，生成一个**可执行的对象文件** (Executable file)或者一个**可被共享(！！！)的对象文件**(Shared object file)。我们可以**使用 ar 工具**将众多的 .o Relocatable object files 归档(archive)**成 .a 静态库文件**。如何产生 Relocatable file，你应该很熟悉了，请参见我们相关的基本概念文章和JulWiki。另外，可以预先告诉大家的是我们的内核可加载**模块 .ko 文件**也是 **Relocatable object file**。
+这是由**汇编器汇编**生成**的 .o 文件**。后面的**链接器(link editor**)拿一个或一些可重定位的对象文件(Relocatable object files)作为输入，经**链接处理**后，生成一个**可执行的对象文件** (Executable file)或者一个**可被共享(！！！)的对象文件**(Shared object file)。我们可以**使用 ar 工具**将众多的 .o Relocatable object files 归档(archive)**成 .a 静态库文件**。如何产生 Relocatable file，你应该很熟悉了，请参见我们相关的基本概念文章和JulWiki。另外，可以预先告诉大家的是我们的内核可加载**模块 .ko 文件**也是 **Relocatable object file**。
 
 - 可执行的对象文件(Executable file)
 
@@ -272,7 +274,7 @@ libtestelf.a:$(SUBS_OBJS)
 
 ELF文件由各个部分组成。
 
-为了方便和高效，ELF文件内容有**两个平行的视角**:一个是**程序连接角度**，另一个是**程序运行角度**
+为了方便和高效，ELF文件内容有**两个平行的视角**: 一个是**程序连接角度**，另一个是**程序运行角度**
 
 ![elf文件的布局和结构](./images/elf_layout.png)
 
@@ -358,7 +360,7 @@ typedef __s64	Elf64_Sxword;
 
 # 4 ELF头部Elfxx\_Ehdr
 
-**elf头部**用**Elfxx\_Ehdr结构**(被定义在[linux/uapi/linux/elf.h](http://lxr.free-electrons.com/source/include/uapi/linux/elf.h?v=4.5#L200)来表示,[Elf32\_Ehdr(32bit)](http://lxr.free-electrons.com/source/include/uapi/linux/elf.h?v=4.5#L203)和[Elf64\_Ehdr(64bit)](http://lxr.free-electrons.com/source/include/uapi/linux/elf.h?v=4.5#L220)
+**elf头部**用**Elfxx\_Ehdr结构**(被定义在linux/uapi/linux/elf.h)来表示, Elf32\_Ehdr(32bit)和 Elf64\_Ehdr(64bit)
 
 ```c
 #define EI_NIDENT	16
@@ -711,9 +713,9 @@ e\_shentsize 给出**每个项目的字节数**。
 
 从这些信息中可以确切地定位节区的具体位置、长度。
 
-从之前的描述中可知，**每一项节区**在节区头部表格中都**存在着一项元素与它对应**，因此可知，这个节区头部表格为一连续的空间，**每一项元素**为一**结构体**
+从之前的描述中可知，**每一项节区**在节区头部表格中都**存在着一项元素与它对应**，因此可知，这个节区头部表格为一段连续的空间，**每一项元素**为一**结构体**
 
-那么这个节区头部由elfxx\_shdr（定义在[include/uapi/linux/elf.h](http://lxr.free-electrons.com/source/include/uapi/linux/elf.h?v=4.5#L8)）,32位elf32\_shdr，64位elf64\_shdr
+那么这个节区头部由elfxx\_shdr（定义在[include/uapi/linux/elf.h]）,32位elf32\_shdr，64位elf64\_shdr
 
 ### 6.1.1 数据结构
 
@@ -865,7 +867,7 @@ readelf -S testelf_dynamic
 readelf -S libtestelf.so
 ```
 
-![dyn的elf程序头表](./images/dyn_program_header_table.png)
+![dyn的elf程序头表](./images/dyn_section_headers.png)
 
 ![config](images/8.png)
 
@@ -910,7 +912,7 @@ shstrab  = (rt_uint8_t *)module_ptr +shdr[elf_module->e_shstrndx].sh_offset;
 
 ## 8.1 数据结构
 
-**符号表**是**由一个个符号元素组成**，用elfxx\_sym来结构来表示,定义在[include/uapi/linux/elf.h](http://lxr.free-electrons.com/source/include/uapi/linux/elf.h#L182),同样32位为elf32\_sym,64位对应elf64\_sym
+**符号表**是**由一个个符号元素组成**，用elfxx\_sym来结构来表示,定义在[include/uapi/linux/elf.h],同样32位为elf32\_sym,64位对应elf64\_sym
 
 ```c
 typedef struct elf32_sym{
