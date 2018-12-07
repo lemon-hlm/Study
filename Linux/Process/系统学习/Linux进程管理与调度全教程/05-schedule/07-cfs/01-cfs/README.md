@@ -116,7 +116,8 @@ CFS完全公平调度器的调度器类叫fair_sched_class, 其定义在[kernel/
  * All the scheduling class methods:
  */
 const struct sched_class fair_sched_class = {
-        .next                   = &idle_sched_class,  /*  下个优先级的调度类, 所有的调度类通过next链接在一个链表中*/
+        /* 下个优先级的调度类, 所有的调度类通过next链接在一个链表中 */
+        .next                   = &idle_sched_class,  
         .enqueue_task           = enqueue_task_fair,
         .dequeue_task           = dequeue_task_fair,
         .yield_task             = yield_task_fair,
@@ -159,21 +160,20 @@ const struct sched_class fair_sched_class = {
 
 | 成员 | 描述 |
 | ------------- |:-------------:|
-| enqueue_task | 向就绪队列中添加一个进程, 某个任务进入可运行状态时，该函数将得到调用。它将调度实体（进程）放入红黑树中，并对 nr_running 变量加 1 |
-| dequeue_task | 将一个进程从就就绪队列中删除, 当某个任务退出可运行状态时调用该函数，它将从红黑树中去掉对应的调度实体，并从 nr_running 变量中减 1 |
-| yield_task | 在进程想要资源放弃对处理器的控制权的时, 可使用在sched_yield系统调用, 会调用内核API yield_task完成此工作. compat_yield sysctl 关闭的情况下，该函数实际上执行先出队后入队；在这种情况下，它将调度实体放在红黑树的最右端 |
-| check_preempt_curr | 该函数将检查当前运行的任务是否被抢占。在实际抢占正在运行的任务之前，CFS 调度程序模块将执行公平性测试。这将驱动唤醒式（wakeup）抢占 |
-| pick_next_task | 该函数选择接下来要运行的最合适的进程 |
-| put_prev_task | 用另一个进程代替当前运行的进程 |
-| set_curr_task | 当任务修改其调度类或修改其任务组时，将调用这个函数 |
-| task_tick | 在每次激活周期调度器时, 由周期性调度器调用, 该函数通常调用自 time tick 函数；它可能引起进程切换。这将驱动运行时（running）抢占 |
-| task_new | 内核调度程序为调度模块提供了管理新任务启动的机会, 用于建立fork系统调用和调度器之间的关联, 每次新进程建立后, 则用new_task通知调度器, CFS 调度模块使用它进行组调度，而用于实时任务的调度模块则不会使用这个函数 |
+| enqueue\_task | 向**就绪队列**中**添加一个进程**,某个任务**进入可运行状态时**，该函数将得到**调用**。它将调度实体（进程）**放入红黑树**中，并对**nr\_running**变量加 1 |
+| dequeue\_task | 将一个进程从**就就绪队列**中**删除**,当某个任务**退出可运行状态**时调用该函数，它将**从红黑树中去掉对应的调度实体**，并从 **nr\_running** 变量中减 1 |
+| yield\_task | 在进程想要资源**放弃对处理器的控制权**的时, 可使用在**sched\_yield系统调用**, 会调用内核API yield\_task完成此工作. **compat\_yield sysctl关闭**的情况下，该函数实际上执行**先出队后入队**；在这种情况下，它将调度实体放在**红黑树的最右端** |
+| check\_preempt\_curr | 该函数将**检查当前运行的任务是否被抢占**。在**实际抢占正在运行的任务之前**，CFS 调度程序模块将**执行公平性测试**。这**将驱动唤醒式（wakeup）抢占** |
+| pick\_next\_task | 该函数**选择**接下来要运行的最合适的进程 |
+| put\_prev\_task | 用另一个进程**代替当前运行的进程** |
+| set\_curr\_task | 当任务**修改其调度类或修改其任务组**时，将调用这个函数 |
+| task\_tick | 在**每次激活周期调度器**时, 由**周期性调度器调用**, 该函数通常调用自 time tick 函数；它**可能引起进程切换**。这将驱动运行时（running）抢占 |
+| task\_new | 内核调度程序为调度模块提供了管理新任务启动的机会,用于建立fork系统调用和调度器之间的关联, 每次**新进程建立**后,则用**new\_task通知调度器**,CFS调度模块使用它进行组调度，而用于**实时任务的调度模块则不会使用**这个函数 |
 
 
 ##2.2	cfs的就绪队列
--------
 
-就绪队列是全局调度器许多操作的起点, 但是进程并不是由就绪队列直接管理的, 调度管理是各个调度器的职责, 因此在各个就绪队列中嵌入了特定调度类的子就绪队列(cfs的顶级调度就队列 [struct cfs_rq](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L359), 实时调度类的就绪队列[struct rt_rq](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L449)和deadline调度类的就绪队列[struct dl_rq](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L490)
+**就绪队列**是**全局调度器**许多**操作的起点**, 但是**进程并不是由就绪队列直接管理**的, **调度管理**是**各个调度器**的职责, 因此在**各个就绪队列**中嵌入了**特定调度类的子就绪队列**(cfs的顶级调度就队列 struct cfs\_rq, 实时调度类的就绪队列struct rt\_rq和deadline调度类的就绪队列struct dl\_rq
 
 ```c
 /* CFS-related fields in a runqueue */
@@ -278,15 +278,14 @@ struct cfs_rq {
 };
 ```
 
-
 | 成员 | 描述 |
 | ------------- |:-------------:|
-| nr_running | 队列上可运行进程的数目
-| load | 就绪队列上可运行进程的累计负荷权重 |
-| min_vruntime | 跟踪记录队列上所有进程的最小虚拟运行时间. 这个值是实现与就绪队列相关的虚拟时钟的基础 |
-| tasks_timeline | 用于在按时间排序的红黑树中管理所有进程 |
-| rb_leftmost | 总是设置为指向红黑树最左边的节点, 即需要被调度的进程. 该值其实可以可以通过病例红黑树获得, 但是将这个值存储下来可以减少搜索红黑树花费的平均时间 |
-| curr | 当前正在运行的sched_entity（对于组虽然它不会在cpu上运行，但是当它的下层有一个task在cpu上运行，那么它所在的cfs_rq就把它当做是该cfs_rq上当前正在运行的sched_entity |
+| nr\_running | 队列上**可运行进程的数目**
+| load | **就绪队列**上可运行进程的**累计负荷权重** |
+| min\_vruntime | 跟踪记录队列上所有进程的**最小虚拟运行时间**. 这个值是实现与就绪队列相关的虚拟时钟的基础 |
+| tasks\_timeline | 用于在**按时间排序**的**红黑树**中管理所有进程 |
+| rb\_leftmost | 总是设置为指向红黑树最左边的节点, 即需要被调度的进程. 该值其实可以可以通过病例红黑树获得, 但是将这个值存储下来可以减少搜索红黑树花费的平均时间 |
+| curr | 当前正在运行的sched\_entity（对于组虽然它不会在cpu上运行，但是当它的下层有一个task在cpu上运行，那么它所在的cfs\_rq就把它当做是该cfs\_rq上当前正在运行的sched\_entity |
 | next | 表示有些进程急需运行，即使不遵从CFS调度也必须运行它，调度时会检查是否next需要调度，有就调度next |
 | skip | 略过进程(不会选择skip指定的进程调度) |
 

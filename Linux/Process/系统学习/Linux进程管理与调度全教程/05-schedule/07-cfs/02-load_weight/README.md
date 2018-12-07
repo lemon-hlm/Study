@@ -520,10 +520,10 @@ static inline void update_load_set(struct load_weight *lw, unsigned long w)
 
 
 | 函数 | 描述 | 调用时机 | 定义位置 | 调用位置 |
-| ------------- |:-------------:|:-------------:|
-| update_load_add | 使得lw指向的负荷权重的值增加inc | 用于进程进入就绪队列时调用 | [kernel/sched/fair.c, L117](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L117) | [account_entity_enqueue两处](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L2420), [sched_slice](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L640) |
-| update_load_sub | 使得lw指向的负荷权重的值减少inc | 用于进程调出就绪队列时调用 |  [update_load_sub, L123](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L123) | [account_entity_dequeue两处](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L2437) |
-| update_load_set |
+| ---- |:-----|:----|:----|:----|
+| update\_load\_add | 使得lw指向的负荷权重的值增加inc | 用于进程进入就绪队列时调用 | [kernel/sched/fair.c, L117](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L117) | [account\_entity\_enqueue两处](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L2420), [sched\_slice](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L640) |
+| update\_load\_sub | 使得lw指向的负荷权重的值减少inc | 用于进程调出就绪队列时调用 |  [update\_load\_sub, L123](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L123) | [account\_entity\_dequeue两处](http://lxr.free-electrons.com/source/kernel/sched/fair.c?v=4.6#L2437) |
+| update\_load\_set |
 
 
 >其中sched_slice函数计算当前进程在调度延迟内期望的运行时间, 它根据cfs就绪队列中进程数确定一个最长时间间隔，然后看在该时间间隔内当前进程按照权重比例执行

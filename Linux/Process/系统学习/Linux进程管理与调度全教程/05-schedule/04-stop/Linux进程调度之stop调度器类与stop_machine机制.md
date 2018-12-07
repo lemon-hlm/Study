@@ -1,3 +1,5 @@
+[TOC]
+
 - 1 stop调度器类stop\_sched\_class
 - 2 stop\_machine机制
     - 2.1 cpu\_stop\_work

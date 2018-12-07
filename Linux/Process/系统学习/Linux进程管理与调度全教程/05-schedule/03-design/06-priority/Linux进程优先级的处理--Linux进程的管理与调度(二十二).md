@@ -279,7 +279,7 @@ struct task_struct
 
 但是这些**优先级是如何关联的呢**, **动态优先级prio又是如何计算**的呢?
 
-## 3.1 normal\_prio设置普通优先级normal\_prio
+## 3.1 normal\_prio()设置普通优先级normal\_prio
 
 **静态优先级static\_prio(普通进程**)和**实时优先级rt_priority(实时进程**)是**计算的起点(！！！**)
 
@@ -321,16 +321,16 @@ static inline int normal_prio(struct task_struct *p)
 | 进程类型  | 调度器 | **普通优先级normal\_prio** |
 | ---------- |:---------|:-------------|
 | **EDF实时进程** | **EDF** |  MAX\_DL_PRIO \- 1 = \-1 |
-| **普通实时进程** | **RT** | MAX\_RT\_PRIO \- 1 \- p\->rt\_priority = 99 \- rt\_priority |
+| **实时进程** | **RT** | MAX\_RT\_PRIO \- 1 \- p\->rt\_priority = 99 \- rt\_priority |
 | **普通进程** | **CFS** | \_\_normal\_prio(p) = static\_prio |
 
 普通优先级normal\_prio需要根据普通进程和实时进程进行不同的计算, 其中\_\_normal\_prio适用于普通进程,直接将普通优先级normal\_prio设置为静态优先级static\_prio.而实时进程的普通优先级计算依据其实时优先级rt\_priority.
 
 ### 3.1.1 辅助函数task\_has\_dl\_policy和task\_has\_rt\_policy
 
-定义在[kernel/sched/sched.h#L117](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L117) 中
+定义在[kernel/sched/sched.h](http://lxr.free-electrons.com/source/kernel/sched/sched.h?v=4.6#L117) 中
 
-其本质其实就是传入**task->policy调度策略字段**看其值**等于SCHED\_NORMAL**, **SCHED\_BATCH, SCHED\_IDLE, SCHED\_FIFO, SCHED\_RR, SCHED\_DEADLINE中的哪个**,从而**确定其所属的调度类**,进一步就**确定了其进程类型**
+其本质其实就是传入**task\-\>policy调度策略字段**看其值**等于SCHED\_NORMAL**, **SCHED\_BATCH, SCHED\_IDLE, SCHED\_FIFO, SCHED\_RR, SCHED\_DEADLINE中的哪个**, 从而**确定其所属的调度类**, 进一步就**确定了其进程类型**
 
 ```c
 static inline int idle_policy(int policy)
@@ -370,7 +370,7 @@ static inline int task_has_dl_policy(struct task_struct *p)
 
 ### 3.1.2 关于rt\_priority数值越大, 实时进程优先级越高的问题
 
-我们前面提到了**数值越小**,**优先级越高**,但是此处我们会发现**rt\_priority的值越大**,其**普通优先级越小**,从而**优先级越高**.
+我们前面提到了**数值越小**,**优先级越高**, 但是此处我们会发现**rt\_priority的值越大**,其**普通优先级越小**,从而**优先级越高**.
 
 因此网上出现了一种说法, 优先级越高？这又是怎么回事？难道有一种说法错了吗？
 
@@ -392,7 +392,7 @@ static inline int task_has_dl_policy(struct task_struct *p)
 
 ## 3.2 effective\_prio设置动态优先级prio
 
-可以通过**函数effective\_prio**用**静态优先级static\_prio**计算**动态优先级prio**, 即·
+可以通过**函数effective\_prio**()用**静态优先级static\_prio**计算**动态优先级prio**, 即·
 
 ```c
 p->prio = effective_prio(p);
@@ -422,7 +422,7 @@ static int effective_prio(struct task_struct *p)
 }
 ```
 
-我们会发现函数首先**effective\_prio设置了普通优先级**,显然我们用effective\_prio同时设置了**两个优先级**(**普通优先级normal\_prio**和**动态优先级prio**)
+我们会发现函数首先**effective\_prio设置了普通优先级**, 显然我们用effective\_prio同时设置了**两个优先级**(**普通优先级normal\_prio**和**动态优先级prio**)
 
 因此计算**动态优先级的流程**如下
 
@@ -441,7 +441,7 @@ static int effective_prio(struct task_struct *p)
 
 ### 3.2.1 为什么effective\_prio使用优先级数值检测实时进程
 
-**rt\_prio**会检测**普通优先级是否在实时范围内**,即是否小于MAX\_RT\_PRIO.参见[include/linux/sched/rt.h#L6](http://lxr.free-electrons.com/source/include/linux/sched/rt.h#L6)
+**rt\_prio**()会检测**普通优先级是否在实时范围内**,即是否小于MAX\_RT\_PRIO.参见[include/linux/sched/rt.h#L6](http://lxr.free-electrons.com/source/include/linux/sched/rt.h#L6)
 
 ```c
 static inline int rt_prio(int prio)
@@ -452,7 +452,7 @@ static inline int rt_prio(int prio)
 }
 ```
 
-而前面我们在normal\_prio的时候,则通过task\_has\_rt\_policy来判断其policy属性来确定
+而前面我们在normal\_prio的时候, 则通过task\_has\_rt\_policy来判断其policy属性来确定
 
 ```
 policy == SCHED_FIFO || policy == SCHED_RR;
@@ -553,7 +553,7 @@ task\_struct采用了**四个成员**表示**进程的优先级**:prio和normal\
 
 调度器会考虑的优先级则保存在prio.由于在某些情况下内核需要暂时提高进程的优先级, 因此需要用prio表示.由于这些改变不是持久的,因此静态优先级static\_prio和普通优先级normal\_prio不受影响.此外还用了一个字段rt\_priority保存了实时进程的优先级静态优先级static\_prio(普通进程)和实时优先级rt\_priority(实时进程)是计算的起点, 通过他们计算进程的普通优先级normal\_prio和动态优先级prio.
 
-- 内核通过**normal\_prIo函数**计算**普通优先级normal\_prio**
+- 内核通过**normal\_prio函数**计算**普通优先级normal\_prio**
 - 通过**effective\_prio函数**计算**动态优先级prio**
 
 # 5 参考

@@ -2038,8 +2038,8 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 		p->sched_class = &fair_sched_class;
 	}
 
-	//  ……
-
+	if (p->sched_class->task_fork)
+		p->sched_class->task_fork(p);
 	//  为子进程分配 CPU
 	set_task_cpu(p, cpu);
 
@@ -2048,9 +2048,9 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 }
 ```
 
-我们可以看到sched\_fork大致完成了两项重要工作，
+我们可以看到sched\_fork大致完成了两项重要工作，后续会详细说明
 
-- 一是将子进程状态设置为TASK\_RUNNING, 并设置调度相关字段
+- 一是将子进程状态设置为TASK\_RUNNING, 并设置**调度相关字段**
 
 - 二是**为其分配CPU**
 
@@ -3933,7 +3933,7 @@ linux内核实现的**6种调度策略**,前面**三种策略**使用的是**cfs
 | fair\_sched\_clas  | 采用**CFS算法调度普通的非实时进程** | SCHED\_NORMAL, SCHED\_BATCH |
 | idle\_sched\_class | 采用**CFS算法调度idle进程**,每个cup的第一个pid=0线程：swapper，是一个静态线程。调度类属于：idel\_sched\_class，所以在**ps里面是看不到**的。一般运行在开机过程和cpu异常的时候做dump | SCHED\_IDLE |
 
-其所属进程的优先级顺序为
+这**5种调度类**通过**next指针**串联在一起, 其所属进程的优先级顺序为
 
 ```c
 stop_sched_class -> dl_sched_class -> rt_sched_class -> fair_sched_class -> idle_sched_class
@@ -3952,6 +3952,10 @@ linux中针对当前**可调度的实时和非实时进程**, 定义了类型为
 | sched\_dl\_entity | **DEADLINE调度实体** | 采用**EDF算法**调度的**实时调度实体** | dl\_sched\_class |
 | sched\_rt\_entity |  **RT调度实体** | 采用**Roound-Robin或者FIFO算法**调度的**实时调度实体** | rt\_sched\_class |
 | sched\_entity | **CFS调度实体** | 采用**CFS**算法调度的**普通非实时进程的调度实体** | fair\_sched\_class |
+
+内核中调度器相关数据结构的关系如图所示，看起来很复杂，其实它们是有关联的。
+
+![config](images/40.png)
 
 ## 25.5 调度器类的就绪队列
 
@@ -4123,86 +4127,6 @@ cpus\_allows是一个位域, 在多处理器系统上使用, 用来限制进程�
 
 **sched\_class结构体表示调度类**, 类提供了**通用调度器和各个调度器之间的关联**, 调度器类和特定数据结构中汇集地几个函数指针表示, **全局调度器**请求的**各个操作**都可以用一个指针表示, 这使得**无需了解调度器类的内部工作原理**即可**创建通用调度器**, 定义在[kernel/sched/sched.h]
 
-```c
-[kernel/sched/sched.h]
-struct sched_class {
-	/*	系统中多个调度类, 按照其调度的优先级排成一个链表
-    下一优先级的调度类
-     * 调度类优先级顺序: stop_sched_class -> dl_sched_class -> rt_sched_class -> fair_sched_class -> idle_sched_class
-     */
-    const struct sched_class *next;
-	
-    /*  将进程加入到运行队列中，即将调度实体（进程）放入红黑树中，并对 nr_running 变量加1   */
-    void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
-    /*  从运行队列中删除进程，并对 nr_running 变量中减1  */
-    void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
-    /*  放弃CPU，在 compat_yield sysctl 关闭的情况下，该函数实际上执行先出队后入队；在这种情况下，它将调度实体放在红黑树的最右端  */
-    void (*yield_task) (struct rq *rq);
-    bool (*yield_to_task) (struct rq *rq, struct task_struct *p, bool preempt);
-	/*   检查当前进程是否可被新进程抢占 */
-    void (*check_preempt_curr) (struct rq *rq, struct task_struct *p, int flags);
-
-     /*  选择下一个应该要运行的进程运行  */
-    struct task_struct * (*pick_next_task) (struct rq *rq,
-                        struct task_struct *prev);
-	/* 将进程放回运行队列 */
-    void (*put_prev_task) (struct rq *rq, struct task_struct *p);
-
-#ifdef CONFIG_SMP
-	/* 为进程选择一个合适的CPU */
-    int  (*select_task_rq)(struct task_struct *p, int task_cpu, int sd_flag, int flags);
-	/* 迁移任务到另一个CPU */
-	void (*migrate_task_rq)(struct task_struct *p);
-	/* 用于进程唤醒 */
-    void (*task_waking) (struct task_struct *task);
-    void (*task_woken) (struct rq *this_rq, struct task_struct *task);
-	/* 修改进程的CPU亲和力(affinity) */
-    void (*set_cpus_allowed)(struct task_struct *p,
-                 const struct cpumask *newmask);
-	/* 启动运行队列 */
-    void (*rq_online)(struct rq *rq);
-     /* 禁止运行队列 */
-    void (*rq_offline)(struct rq *rq);
-#endif
-	/* 当进程改变它的调度类或进程组时被调用 */
-    void (*set_curr_task) (struct rq *rq);
-	/* 该函数通常调用自 time tick 函数；它可能引起进程切换。这将驱动运行时（running）抢占 */
-    void (*task_tick) (struct rq *rq, struct task_struct *p, int queued);
-	/* 在进程创建时调用，不同调度策略的进程初始化不一样 */
-    void (*task_fork) (struct task_struct *p);
-	/* 在进程退出时会使用 */
-    void (*task_dead) (struct task_struct *p);
-
-	/* 用于进程切换 */
-    void (*switched_from) (struct rq *this_rq, struct task_struct *task);
-    void (*switched_to) (struct rq *this_rq, struct task_struct *task);
-	/* 改变优先级 */
-    void (*prio_changed) (struct rq *this_rq, struct task_struct *task,
-                 int oldprio);
-
-    unsigned int (*get_rr_interval) (struct rq *rq,
-                     struct task_struct *task);
-
-    void (*update_curr) (struct rq *rq);
-
-#ifdef CONFIG_FAIR_GROUP_SCHED
-    void (*task_move_group) (struct task_struct *p);
-#endif
-};
-```
-
-| 成员 | 描述 |
-| ------------- |:-------------:|
-| enqueue\_task | 向**就绪队列**中**添加一个进程**,某个任务**进入可运行状态时**，该函数将得到**调用**。它将调度实体（进程）**放入红黑树**中，并对**nr\_running**变量加 1 |
-| dequeue\_task | 将一个进程从**就就绪队列**中**删除**,当某个任务**退出可运行状态**时调用该函数，它将**从红黑树中去掉对应的调度实体**，并从 **nr\_running** 变量中减 1 |
-| yield\_task | 在进程想要资源**放弃对处理器的控制权**的时, 可使用在**sched\_yield系统调用**, 会调用内核API yield\_task完成此工作. **compat\_yield sysctl关闭**的情况下，该函数实际上执行**先出队后入队**；在这种情况下，它将调度实体放在**红黑树的最右端** |
-| check\_preempt\_curr | 该函数将**检查当前运行的任务是否被抢占**。在**实际抢占正在运行的任务之前**，CFS 调度程序模块将**执行公平性测试**。这**将驱动唤醒式（wakeup）抢占** |
-| pick\_next\_task | 该函数**选择**接下来要运行的最合适的进程 |
-| put\_prev\_task | 用另一个进程**代替当前运行的进程** |
-| set\_curr\_task | 当任务**修改其调度类或修改其任务组**时，将调用这个函数 |
-| task\_tick | 在**每次激活周期调度器**时, 由**周期性调度器调用**, 该函数通常调用自 time tick 函数；它**可能引起进程切换**。这将驱动运行时（running）抢占 |
-| task\_new | 内核调度程序为调度模块提供了管理新任务启动的机会,用于建立fork系统调用和调度器之间的关联, 每次**新进程建立**后,则用**new\_task通知调度器**,CFS调度模块使用它进行组调度，而用于**实时任务的调度模块则不会使用**这个函数 |
-
 对于各个调度器类, 都必须提供struct sched\_class的一个实例, 目前内核中有实现以下五种:
 
 ```c
@@ -4359,6 +4283,17 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 };
 ```
+
+| 成员 | 描述 |
+| ------------- |:-------------:|
+| nr\_running | 队列上**可运行进程的数目**
+| load | **就绪队列**上可运行进程的**累计负荷权重** |
+| min\_vruntime | 跟踪记录队列上所有进程的**最小虚拟运行时间**. 这个值是实现与就绪队列相关的虚拟时钟的基础 |
+| tasks\_timeline | 用于在**按时间排序**的**红黑树**中管理所有进程 |
+| rb\_leftmost | 总是设置为指向红黑树最左边的节点, 即需要被调度的进程. 该值其实可以可以通过病例红黑树获得, 但是将这个值存储下来可以减少搜索红黑树花费的平均时间 |
+| curr | 当前正在运行的sched\_entity（对于组虽然它不会在cpu上运行，但是当它的下层有一个task在cpu上运行，那么它所在的cfs\_rq就把它当做是该cfs\_rq上当前正在运行的sched\_entity |
+| next | 表示有些进程急需运行，即使不遵从CFS调度也必须运行它，调度时会检查是否next需要调度，有就调度next |
+| skip | 略过进程(不会选择skip指定的进程调度) |
 
 ### 26.3.3 实时进程就绪队列rt\_rq
 
@@ -5339,3 +5274,1246 @@ linux内核通过在thread\_info结构中添加了一个**自旋锁标识preempt
 
 而内核抢占时, 通过调用\_\_schedule(true)传入的preempt=true来通知内核, 这是一个内核抢占
 
+# 32 Linux优先级
+
+在**用户空间**通过**nice命令**设置进程的**静态优先级**,这在内部会调用**nice系统调用**,进程的**nice值在\-20\~\+19之间(用户空间！！！**。）.值越低优先级越高.
+
+**setpriority系统调**用也可以用来**设置进程的优先级**.它不仅能够**修改单个线程的优先级**, 还能**修改进程组中所有进程的优先级**,或者通过**制定UID来修改特定用户的所有进程的优先级(特定用户！！！**)
+
+**内核**使用一些简单的数值范围**0\~139表示内部优先级（内核里面使用！！！**), 数值越低, 优先级越高。
+
+- **0\~99**的范围专供**实时进程**使用
+
+- nice的值[**\-20,19**]则映射到范围**100\~139**, 用于**普通进程！！！**
+
+>linux2.6内核将任务优先级进行了一个划分, **实时进程**优先级范围是0到MAX\_RT\_PRIO\-1（即99），而**普通进程的静态优先级**范围是从MAX\_RT\_PRIO到MAX\_PRIO-1（即100到139）.
+
+内核里面**priority的范围**:
+
+| 优先级范围 | 内核宏 | 描述 |
+| -----------| ------ |:-----|
+| 0 —— 99 | 0 —— (MAX\_RT\_PRIO \- 1) | 实时进程 |
+| 100 —— 139 | MAX\_RT\_PRIO —— (MAX\_PRIO \- 1) | 非实时进程 |
+
+![内核的优先级标度](./images/37.jpg)
+
+## 32.1 内核的优先级表示
+
+内核表示优先级的所有信息基本都放在[include/linux/sched/prio.h], 其中定义了一些表示**优先级的宏和函数**.
+
+优先级数值通过宏来定义, 如下所示,
+
+其中MAX\_NICE和MIN\_NICE定义了**nice的最大最小值**
+
+而MAX\_RT\_PRIO指定了实时进程的最大优先级, 而MAX\_PRIO则是普通进程的最大优先级数值
+
+```c
+[include/linux/sched/prio.h]
+#define MAX_NICE        19
+#define MIN_NICE        -20
+#define NICE_WIDTH      (MAX_NICE - MIN_NICE + 1)
+
+[include/linux/sched/prio.h]
+#define MAX_USER_RT_PRIO	100
+#define MAX_RT_PRIO		MAX_USER_RT_PRIO
+#define MAX_PRIO        (MAX_RT_PRIO + 40)
+#define DEFAULT_PRIO        (MAX_RT_PRIO + 20)
+```
+
+| 宏 | 值 | 描述 |
+| --------- |:-------|:---------|
+| MIN\_NICE | \-20 | 对应于**优先级100**,可以使用NICE\_TO\_PRIO和PRIO\_TO\_NICE转换 |
+| MAX\_NICE |  19 | 对应于优先级139,可以使用NICE\_TO\_PRIO和PRIO\_TO\_NICE转换 |
+| NICE\_WIDTH | 40 | nice值得范围宽度, 即[\-20, 19]共40个数字的宽度 |
+| MAX\_RT\_PRIO, MAX\_USER\_RT\_PRIO | 100 | **实时进程的最大优先级** |
+| MAX\_PRIO | 140 | **普通进程的最大优先级** |
+| DEFAULT\_PRIO | **120** | **进程的默认优先级**, 对应于nice=0 |
+| MAX\_DL\_PRIO | **0** | 使用**EDF最早截止时间优先**调度算法的**实时进程最大的优先级** |
+
+而内核提供了一组宏将优先级在各种不同的表示形之间转移
+
+```c
+[include/linux/sched/prio.h]
+#define NICE_TO_PRIO(nice)      ((nice) + DEFAULT_PRIO)
+#define PRIO_TO_NICE(prio)      ((prio) - DEFAULT_PRIO)
+
+#define USER_PRIO(p)            ((p)-MAX_RT_PRIO)
+#define TASK_USER_PRIO(p)       USER_PRIO((p)->static_prio)
+#define MAX_USER_PRIO           (USER_PRIO(MAX_PRIO))
+```
+
+还有一些**nice值和rlimit值之间相互转换**的函数nice\_to\_rlimit和rlimit\_to\_nice, 这在nice系统调用进行检查的时候很有用
+
+```c
+static inline long nice_to_rlimit(long nice)
+{
+    return (MAX_NICE - nice + 1);
+}
+
+static inline long rlimit_to_nice(long prio)
+{
+    return (MAX_NICE - prio + 1);
+}
+```
+
+## 32.2 DEF最早截至时间优先实时调度算法的优先级描述
+
+**EDF实时调度算法**, 它的**优先级**比**RT进程**和**NORMAL/BATCH进程的优先级**都要**高**, 关于**EDF的优先级的设置信息都在内核头文件**[include/linux/sched/deadline.h]
+
+因此内核将MAX\_DL\_PRIO设置为0
+
+```c
+#define  MAX_DL_PRIO  0
+```
+
+## 32.3 进程优先级的计算
+
+前面说了task\_struct中的几个优先级的字段
+
+| 静态优先级 | 普通优先级 | 动态优先级 | 实时优先级 |
+| ------- |:----------|:----------|:-----------|
+| static\_prio | normal\_prio | prio | rt\_priority |
+
+但是这些**优先级是如何关联的呢**, **动态优先级prio又是如何计算**的呢?
+
+### 32.3.1 normal\_prio()设置普通优先级normal\_prio
+
+**静态优先级static\_prio(普通进程**)和**实时优先级rt_priority(实时进程**)是**计算的起点(！！！**)
+
+因此他们也是进程创建的时候设定好的, 我们通过**nice修改**的就是**普通进程的静态优先级static\_prio(！！！**。）
+
+首先通过**静态优先级static\_prio**计算出**普通优先级normal\_prio**, 该工作可以由**normal\_prio**()来完成, 该函数定义在 [kernel/sched/core.c]
+
+```c
+/*
+ * 普通进程(非实时进程)的普通优先级normal_prio就是静态优先级static_prio
+ */
+static inline int __normal_prio(struct task_struct *p)
+{
+    return p->static_prio;
+}
+
+static inline int normal_prio(struct task_struct *p)
+{
+    int prio;
+
+    if (task_has_dl_policy(p))		/* EDF调度的实时进程 */
+            prio = MAX_DL_PRIO-1;
+    else if (task_has_rt_policy(p))	/* 普通实时进程的优先级 */
+            prio = MAX_RT_PRIO-1 - p->rt_priority;
+    else							/* 普通进程的优先级 */
+            prio = __normal_prio(p);
+    return prio;
+}
+```
+
+| 进程类型  | 调度器 | **普通优先级normal\_prio** |
+| ---------- |:---------|:-------------|
+| **EDF实时进程** | **EDF** |  MAX\_DL_PRIO \- 1 = \-1 |
+| **实时进程** | **RT** | MAX\_RT\_PRIO \- 1 \- p\->rt\_priority = 99 \- rt\_priority |
+| **普通进程** | **CFS** | \_\_normal\_prio(p) = static\_prio |
+
+#### 32.3.1.1 辅助函数task\_has\_dl\_policy和task\_has\_rt\_policy
+
+其本质其实就是传入**task\-\>policy调度策略字段**看其值**等于SCHED\_NORMAL**, **SCHED\_BATCH, SCHED\_IDLE, SCHED\_FIFO, SCHED\_RR, SCHED\_DEADLINE中的哪个**, 从而**确定其所属的调度类**, 进一步就**确定了其进程类型**
+
+```c
+[kernel/sched/sched.h]
+static inline int idle_policy(int policy)
+{
+    return policy == SCHED_IDLE;
+}
+static inline int fair_policy(int policy)
+{
+    return policy == SCHED_NORMAL || policy == SCHED_BATCH;
+}
+
+static inline int rt_policy(int policy)
+{
+    return policy == SCHED_FIFO || policy == SCHED_RR;
+}
+
+static inline int dl_policy(int policy)
+{
+        return policy == SCHED_DEADLINE;
+}
+static inline bool valid_policy(int policy)
+{
+        return idle_policy(policy) || fair_policy(policy) ||
+                rt_policy(policy) || dl_policy(policy);
+}
+
+static inline int task_has_rt_policy(struct task_struct *p)
+{
+        return rt_policy(p->policy);
+}
+
+static inline int task_has_dl_policy(struct task_struct *p)
+{
+        return dl_policy(p->policy);
+}
+```
+
+#### 32.3.1.2 关于rt\_priority数值越大, 实时进程优先级越高的问题
+
+前面提到了**数值越小**,**优先级越高**, 但是此处我们会发现**rt\_priority的值越大**,其**普通优先级越小**,从而**优先级越高**.
+
+对于一个**实时进程(！！！**)，他有**两个参数来表明优先级(！！！**)——**prio** 和 **rt\_priority**，
+
+**prio才是调度所用的最终优先级数值(！！！**)，这个**值越小**，**优先级越高**；
+
+而**rt\_priority**被称作**实时进程优先级**，prio要经过转化——**prio=MAX\_RT\_PRIO \- 1 \- p\->rt\_priority** = 99 \- p\->rt\_priority; 
+
+**MAX\_RT\_PRIO = 100**;这样意味着**rt\_priority值越大，优先级越高**；
+
+而**内核提供的修改优先级的函数**，是**修改rt\_priority的值**，所以**越大**，优先级**越高**。
+
+所以**用户在使用实时进程或线程**，在修改优先级时，就会有“**优先级值越大，优先级越高的说法**”，也是对的。
+
+#### 32.3.1.3 为什么需要\_\_normal\_prio函数
+
+历史原因
+
+### 32.3.2 effective\_prio()设置动态优先级prio
+
+可以通过**函数effective\_prio**()用**静态优先级static\_prio**计算**动态优先级prio**, 即·
+
+```c
+p->prio = effective_prio(p);
+```
+
+```c
+[kernel/sched/core.c]
+static int effective_prio(struct task_struct *p)
+{
+    p->normal_prio = normal_prio(p);
+
+    if (!rt_prio(p->prio))
+            return p->normal_prio;
+    return p->prio;
+}
+```
+
+- 设置进程的**普通优先级(实时进程99 \- rt\_priority, 普通进程为static\_priority**)
+
+- 计算进程的**动态优先级**(**实时进程**则维持**动态优先级的prio不变**, **普通进程**的**动态优先级即为其普通优先级**)
+
+| 进程类型  | 实时优先级rt\_priority | 静态优先级static\_prio | 普通优先级normal\_prio | 动态优先级prio |
+| ------- |:-------:|:-------:|:-------:|:-------:|
+| EDF调度的实时进程 | rt\_priority | 不使用 | MAX\_DL\_PRIO\-1 | 维持原prio不变 |
+| RT算法调度的实时进程 | rt\_priority | 不使用 | MAX\_RT\_PRIO\-1\-rt\_priority | 维持原prio不变 |
+| 普通进程 | 不使用 | static\_prio | static\_prio | static\_prio |
+| **优先级提高的普通进程** | 不使用 | static\_prio(改变) | static\_prio | 维持原prio不变 |
+
+#### 32.3.2.1 使用优先级数值检测实时进程rt\_prio()
+
+**rt\_prio**()会检测**普通优先级是否在实时范围内**,即是否小于MAX\_RT\_PRIO.
+
+```c
+static inline int rt_prio(int prio)
+{
+	if (unlikely(prio < MAX_RT_PRIO))
+    	return 1;
+	return 0;
+}
+```
+
+### 32.3.3 设置prio的时机
+
+- 在**新进程**用**wake\_up\_new\_task唤醒**时, 或者使用**nice系统调用**改变其**静态优先级**时, 则会**通过effective\_prio的方法设置p\->prio**
+
+>wake\_up\_new\_task(),计算此进程的优先级和其他调度参数，将新的进程加入到进程调度队列并设此进程为可被调度的，以后这个进程可以被进程调度模块调度执行。
+
+- 进程创建时**copy\_process**()通过调用**sched\_fork**()来初始化和设置调度器的过程中会设置**子进程的优先级**
+
+#### 32.3.3.1 nice系统调用的实现
+
+**nice系统调用**是的内核实现是**sys\_nice**(), 通过一系列检测后, 通过set\_user\_nice()函数
+
+#### 32.3.3.2 fork时优先级的继承
+
+在进程分叉处子进程时, **子进程**的**静态优先级继承自父进程**. 
+
+子进程的**动态优先级p\->prio**则被设置为**父进程的普通优先级(！！！**), 这确保了**实时互斥量(RT-Mutex)**引起的**优先级提高不会传递到子进程**.
+
+```c
+int sched_fork(unsigned long clone_flags, struct task_struct *p)
+{
+	/*	......	*/
+    /*
+     * Make sure we do not leak PI boosting priority to the child.
+     * 子进程的动态优先级被设置为父进程普通优先级 
+     */
+    p->prio = current->normal_prio;
+
+    /*
+     * sched_reset_on_fork标识用于判断是否恢复默认的优先级或调度策略
+     */
+    if (unlikely(p->sched_reset_on_fork))  /*  如果要恢复默认的调度策略, 即SCHED_NORMAL  */
+    {
+    	/*   首先是设置静态优先级static_prio
+         *	 由于要恢复默认的调度策略
+         *	 对于父进程是实时进程的情况, 静态优先级就设置为DEFAULT_PRIO
+         *
+         *	 对于父进程是非实时进程的情况, 要保证子进程优先级不小于DEFAULT_PRIO
+         *	 父进程nice < 0即static_prio < 的重新设置为DEFAULT_PRIO的重新设置为DEFAULT_PRIO
+         *	 父进程nice > 0的时候, 则什么也没做
+         *	 */
+        if (task_has_dl_policy(p) || task_has_rt_policy(p))
+        {
+            p->policy = SCHED_NORMAL;			/*  普通进程调度策略  */
+            p->static_prio = NICE_TO_PRIO(0);	/*  静态优先级为nice = 0 即DEFAULT_PRIO*/
+            p->rt_priority = 0;								/*  实时优先级为0  */
+        }
+        else if (PRIO_TO_NICE(p->static_prio) < 0)  /*  */
+            p->static_prio = NICE_TO_PRIO(0);	/*  */
+
+        /*  接着就通过__normal_prio设置其普通优先级和动态优先级
+          *  这里做了一个优化, 因为用sched_reset_on_fork标识设置恢复默认调度策略后
+          *  创建的子进程是是SCHED_NORMAL的非实时进程
+          *  因此就不需要绕一大圈用effective_prio设置normal_prio和prio了 
+          *  直接用__normal_prio设置就可  */
+        p->prio = p->normal_prio = __normal_prio(p); /*  设置*/
+
+        /*  设置负荷权重  */
+        set_load_weight(p);
+
+        /*
+         * We don't need the reset flag anymore after the fork. It has
+         * fulfilled its duty:
+         */
+        p->sched_reset_on_fork = 0;
+    }
+	/*	......	*/
+}
+```
+
+# 33 Linux睡眠唤醒抢占
+
+**每个调度器类**都应该实现一个**check\_preempt\_curr函数**, 在**全局check\_preempt\_curr**中会调用**进程其所属调度器类**check\_preempt\_curr进行**抢占检查**, 对于**完全公平调度器CFS**处理的进程,则对应由**check\_preempt\_wakeup函数**执行该策略.
+
+**新唤醒的进程**不必一定由**完全公平调度器**处理, 如果新进程是一个**实时进程**, 则会**立即请求调度**, 因为实时进程优先极高,实时进程总会抢占CFS进程.
+
+## 33.1 Linux进程的睡眠
+
+在Linux中，仅**等待CPU时间的进程**称为**就绪进程**，它们被放置在一个**运行队列**中，一个就绪进程的状态标志位为**TASK\_RUNNING**.一旦一个运行中的进程**时间片用完**,Linux内核的调度器会**剥夺这个进程对CPU的控制权**,并且从运行队列中**选择一个合适的进程**投入运行.
+
+当然，**一个进程**也可以**主动释放CPU的控制权**.函数**schedule**()是一个调度函数, 它可以**被一个进程主动调用**,从而调度其它进程占用CPU.一旦这个主动放弃CPU的进程被重新调度占用CPU,那么它将**从上次停止执行的位置开始执行**,也就是说它将从**调用schedule()的下一行代码处开始执行(！！！**).
+
+在现代的Linux操作系统中,进程一般都是用**调用schedule**()的方法**进入睡眠状态**的, 下面的代码演示了如何让**正在运行的进程进入睡眠状态**。
+
+```c
+sleeping_task = current;
+set_current_state(TASK_INTERRUPTIBLE);
+schedule();
+func1();
+```
+
+在第一个语句中, 程序存储了一份进程结构指针sleeping\_task, current 是一个宏，它指向正在执行的进程结构。set\_current\_state()将该进程的状态从执行状态TASK\_RUNNING变成睡眠状态TASK\_INTERRUPTIBLE.
+
+- 如果schedule是被一个状态为TASK\_RUNNING的进程调度，那么schedule将调度另外一个进程占用CPU;
+
+- 如果**schedule**是被一个状态为**TASK\_INTERRUPTIBLE或TASK\_UNINTERRUPTIBLE的进程调度**，那么还有一个**附加的步骤(！！！**)将被执行：**当前执行的进程**在另外一个进程被调度之前会被**从运行队列中移出(！！！**)，这将导致**正在运行的那个进程进入睡眠**，因为它已经不在运行队列中了.
+
+## 33.2 Linux进程的唤醒
+
+当在**try\_to\_wake\_up**/**wake\_up\_process**和**wake\_up\_new\_task**中唤醒进程时, 内核使用**全局check\_preempt\_curr**看看是否进程**可以抢占**当前进程可以抢占当前运行的进程. 请注意**该过程不涉及核心调度器(！！！**).
+
+### 33.2.1 wake\_up\_process()
+
+使用**wake\_up\_process**将刚才那个**进入睡眠的进程唤醒**,该函数定义在[kernel/sched/core.c]
+
+```c
+int wake_up_process(struct task_struct *p)
+{
+	return try_to_wake_up(p, TASK_NORMAL, 0);
+}
+```
+
+在调用了wake\_up\_process以后, 这个睡眠进程的状态会被设置为**TASK\_RUNNING**，而且调度器会把它**加入到运行队列**中去. 当然，这个进程只有在**下次被调度器调度(！！！**)到的时候才能真正地**投入运行**.
+
+### 33.2.2 try\_to\_wake\_up()
+
+try\_to\_wake\_up函数通过**把进程状态设置为TASK\_RUNNING**,并把该进程插入**本地CPU运行队列rq！！！**来达到唤醒睡眠和停止的进程的目的.
+
+```c
+static int
+try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+```
+
+该函数接受的参数有:**被唤醒进程的描述符指针**(p),可以被唤醒的进程状态掩码(state),一个标志wake\_flags，用来**禁止被唤醒的进程抢占本地CPU**上正在运行的进程.
+
+### 33.2.3 wake\_up\_new\_task()
+
+```c
+[kernel/sched/core.c]
+void wake_up_new_task(struct task_struct *p)
+```
+
+之前**进入睡眠状态**的可以通过try\_to\_wake\_up和wake\_up\_process完成唤醒
+
+而我们**fork新创建**的进程在完成自己的创建工作后, 可以通过**wake\_up\_new\_task完成唤醒**并**添加到就绪队列中等待调度**, 详情见上面
+
+```c
+void wake_up_new_task(struct task_struct *p)
+{
+	struct rq_flags rf;
+	struct rq *rq;
+
+	/* Initialize new task's runnable average */
+	init_entity_runnable_average(&p->se);
+	raw_spin_lock_irqsave(&p->pi_lock, rf.flags);
+#ifdef CONFIG_SMP
+
+	set_task_cpu(p, select_task_rq(p, task_cpu(p), SD_BALANCE_FORK, 0));
+#endif
+	rq = __task_rq_lock(p, &rf);
+	post_init_entity_util_avg(&p->se);
+
+	activate_task(rq, p, 0);
+	p->on_rq = TASK_ON_RQ_QUEUED;
+	trace_sched_wakeup_new(p);
+	check_preempt_curr(rq, p, WF_FORK);
+#ifdef CONFIG_SMP
+	if (p->sched_class->task_woken) {
+
+		lockdep_unpin_lock(&rq->lock, rf.cookie);
+		p->sched_class->task_woken(rq, p);
+		lockdep_repin_lock(&rq->lock, rf.cookie);
+	}
+#endif
+	task_rq_unlock(rq, p, &rf);
+}
+```
+
+#### 33.2.3.1 check\_preempt\_curr
+
+**wake\_up\_new\_task中唤醒进程**时,内核使用**全局check\_preempt\_curr**看看**是否进程**可以抢占**当前运行的进程**.
+
+```c
+[kernel/sched/core.c]
+void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
+{
+    const struct sched_class *class;
+
+    if (p->sched_class == rq->curr->sched_class)
+    {
+        rq->curr->sched_class->check_preempt_curr(rq, p, flags);
+    }
+    else
+    {
+        for_each_class(class) {
+            if (class == rq->curr->sched_class)
+                break;
+            if (class == p->sched_class) {
+                resched_curr(rq);
+                break;
+            }
+        }
+    }
+
+    if (task_on_rq_queued(rq->curr) && test_tsk_need_resched(rq->curr))
+        rq_clock_skip_update(rq, true);
+}
+```
+
+## 33.3 无效唤醒
+
+几乎在所有的情况下,进程都会在检查了某些条件之后,发现**条件不满足才进入睡眠**. 可是有的时候进程却会在**判定条件为真后开始睡眠**,如果这样的话进程就会无限期地休眠下去, 这就是所谓的无效唤醒问题.
+
+当**多个进程都企图对共享数据进行某种处理**,而最后的结果又取决于进程运行的顺序时,就会发生竞争条件,这是操作系统中一个典型的问题,**无效唤醒**恰恰就是由于**竞争条件**导致的.
+
+设想有**两个进程A和B**,A进程正在处理一个链表,它需要检查这个链表是否为空,如果不空就对链表里面的数据进行一些操作,同时B进程也在往这个链表添加节点.当这个**链表是空**的时候,由于**无数据可操作**,这时**A进程就进入睡眠**,当B进程向链表里面添加了节点之后它就唤醒A进程
+
+A进程:
+
+```c
+spin_lock(&list_lock);
+if(list_empty(&list_head))
+{
+	spin_unlock(&list_lock);
+	set_current_state(TASK_INTERRUPTIBLE);
+	schedule();
+	spin_lock(&list_lock);
+}
+/* Rest of the code ... */
+spin_unlock(&list_lock);
+}
+```
+
+B进程:
+
+```c
+spin_lock(&list_lock);
+list_add_tail(&list_head, new_node);
+spin_unlock(&list_lock);
+wake_up_process(A);
+```
+
+这里会出现一个问题，假如当A进程执行到**第4行后(spin\_unlock(&list\_lock);)第5行前(set\_current\_state(TASK\_INTERRUPTIBLE);)**的时候,B进程被另外一个处理器调度投入运行.在这个时间片内,**B进程执行完了它所有的指令**,因此它试图**唤醒A进程**,而此时的A进程还**没有进入睡眠**, 所以**唤醒操作无效**.
+
+在这之后, **A进程**继续执行, 它会错误地认为这个时候**链表仍然是空**的,于是将自己的状态设置为TASK\_INTERRUPTIBLE然后调用schedule()进入睡眠. 由于**错过了B进程唤醒**, 它将会**无限期的睡眠**下去, 这就是**无效唤醒问题**, 因为即使链表中有数据需要处理, A进程也还是睡眠了.
+
+### 33.3.1 无效唤醒的原因
+
+**无效唤醒**主要发生在**检查条件之后(链表为空)**和**进程状态被设置为睡眠状态之前**,本来B进程的wake\_up\_process提供了一次将A进程状态置为TASK\_RUNNING的机会，可惜这个时候A进程的状态仍然是TASK\_RUNNING，所以wake\_up\_process将A进程状态从睡眠状态转变为运行状态的努力没有起到预期的作用.
+
+### 33.3.2 避免无效抢占
+
+Linux中**避免进程的无效唤醒的关键**是
+
+- 在**进程检查条件之前**就将**进程的状态**置为**TASK\_INTERRUPTIBLE或TASK\_UNINTERRUPTIBLE**
+
+- 并且如果**检查的条件满足**的话就应该将其状态重新设置为**TASK\_RUNNING**.
+
+这样无论进程**等待的条件是否满足**,进程都不会因为被移出就绪队列而错误地进入睡眠状态,从而避免了无效唤醒问题.
+
+以上面为例, 必须使用一种保障机制使得**判断链表为空**和**设置进程状态为睡眠状态**成为**一个不可分割的步骤**才行, 也就是必须消除竞争条件产生的根源, 这样在这之后出现的wake\_up\_process就可以起到唤醒状态是睡眠状态的进程的作用了.
+
+A进程
+
+```C
+set_current_state(TASK_INTERRUPTIBLE);
+spin_lock(&list_lock);
+if(list_empty(&list_head))
+{
+	spin_unlock(&list_lock);
+	schedule();
+	spin_lock(&list_lock);
+}
+set_current_state(TASK_RUNNING);
+/* Rest of the code ... */
+spin_unlock(&list_lock);
+```
+
+可以看到，这段代码在**测试条件之前(链表为空)**就将当前执行进程状态转设置成**TASK\_INTERRUPTIBLE**了,并且在**链表不为空**的情况下又将自己置为**TASK\_RUNNING状态**.
+
+# 34 stop\_sched\_class调度器类与stop\_machine机制
+
+所属**调度器类为stop\_sched\_class**的进程是系统中**优先级最高**的进程, 其次才是dl\_shced\_class和rt\_sched\_class
+
+stop\_sched\_class用于停止CPU, 一般在**SMP系统**上使用，用以实现**负载平衡**和**CPU热插拔**.这个类有最高的调度优先级, 如果你的系统**没有定义CONFIG\_SMP**. 你可以试着**将此类移除**.
+
+**stop\_machine**是一个**通信信号**: 在SMP的情况下相当于**暂时停止其他的CPU的运行**, 它让**一个CPU继续运行**，而让所有其他CPU空闲. 在单CPU的情况下这个东西就相当于关中断
+
+我的理解是如果Mulit CPU共享的东西需要修改, 且无法借助OS的lock, 关中断等策略来实现这一功能, 则需要stop\_machine
+
+# 35 dl\_sched\_class调度器类
+
+对于**实时进程**，采用**FIFO**, **Round Robin**或者**Earliest Deadline First (EDF)最早截止期限优先**调度算法的调度策略.
+
+# 36 rt\_sched\_class调度器类
+
+对于实时进程，采用FIFO, Round Robin或者Earliest Deadline First (EDF)最早截止期限优先调度算法的调度策略.
+
+实时进程与普通进程有一个根本的不同之处: 如果系统中有一个实时进程且可运行, 那么调度器总是会选中它运行, 除非有另外一个优先级更高的实时进程.
+
+现有的两种实时调度策略, 不同之处如下所示:
+
+| 名称 | 调度策略 | 描述 |
+|:-------:|:-------:|:-------:|
+| **循环进程** | SCHED\_RR | 有**时间片**, 其值在进程运行时会减少, 就像是普通进程. 在**所有的时间段到期**后, 则该值**重置为初始值**, 而**进程**则置与**队列的末尾**, 这保证了在有**几个优先级相同的SCHED\_RR进程**的情况下, 他们总是**依次执行** |
+| **先进先出进程** | SCHED\_FIFO | **没有时间片**, 在被调度器选择执行后, 可以运行任意长时间. |
+
+很明显, 如果实时进程编写的比较差, 系统可能长时间无法使用. 最简单的例子, 只要写一个无限循环, 循环体内不进入休眠即可. 因而我们在编写实时应用程序时, 应该格外小心.
+
+# 37 fair\_sched\_clas调度器类
+
+简单说一下CFS调度算法的思想：**理想状态**下**每个进程**都能获得**相同的时间片**，并且同时运行在CPU上，但实际上一个CPU同一时刻运行的进程只能有一个。 也就是说，当一个进程占用CPU时，其他进程就必须等待。
+
+## 37.1 CFS调度器类fair\_sched\_class
+
+```c
+[kernel/sched/sched.h]
+struct sched_class {
+	/*	系统中多个调度类, 按照其调度的优先级排成一个链表
+    下一优先级的调度类
+     * 调度类优先级顺序: stop_sched_class -> dl_sched_class -> rt_sched_class -> fair_sched_class -> idle_sched_class
+     */
+    const struct sched_class *next;
+	
+    /*  将进程加入到运行队列中，即将调度实体（进程）放入红黑树中，并对 nr_running 变量加1   */
+    void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
+    /*  从运行队列中删除进程，并对 nr_running 变量中减1  */
+    void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
+    /*  放弃CPU，在 compat_yield sysctl 关闭的情况下，该函数实际上执行先出队后入队；在这种情况下，它将调度实体放在红黑树的最右端  */
+    void (*yield_task) (struct rq *rq);
+    bool (*yield_to_task) (struct rq *rq, struct task_struct *p, bool preempt);
+	/*   检查当前进程是否可被新进程抢占 */
+    void (*check_preempt_curr) (struct rq *rq, struct task_struct *p, int flags);
+
+     /*  选择下一个应该要运行的进程运行  */
+    struct task_struct * (*pick_next_task) (struct rq *rq,
+                        struct task_struct *prev);
+	/* 将进程放回运行队列 */
+    void (*put_prev_task) (struct rq *rq, struct task_struct *p);
+
+#ifdef CONFIG_SMP
+	/* 为进程选择一个合适的CPU */
+    int  (*select_task_rq)(struct task_struct *p, int task_cpu, int sd_flag, int flags);
+	/* 迁移任务到另一个CPU */
+	void (*migrate_task_rq)(struct task_struct *p);
+	/* 用于进程唤醒 */
+    void (*task_waking) (struct task_struct *task);
+    void (*task_woken) (struct rq *this_rq, struct task_struct *task);
+	/* 修改进程的CPU亲和力(affinity) */
+    void (*set_cpus_allowed)(struct task_struct *p,
+                 const struct cpumask *newmask);
+	/* 启动运行队列 */
+    void (*rq_online)(struct rq *rq);
+     /* 禁止运行队列 */
+    void (*rq_offline)(struct rq *rq);
+#endif
+	/* 当进程改变它的调度类或进程组时被调用 */
+    void (*set_curr_task) (struct rq *rq);
+	/* 该函数通常调用自 time tick 函数；它可能引起进程切换。这将驱动运行时（running）抢占 */
+    void (*task_tick) (struct rq *rq, struct task_struct *p, int queued);
+	/* 在进程创建时调用，不同调度策略的进程初始化不一样 */
+    void (*task_fork) (struct task_struct *p);
+	/* 在进程退出时会使用 */
+    void (*task_dead) (struct task_struct *p);
+
+	/* 用于进程切换 */
+    void (*switched_from) (struct rq *this_rq, struct task_struct *task);
+    void (*switched_to) (struct rq *this_rq, struct task_struct *task);
+	/* 改变优先级 */
+    void (*prio_changed) (struct rq *this_rq, struct task_struct *task,
+                 int oldprio);
+
+    unsigned int (*get_rr_interval) (struct rq *rq,
+                     struct task_struct *task);
+
+    void (*update_curr) (struct rq *rq);
+
+#ifdef CONFIG_FAIR_GROUP_SCHED
+    void (*task_move_group) (struct task_struct *p);
+#endif
+};
+```
+
+| 成员 | 描述 |
+| ------------- |:-------------:|
+| enqueue\_task | 向**就绪队列**中**添加一个进程**,某个任务**进入可运行状态时**，该函数将得到**调用**。它将调度实体（进程）**放入红黑树**中，并对**nr\_running**变量加 1 |
+| dequeue\_task | 将一个进程从**就就绪队列**中**删除**,当某个任务**退出可运行状态**时调用该函数，它将**从红黑树中去掉对应的调度实体**，并从 **nr\_running** 变量中减 1 |
+| yield\_task | 在进程想要资源**放弃对处理器的控制权**的时, 可使用在**sched\_yield系统调用**, 会调用内核API yield\_task完成此工作. **compat\_yield sysctl关闭**的情况下，该函数实际上执行**先出队后入队**；在这种情况下，它将调度实体放在**红黑树的最右端** |
+| check\_preempt\_curr | 该函数将**检查当前运行的任务是否被抢占**。在**实际抢占正在运行的任务之前**，CFS 调度程序模块将**执行公平性测试**。这**将驱动唤醒式（wakeup）抢占** |
+| pick\_next\_task | 该函数**选择**接下来要运行的最合适的进程 |
+| put\_prev\_task | 用另一个进程**代替当前运行的进程** |
+| set\_curr\_task | 当任务**修改其调度类或修改其任务组**时，将调用这个函数 |
+| task\_tick | 在**每次激活周期调度器**时, 由**周期性调度器调用**, 该函数通常调用自 time tick 函数；它**可能引起进程切换**。这将驱动运行时（running）抢占 |
+| task\_new | 内核调度程序为调度模块提供了管理新任务启动的机会,用于建立fork系统调用和调度器之间的关联, 每次**新进程建立**后,则用**new\_task通知调度器**,CFS调度模块使用它进行组调度，而用于**实时任务的调度模块则不会使用**这个函数 |
+
+## 37.2 cfs的就绪队列
+
+**就绪队列**是**全局调度器**许多**操作的起点**, 但是**进程并不是由就绪队列直接管理**的, **调度管理**是**各个调度器**的职责, 因此在**各个就绪队列**中嵌入了**特定调度类的子就绪队列**(cfs的顶级调度就队列 struct cfs\_rq, 实时调度类的就绪队列struct rt\_rq和deadline调度类的就绪队列struct dl\_rq
+
+见上面
+
+## 37.3 进程优先级
+
+```c
+struct task_struct
+{
+    /* 进程优先级
+     * prio: 动态优先级，范围为100~139，与静态优先级和补偿(bonus)有关
+     * static_prio: 静态优先级，static_prio = 100 + nice + 20 (nice值为-20~19,所以static_prio值为100~139)
+     * normal_prio: 没有受优先级继承影响的常规优先级，具体见normal_prio函数，跟属于什么类型的进程有关
+     */
+    int prio, static_prio, normal_prio;
+    /* 实时进程优先级 */
+    unsigned int rt_priority;
+}
+```
+
+## 37.4 负荷权重
+
+### 37.4.1 调度实体的负荷权重结构struct load\_weight
+
+**调度实体的数据结构**中己经内嵌了**struct load\_weight**结构体，用于描述**当前调度实体的权重**
+
+```c
+[include/linux/sched.h]
+struct sched_entity {
+	struct load_weight	load;		/* for load-balancing */
+}
+
+struct load_weight {
+	unsigned long weight;	/* 存储了权重的信息 */
+	u32 inv_weight;		/* 存储了权重值用于重除的结果 weight * inv_weight = 2^32 */
+};
+```
+
+inv\_weight是inverse weight的缩写
+
+### 37.4.2 进程的负荷权重
+
+而**进程**可以被作为**一个调度的实体**时, 其内部通过存储struct sched\_entity se而间接存储了其load\_weight信息
+
+```c
+struct task_struct
+{
+	/*  ......  */
+	struct sched_entity se;
+    /*  ......  */
+}
+```
+
+因此代码中经常通过**p\->se.load**来获取**进程p的权重信息**, 而set\_load\_weight()负责根据**进程类型**及其**静态优先级**计算负荷权重.
+
+## 37.5 优先级和权重的转换
+
+### 37.5.1 优先级\-\>权重转换表
+
+**nice值**的范围是**从\-20〜19(nice值转priority是120, 也可见nice值对应的是普通进程的, 不是实时进程或deadline进程或idle进程！！！**), 进程**默认的nice值为0**。这些值含义类似级别，可以理解成有**40个等级**，nice值**越高**，则优先级**越低(优先级数值越大,nice值和优先级值线性关系**)
+
+一般这个概念是这样的, 进程每降低一个nice值(优先级提升), 则多获得10%的CPU时间, 没升高一个nice值(优先级降低), 则放弃10%的CPU时间.
+
+为执行该策略, 内核需要将优先级转换为权重值, 内核约定**nice值为0的权重值为1024**, 并提供了一张**优先级\-\>权重转换表sched\_prio\_to\_weight**, **表下标对应nice值**[\-20〜19]。
+
+```cpp
+[kernel/sched/sched.h]
+extern const int sched_prio_to_weight[40];
+
+static const int prio_to_weight[40] = {
+ /* -20 */     88761,     71755,     56483,     46273,     36291,
+ /* -15 */     29154,     23254,     18705,     14949,     11916,
+ /* -10 */      9548,      7620,      6100,      4904,      3906,
+ /*  -5 */      3121,      2501,      1991,      1586,      1277,
+ /*   0 */      1024,       820,       655,       526,       423,
+ /*   5 */       335,       272,       215,       172,       137,
+ /*  10 */       110,        87,        70,        56,        45,
+ /*  15 */        36,        29,        23,        18,        15,
+};
+```
+
+**10%**的影响是**相对及累加**的
+
+举个例子，**进程A和进程B**的**nice值都为0**,那么**权重值都是1024**,它们获得**CPU的时间都是50%**, 计算公式为1024/(1024+1024)=50%。
+
+假设进程A增加一个nice值，即nice=1, 进程B的nice值不变，那么**进程B**应该获得55%的CPU时间，进程A应该是45%。我们利用prio\_to\_weight[]表来计算，进程A=820/(1024+820)=45%,而进程B=1024/(1024+820)=55%, 注意是近似等于。
+
+内核不仅维护了**负荷权重自身**, 还保存另外一个数值, 用于**负荷重除的结果**, 即**sched\_prio\_to\_wmult数组**, 这两个数组中的数据是一一对应的.
+
+```cpp
+[kernel/sched/sched.h]
+extern const u32 sched_prio_to_wmult[40];
+
+static const u32 prio_to_wmult[40] = {
+ /* -20 */     48388,     59856,     76040,     92818,    118348,
+ /* -15 */    147320,    184698,    229616,    287308,    360437,
+ /* -10 */    449829,    563644,    704093,    875809,   1099582,
+ /*  -5 */   1376151,   1717300,   2157191,   2708050,   3363326,
+ /*   0 */   4194304,   5237765,   6557202,   8165337,  10153587,
+ /*   5 */  12820798,  15790321,  19976592,  24970740,  31350126,
+ /*  10 */  39045157,  49367440,  61356676,  76695844,  95443717,
+ /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
+};
+```
+
+prio\_to\_wmult[]表的计算公式如下：
+
+![config](images/38.png)
+
+其中，inv\_weight是inverse weight的缩写，指**权重被倒转**了，作用是为后面计算方便。
+
+```
+nice [-20, 19] -=> 下标 [0, 39]
+```
+
+### 37.5.2 set\_load\_weight()依据静态优先级设置进程的负荷权重
+
+定义了两个宏**WEIGHT\_IDLEPRIO**和**WMULT\_IDLEPRIO**这两个宏对应的就是**SCHED\_IDLE**调度的**进程的负荷权重信息**, 因为要保证**SCHED\_IDLE进程**的**最低优先级**和**最低的负荷权重**.
+
+内核提供**一个函数**来查询这两个表，然后把值存放在p\-\>se.load数据结构中，即struct load\_weight结构中。
+
+```cpp
+#define WEIGHT_IDLEPRIO                3
+#define WMULT_IDLEPRIO         1431655765
+
+[kernel/sched/core.c]
+static void set_load_weight(struct task_struct *p)
+{
+    /* 
+     * 由于数组中的下标是0~39, 普通进程的优先级是[100~139]
+     * 因此通过static_prio - MAX_RT_PRIO将静态优先级转换成为数组下标
+    */
+	int prio = p->static_prio - MAX_RT_PRIO;
+	/* 取得指向进程task负荷权重的指针load,
+     * 下面修改load就是修改进程的负荷权重  
+    */
+	struct load_weight *load = &p->se.load;
+
+	/* 
+	 * 必须保证SCHED_IDLE进程的负荷权重最小
+     * 其权重weight就是WEIGHT_IDLEPRIO
+     * 而权重的重除结果就是WMULT_IDLEPRIO
+	*/
+	if (p->policy == SCHED_IDLE) {
+		load->weight = scale_load(WEIGHT_IDLEPRIO);
+		load->inv_weight = WMULT_IDLEPRIO;
+		return;
+	}
+    /* 设置进程的负荷权重weight和权重的重除值inv_weight */
+	load->weight = scale_load(prio_to_weight[prio]);
+	load->inv_weight = prio_to_wmult[prio];
+}
+```
+
+## 37.6 就绪队列的负荷权重
+
+不仅进程, 就绪队列也关联到一个负荷权重. 
+
+这样不仅确保**就绪队列**能够跟踪记录有**多少进程在运行**, 而且还能将**进程的权重添加到就绪队列**中.
+
+```c
+[kernel/sched/sched.h]
+struct rq
+{
+    struct load_weight load;
+};
+
+struct cfs_rq
+{
+	struct load_weight load;
+	unsigned int nr_running, h_nr_running;
+	/*  ......  */
+};
+
+struct rt_rq中不需要负荷权重
+
+struct dl_rq中不需要负荷权重
+```
+
+由于**负荷权重仅用于调度普通进程(非实时进程！！！**), 因此**只在cpu的就绪队列队列rq**和**cfs调度器的就绪队列cfs\_rq**上需要保存其就绪队列的信息, 而**实时进程的就绪队列rt\_rq**和**dl\_rq**是**不需要保存负荷权重**的.
+
+### 37.6.1 就绪队列的负荷权重计算
+
+**就绪队列的负荷权重**存储的其实就是**队列上所有进程**的**负荷权重的总和**, 因此**每次进程**被**加到就绪队列**的时候, 就需要在**就绪队列的负荷权重**中**加上进程的负荷权重**, 同时由于**就绪队列不是一个单独被调度的实体**, 也就**不需要优先级到负荷权重的转换**, 因而其**不需要负荷权重的重除字段**, 即**inv\_weight = 0**;
+
+```c
+//struct load_weight {
+	/* 就绪队列的负荷权重 +/- 入队/出队进程的负荷权重  */
+	unsigned long weight +/- task_struct->se->load->weight;
+    /* 就绪队列负荷权重的重除字段无用途，所以始终置0  */
+	u32 inv_weight = 0;
+//};
+```
+
+因此进程从就绪队列上入队或者出队的时候, 就绪队列的负荷权重就加上或者减去进程的负荷权重, 内核为我们提供了增加/减少/重置就绪队列负荷权重的的函数, 分别是update\_load\_add, update\_load\_sub, update\_load\_set
+
+```c
+[kernel/sched/fair.c]
+/* 使得lw指向的负荷权重的值增加inc, 用于进程进入就绪队列时调用
+ *  进程入队account_entity_enqueue
+ */
+static inline void update_load_add(struct load_weight *lw, unsigned long inc)
+{
+    lw->weight += inc;
+    lw->inv_weight = 0;
+}
+
+/* 使得lw指向的负荷权重的值减少inc, 用于进程调出就绪队列时调用
+ * 进程出队account_entity_dequeue
+ */
+static inline void update_load_sub(struct load_weight *lw, unsigned long dec)
+{
+    lw->weight -= dec;
+    lw->inv_weight = 0;
+}
+
+static inline void update_load_set(struct load_weight *lw, unsigned long w)
+{
+    lw->weight = w;
+    lw->inv_weight = 0;
+}
+```
+
+| 函数 | 描述 | 调用时机 | 定义位置 | 调用位置 |
+| ---- |:-----|:----|:----|:----|
+| update\_load\_add | 使得lw指向的负荷权重的值增加inc | 用于进程进入就绪队列时调用 | [kernel/sched/fair.c] | [account\_entity\_enqueue两处], [sched\_slice] |
+| update\_load\_sub | 使得lw指向的负荷权重的值减少inc | 用于进程调出就绪队列时调用 |  [update\_load\_sub] | [account\_entity\_dequeue两处] |
+| update\_load\_set |
+
+其中**sched\_slice**()函数计算**当前进程**在调度延迟内期望的**运行时间**, 它根据cfs就绪队列中进程数确定一个最长时间间隔，然后看在该时间间隔内当前进程按照权重比例执行
+
+## 37.7 虚拟运行时间
+
+CFS调度算法的思想：理想状态下**每个进程**都能获得**相同的时间片**，并且同时运行在CPU上，但实际上一个CPU同一时刻运行的进程只能有一个。 也就是说，当一个进程占用CPU时，其他进程就必须等待。
+
+假设现在系统有**A，B，C三个进程**，**A.weight=1**, **B.weight=2**, **C.weight=3**.那么我们可以计算出**整个公平调度队列的总权重**是cfs\_rq.weight = 6，很自然的想法就是，**公平**就是你在重量中**占的比重的多少**来排你的重要性，那么，A的重要性就是1/6,同理，B和C的重要性分别是2/6,3/6. 很显然C最重要就应改被先调度，而且占用的资源也应该最多，即假设A，B,C运行一遍的总时间假设是6个时间单位的话，A占1个单位，B占2个单位，C占三个单位。这就是CFS的公平策略.
+
+CFS为了**实现公平**，**必须惩罚**当前**正在运行的进程**，以使那些正在等待的进程下次被调度。
+
+**具体实现**时，**CFS**通过**每个进程的虚拟运行时间（vruntime**）来**衡量哪个进程最值得被调度**。
+
+CFS中的**就绪队列**是**一棵以vruntime为键值的红黑树**，**虚拟时间越小**的进程**越靠近整个红黑树的最左端**。因此，**调度器**每次选择位于**红黑树最左端的那个进程**，该进程的vruntime最小
+
+**虚拟运行时间**是通过**进程的实际运行时间**和**进程的权重（weight**）计算出来的。
+
+在**CFS调度器**中，将**进程优先级**这个概念**弱化**，而是强调**进程的权重**。一个进程的**权重越大**，则说明**这个进程更需要运行**，因此它的**虚拟运行时间就越小**，这样**被调度的机会就越大**。
+
+那么，在**用户态进程**的**优先级nice值**与**CFS调度器中的权重**又有什么关系？在内核中通过**prio\_to\_weight数组**进行**nice值**和**权重的转换**。
+
+### 37.7.1 虚拟时钟相关的数据结构
+
+#### 37.7.1.1 调度实体的虚拟时钟信息
+
+这个虚拟时钟为什叫虚拟的，是因为这个时钟与具体的时钟晶振没有关系, 它与进程的权重有关, 权重越高，说明进程的优先级比较高，进而该进程虚拟时钟增长的就慢
+
+既然**虚拟时钟**是**调度实体(一个或者多个进程**)的一种**时间度量**, 因此必须在**调度实体**中**存储其虚拟时钟的信息**
+
+```c
+struct sched_entity
+{
+    /* 负荷权重，这个决定了进程在CPU上的运行时间和被调度次数 */
+	struct load_weight load;           
+    struct rb_node run_node;
+    /* 是否在就绪队列上 */
+    unsigned int on_rq;          
+    /* 上次启动的时间 */
+    u64 exec_start;			
+
+    u64 sum_exec_runtime;
+    u64 vruntime;
+    u64 prev_sum_exec_runtime;
+    /* rq on which this entity is (to be) queued: */
+    struct cfs_rq *cfs_rq;
+};
+```
+
+**sum_exec_runtime**是用于记录**该进程的CPU消耗时间**，这个是**真实的CPU消耗时间**。在**进程撤销**时会将sum\_exec\_runtime保存到**prev\_sum\_exec\_runtime**中
+
+**vruntime**是**本进程生命周期**中在CPU上运行的虚拟时钟。那么何时应该更新这些时间呢? 这是通过调用**update\_curr**实现的, 该函数在**多处调用**.
+
+#### 37.7.1.2 就绪队列上的虚拟时钟信息
+
+**完全公平调度器类sched\_fair\_class**主要负责**管理普通进程**, 在**全局的CPU就绪队列**上存储了在CFS的就绪队列struct cfs\_rq
+
+**进程的就绪队列**中就存储了**CFS相关的虚拟运行时钟的信息**, struct cfs\_rq定义如下：
+
+```c
+struct cfs_rq
+{
+    struct load_weight load;   /*所有进程的累计负荷值*/
+    unsigned long nr_running;  /*当前就绪队列的进程数*/
+
+    u64 min_vruntime;  //  队列的虚拟时钟, 
+    struct rb_root tasks_timeline;  /*红黑树的头结点*/
+    struct rb_node *rb_leftmost;    /*红黑树的最左面节点*/
+
+    struct sched_entity *curr;      /*当前执行进程的可调度实体*/
+        ...
+};
+```
+
+### 37.7.2 update\_curr()函数计算进程虚拟时间
+
+**所有与虚拟时钟有关的计算**都在**update\_curr()中执行**, 该函数在系统中**各个不同地方调用**, 包括**周期性调度器**在内.
+
+```c
+static void update_curr(struct cfs_rq *cfs_rq)
+{
+	struct sched_entity *curr = cfs_rq->curr;
+	// 获取当前CPU的通用就绪队列保存的clock_task值，
+	// 该变量在每次时钟滴答(tick)到来时更新。
+	u64 now = rq_clock_task(rq_of(cfs_rq));
+	u64 delta_exec;
+
+	if (unlikely(!curr))
+		return;
+    // 上一次调用update_curr()函数到现在的时间差,即实际运行的时间.
+    // 权重大的
+    // 权重值大的后期该值会变大
+	delta_exec = now - curr->exec_start;
+	if (unlikely((s64)delta_exec <= 0))
+		return;
+    // 开始执行时间设为现在
+	curr->exec_start = now;
+	/* 将时间差加到先前统计的时间即可 */
+	curr->sum_exec_runtime += delta_exec;
+	schedstat_add(cfs_rq, exec_clock, delta_exec);
+    // 虚拟运行时间不断增加
+	curr->vruntime += calc_delta_fair(delta_exec, curr);
+	update_min_vruntime(cfs_rq);
+
+	if (entity_is_task(curr)) {
+		struct task_struct *curtask = task_of(curr);
+
+		trace_sched_stat_runtime(curtask, delta_exec, curr->vruntime);
+		cpuacct_charge(curtask, delta_exec);
+		account_group_exec_runtime(curtask, delta_exec);
+	}
+
+	account_cfs_rq_runtime(cfs_rq, delta_exec);
+}
+```
+
+update\_curr的流程如下
+
+- 首先计算进程**当前时间与上次启动时间的差值**
+- 通过**负荷权重**和**当前时间**模拟出进程的**虚拟运行时钟**
+- 重新设置cfs的min\_vruntime保持其单调性
+
+#### 37.7.2.1 计算时间差
+
+```c
+/*  确定就绪队列的当前执行进程curr  */
+struct sched_entity *curr = cfs_rq->curr;
+```
+
+首先, 该函数确定**就绪队列**的**当前执行进程**, 并获取**主调度器就绪队列的实际时钟值**, 该值在**每个调度周期都会更新**
+
+```c
+/*  rq_of -=> return cfs_rq->rq 返回cfs队列所在的全局就绪队列  
+*  rq_clock_task返回了rq的clock_task  */
+u64 now = rq_clock_task(rq_of(cfs_rq));
+u64 delta_exec;
+```
+
+辅助函数rq\_of()用于确定与**CFS就绪队列**相关的**struct rq实例**, cfs\_rq就绪队列中存储了指向就绪队列的实例, 而rq\_of就返回了这个指向rq的指针, 即**CPU就绪队列struct rq**
+
+rq\_clock\_task()函数获取**当前就绪队列(每个CPU对应的通用就绪队列**)保存的clock\_task值，该变量在**每次时钟滴答(tick)到来时更新**。
+
+```c
+/* 如果就队列上没有进程在执行, 则显然无事可做 */
+if (unlikely(!curr))
+    return;
+
+/* 内核计算当前和上一次更新负荷权重时两次的时间的差值 */
+delta_exec = now - curr->exec_start;
+if (unlikely((s64)delta_exec <= 0))
+    return;
+```
+
+如果就绪队列上没有进程在执行, 则显然无事可做, 否则内核计算**当前**和**上一次更新负荷权重时两次的时间的差值**
+
+**delta\_exec**计算该进程从**上次调用update\_curr()函数到现在的时间差(实际运行的时间！！！**)。
+
+```c
+/*  重新更新启动时间exec_start为now  */
+curr->exec_start = now;
+
+schedstat_set(curr->statistics.exec_max,
+          max(delta_exec, curr->statistics.exec_max));
+
+/* 将时间差加到先前统计的时间即可 */
+curr->sum_exec_runtime += delta_exec;
+schedstat_add(cfs_rq, exec_clock, delta_exec);
+```
+
+然后重新更新更新启动时间**exec\_start为now**, 以备下次计算时使用
+
+最后将计算出的**时间差delta\_exec**, 加到了**先前的统计时间**上
+
+#### 37.7.2.2 模拟虚拟时钟
+
+如何使用给出的信息来**模拟不存在的虚拟时钟**. 
+
+对于运行在**nice级别0！！！**的进程来说, 根据定义**虚拟时钟**和**物理时间相等！！！**. 
+
+在使用**不同的优先级**时, 必须根据**进程的负荷权重重新衡定时间**
+
+```c
+    curr->vruntime += calc_delta_fair(delta_exec, curr);
+    update_min_vruntime(cfs_rq);
+```
+
+其中calc\_delta\_fair函数是计算的关键
+
+```c
+static inline u64 calc_delta_fair(u64 delta, struct sched_entity *se)
+{
+    if (unlikely(se->load.weight != NICE_0_LOAD))
+        delta = __calc_delta(delta, NICE_0_LOAD, &se->load);
+    return delta;
+}
+```
+
+calc\_delta\_fair()使用**delta\_exec时间差**来计算**该进程的虚拟时间vruntime**。
+
+calc\_delta\_fair函数所做的就是根据下列公式计算:
+
+![config](./images/39.png)
+
+调度实体struct sched\_entity数据结构中有一个成员weight, 用于记录该进程的权重。
+
+calc\_delta\_fair()首先判断**该调度实体的权重**是否为**NICE\_0\_LOAD**,如果是，则**直接使用该delta时间**。
+
+NICE\_0\_LOAD类似参考权重，\_\_calc\_delta()利用参考权重来计算虚拟时间。把**nice值为0的进程**作为一个**参考进程**，系统上所有的进程都以此为参照物，根据参考进程权重和权重的比值作为速率向前奔跑。
+
+nice值范围是\-20〜19,**nice值越大，优先级越低。优先级越低的进程，其权重也越低**。
+
+因此按照vruntime的计算公式，**进程权重小**，那么**vruntime值反而越大**；反之，进程优先级高，**权重也大，vruntime值反而越小**。
+
+每一个进程拥有一个vruntime, 每次需要调度的时候就选运行队列中拥有最小vruntime的那个进程来运行, vruntime在时钟中断里面被维护, 每次时钟中断都要更新当前进程的vruntime, 即vruntime以如下公式逐渐增长
+
+那么`curr->vruntime += calc_delta_fair(delta_exec, curr);`即相当于如下操作
+
+| 条件 | 公式 |
+|:-------:|:-------:|
+| curr.nice != NICE\_0\_LOAD | $curr->vruntime += delta\_exec \times \dfrac{NICE\_0\_LOAD}{curr->se->load.weight}$|
+| curr.nice == NICE\_0\_LOAD | $ curr->vruntime += delta $ |
+
+根据公式可知, **nice = 0的进程(优先级120**), 则**虚拟时间**和**物理时间是相等**的, 即current\-\>se\-\>load.weight等于NICE\_0\_LAD的情况.
+
+**CFS**总是在**红黑树中选择vruntime最小的进程进行调度**，优先级高的进程总会被优先选择，随着**vruntime增长(权限级高的后期vruntime值会变大)，优先级低的进程也会有机会运行**。
+
+#### 37.7.2.3 重新设置cfs\_rq\-\>min\_vruntime
+
+接着内核需要重新设置`min_vruntime`. 必须小心保证该值是单调递增的, 通过update\_min\_vruntime()函数来设置
+
+我们通过分析update\_min\_vruntime函数设置cfs\_rq\->min\_vruntime的流程如下
+
+- 首先检测cfs就绪队列上是否有活动进程curr, 以此设置vruntime的值
+
+如果cfs就绪队列上没有活动进程curr, 就设置vruntime为curr->vruntime; 否则又活动进程就设置为vruntime为cfs\_rq的原min\_vruntime;
+
+- 接着检测**cfs的红黑树**上**是否有最左节点**, 即等待被调度的节点, 重新设置vruntime的值为curr进程和最左进程rb\_leftmost的vruntime较小者的值
+
+- 为了保证min\_vruntime单调不减, 只有在vruntime超出的cfs\_rq->min\_vruntime的时候才更新
+
+## 37.8 红黑树的键值entity\_key和entity\_before
+
+
+## 37.x 进程调度相关的初始化sched\_fork()
+
+\_\_sched\_fork()函数会把**新创建进程**的**调度实体**se相关成员**初始化为0**, 因为这些值**不能复用父进程**，子进程将来要加入调度器中参与调度，和父进程“分道扬镳”。
+
+```cpp
+[do_fork()->sched_fork()->_sched_fork()]
+[kernel/sched/core.c]
+static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
+{
+	p->on_rq			= 0;
+
+	p->se.on_rq			= 0;
+	p->se.exec_start		= 0;
+	p->se.sum_exec_runtime		= 0;
+	p->se.prev_sum_exec_runtime	= 0;
+	p->se.nr_migrations		= 0;
+	p->se.vruntime			= 0;
+#ifdef CONFIG_SMP
+	p->se.avg.decay_count		= 0;
+#endif
+	INIT_LIST_HEAD(&p->se.group_node);
+}
+```
+
+继续看sched\_fork()函数，设置子进程运行状态为TASK\_RUNNING，这里不是真正开始运行，因为还没添加到调度器里。
+
+```cpp
+[do_fork() ->sched_fork()]
+
+[kernel/sched/core.c]
+int sched_fork(unsigned long clone_flags, struct task_struct *p)
+{
+	unsigned long flags;
+	int cpu = get_cpu();
+	__sched_fork(clone_flags, p);
+	p->state = TASK_RUNNING;
+	p->prio = current->normal_prio;
+
+	if (dl_prio(p->prio)) {
+		put_cpu();
+		return -EAGAIN;
+	} else if (rt_prio(p->prio)) {
+		p->sched_class = &rt_sched_class;
+	} else {
+		p->sched_class = &fair_sched_class;
+	}
+
+	if (p->sched_class->task_fork)
+		p->sched_class->task_fork(p);
+	set_task_cpu(p, cpu);
+	put_cpu();
+	return 0;
+}
+```
+
+根据新进程的优先级确定相应的调度类.**每个调度类**都定义了一套操作方法集，调用**CFS调度器**的**task\_fork**()方法做一些**fork相关的初始化**。
+
+**CFS调度器调度类**定义的操作方法是task\_fork\_fair()
+
+task\_fork方法实现在kernel/fair.c文件中。
+
+```cpp
+[do_fork()->sched_fork()->task_fork_fair()]
+[kernel/sched/fair.c]
+static void task_fork_fair(struct task_struct *p)
+{
+	struct cfs_rq *cfs_rq;
+	struct sched_entity *se = &p->se, *curr;
+	int this_cpu = smp_processor_id();
+	struct rq *rq = this_rq();
+	unsigned long flags;
+
+	raw_spin_lock_irqsave(&rq->lock, flags);
+
+	update_rq_clock(rq);
+
+	cfs_rq = task_cfs_rq(current);
+	curr = cfs_rq->curr;
+
+	rcu_read_lock();
+	// 重点
+	__set_task_cpu(p, this_cpu);
+	rcu_read_unlock();
+    
+    // 重点
+	update_curr(cfs_rq);
+
+	if (curr)
+		se->vruntime = curr->vruntime;
+	place_entity(cfs_rq, se, 1);
+
+	if (sysctl_sched_child_runs_first && curr && entity_before(curr, se)) {
+		swap(curr->vruntime, se->vruntime);
+		resched_curr(rq);
+	}
+
+	se->vruntime -= cfs_rq->min_vruntime;
+
+	raw_spin_unlock_irqrestore(&rq->lock, flags);
+}
+```
+
+se表示新进程的调度实体，由**current变量(当前进程task\_struct数据结构！！！**)通过函数**task\_cfs\_rp**()取得**当前进程对应的CFS调度器就绪队列的数据结构(cfs\_rq** )。调度器代码中经常有类似的转换，例如取出当前CPU的通用就绪队列struct rq 数据结构，取出当前进程对应的通用就绪队列，取出当前进程对应的CFS调度器就绪队列等。
+
+task\_cfs\_rq()函数可以取出**当前进程对应的CFS就绪队列**：
+
+```cpp
+#define task_thread_info(task)  ((struct thread_info *)(task)->stack)
+
+static inline unsigned int task_cpu(const struct task_struct *p)
+{
+    return task_thread_info(p)->cpu;
+}
+
+#define cpu_rq(cpu)  (&per_cpu(runqueues, (cpu)))
+#define task_rq(p)  cpu_rq(task_cpu(p))
+
+static inline struct cfs_rq *task_cfs_rq(struct task_struct *p)
+{
+    return &task_rq(p)->cfs;
+}
+```
+
+task\_fork\_fair()函数**中\_\_set\_task\_cpu**()把**当前CPU**绑定到**该进程中(struct task\_struct中的stack<struct ehread\_info>的成员cpu！！！**)，p\->wake\_cpu在后续唤醒该进程时会用到这个成员。
+
+```cpp
+[kernel/sched/sched.h]
+static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
+{
+	set_task_rq(p, cpu);
+#ifdef CONFIG_SMP
+	smp_wmb();
+	// 当前CPU绑定到该进程中
+	task_thread_info(p)->cpu = cpu;
+	p->wake_cpu = cpu;
+#endif
+}
+```
+
+
+
+# 38 idle\_sched\_class调度器类
