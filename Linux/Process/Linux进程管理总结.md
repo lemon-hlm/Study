@@ -831,7 +831,7 @@ task\_struct结构信息
 
 - 结构体upid的数组number[1], **数组项个数取决于该进程pid的level值**, **每个数组项代表一个命名空间**, 这个就是用来一个PID可以属于不同的命名空间, nr值表示该进程在该命名空间的pid值, ns指向该信息所在的命名空间, pid\_chain属于哈希表的节点. 系统有一个**pid\_hash**[], 通过**pid**在**某个命名空间的nr值**哈希到某个表项, 如果**多个nr值**哈希到**同一个表项**, 将其**加入链表**, 这个节点就是**upid的pid\_chain**
 
-![增加PID命名空间之后的结构图](./images/task_struct-with-namespace.png)
+![增加PID命名空间之后的结构图](./images/41.png)
 
 图中关于**如何分配唯一的PID没有画出**
 

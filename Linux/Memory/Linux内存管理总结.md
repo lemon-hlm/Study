@@ -996,6 +996,21 @@ struct mm_struct init_mm = {
 };
 ```
 
+而Linux中第一个进程
+
+```c
+[init/init_task.c]
+struct task_struct init_task = INIT_TASK(init_task);
+EXPORT_SYMBOL(init_task);
+
+#define INIT_TASK(tsk)	\
+{									 \
+	.stack      = &init_thread_info, \
+	.mm	        = NULL,			     \
+	.active_mm	= &init_mm,          \
+}
+```
+
 # 6 内存布局探测
 
 **linux**在**被bootloader加载到内存**后， cpu**最初执行**的内核代码是**arch/x86/boot/header.S**汇编文件中的\_**start例程**，设置好**头部header**，其中包括**大量的bootloader参数**。接着是其中的**start\_of\_setup例程**，这个例程在做了一些**准备工作**后会通过**call main**跳转到**arch/x86/boot/main.c:main()函数**处执行，这就是众所周知的x86下的main函数，它们都工作在**实模式**下。这里面能第一次看到与内存管理相关代码, 这就是调用detect\_memory()检测系统物理内存.
@@ -1661,9 +1676,15 @@ void __init find_low_pfn_range(void)
 
 Linux支持4级页表, 根据上面讲过的PAGE\_SIZE等会逐步推出诸如FIXADDR\_BOOT\_START, PKMAP\_BASE等数值
 
-![config](./images/18.png)
+![config](./images/65.png)
 
-![config](./images/19.png)
+![config](./images/66.png)
+
+![config](./images/67.png)
+
+![config](./images/68.png)
+
+
 
 #### 7.4.2.3 低端内存页表和高端内存固定映射区页表的建立init\_mem\_mapping()
 
