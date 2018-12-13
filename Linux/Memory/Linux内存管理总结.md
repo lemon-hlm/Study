@@ -377,6 +377,8 @@ typedef struct pglist_data
 } pg_data_t;
 ```
 
+《Linux/Memory/1. Introduce/Linux内存模型》
+
 ### 4.1.3 交换守护进程
 
 ```cpp
@@ -1925,6 +1927,8 @@ void __init paging_init(void)
 
 **Sparse memory**：**物理内存是不连续**的，**节点的内部内存也可能是不连续**的，系统也因而可能会有**一个或多个节点**。此外，该模型是**内存热插拔**的基础。
 
+**4.4**的内核仍然是有3内存模型可以选择。（Processor type and features \-\-\-\> Memory model，但是**4.18**已经不可选，只有sparse memory）
+
 
 ........
 
@@ -2482,7 +2486,11 @@ static void __init mm_init(void)
 }
 ```
 
-**mem\_init**()则是管理**伙伴管理算法的初始化**，此外**kmem\_cache\_init**()是用于**内核slub内存分配体系的初始化**，而**vmalloc\_init**()则是用于**vmalloc的初始化**。
+**mem\_init**()则是管理**伙伴管理算法的初始化**，
+
+此外**kmem\_cache\_init**()是用于**内核slub内存分配体系的初始化**，
+
+而**vmalloc\_init**()则是用于**vmalloc的初始化**。
 
 ## 9.1 伙伴初始化mem_init()
 
@@ -2957,8 +2965,6 @@ pageblock\_order是一个**大**的分配阶, **pageblock\_nr\_pages**则表示*
 #define pageblock_nr_pages      (1UL << pageblock_order)
 ```
 
-
-
 如果体系结构**不支持巨型页**, 则将其定义为**第二高的分配阶**, 即MAX\_ORDER \- 1
 
 如果**各迁移类型的链表**中**没有**一块**较大的连续内存**, 那么**页面迁移不会提供任何好处**, 因此在**可用内存太少时内核会关闭该特性**. 这是在**build\_all\_zonelists**函数中检查的, 该函数用于初始化内存域列表.如果**没有足够的内存可用**, 则**全局变量**[**page\_group\_by\_mobility\_disabled**]设置为**0**, 否则设置为1.
@@ -3337,7 +3343,7 @@ bool zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 
 - 检查**空闲页数目**是否小于等于**最小值**与**lowmem\_reserve(zone\-\>lowmem\_reserve[zone**]. 这个是为**各种内存域指定的若干页**, 用于一些**无论如何不能失败的关键性内存访问**)中指定的**紧急分配值min**之和, 是的话返回false
 
-- 如果**不小于**, 遍历所有**大于等于当前阶的分配阶**, 其中z\-\>free\_area\[阶数\]\-\>nr\_free是**当前分配阶**的**空闲块的数目**, `struct free_area *area = &z->free_area[阶数]`, 遍历这个area的MIGRATE\_UNMOVABLE(不可移动页), MIGRATE\_MOVABLE(可移动页), MIGRATE\_RECLAIMABLE(可回收页)看这三个链表是否为空, 都为空, 则不进行内存分配.
+- 如果**不小于**, 遍历所有**大于等于当前阶的分配阶**, 其中z\-\>free\_area\[阶数\]\-\>nr\_free是**当前分配阶**的**空闲块的数目**, `struct free_area *area = &z->free_area[阶数]`, **遍历**这个area的**MIGRATE\_UNMOVABLE(不可移动页), MIGRATE\_MOVABLE(可移动页), MIGRATE\_RECLAIMABLE(可回收页**)看这**三个链表**是否为空, 都为空, 则不进行内存分配.
 
 - 不符合要求返回false
 
@@ -3376,7 +3382,7 @@ struct alloc_context {
 
 **zonelist是指向备用列表的指针**. 在**预期内存域(！！！)没有空闲空间**的情况下, 该列表确定了**扫描系统其他内存域(和结点)的顺序**.
 
-随后for循环**遍历备用列表的所有内存域**，用最简单的方式查找**一个适当的空闲内存块**
+随后for循环**遍历备用列表的所有内存域(！！！**)，用最简单的方式查找**一个适当的空闲内存块**
 
 - 首先，解释ALLOC\_\*标志(\_\_cpuset\_zone\_allowed\_softwall是另一个辅助函数, 用于**检查给定内存域是否属于该进程允许运行的CPU**).
 
@@ -3427,7 +3433,7 @@ struct page *buffered_rmqueue(struct zone *preferred_zone,
 - \_\_rmqueue()直接从**伙伴管理**中申请
    
 ```c
-【file:/mm/page_alloc.c】
+[mm/page_alloc.c]
 /*
  * Do the hard work of removing an element from the buddy allocator.
  * Call me with the zone->lock already held.
@@ -3448,6 +3454,32 @@ static struct page *__rmqueue(struct zone *zone, unsigned int order,
 
 	trace_mm_page_alloc_zone_locked(page, order, migratetype);
 	return page;
+}
+
+static inline
+struct page *__rmqueue_smallest(struct zone *zone, unsigned int order,
+						int migratetype)
+{
+	unsigned int current_order;
+	struct free_area *area;
+	struct page *page;
+
+	/* Find a page of the appropriate size in the preferred list */
+	for (current_order = order; current_order < MAX_ORDER; ++current_order) {
+		area = &(zone->free_area[current_order]);
+		page = list_first_entry_or_null(&area->free_list[migratetype],
+							struct page, lru);
+		if (!page)
+			continue;
+		list_del(&page->lru);
+		rmv_page_order(page);
+		area->nr_free--;
+		expand(zone, page, order, current_order, area, migratetype);
+		set_pcppage_migratetype(page, migratetype);
+		return page;
+	}
+
+	return NULL;
 }
 ```
     
@@ -3491,11 +3523,6 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	if (should_fail_alloc_page(gfp_mask, order))
 		return NULL;
 
-	/*
-	 * Check the zones suitable for the gfp_mask contain at least one
-	 * valid zone. It's possible to have an empty zonelist as a result
-	 * of __GFP_THISNODE and a memoryless node
-	 */
 	if (unlikely(!zonelist->_zonerefs->zone))
 		return NULL;
 
@@ -3508,11 +3535,6 @@ retry_cpuset:
 	/* Dirty zone balancing only done in the fast path */
 	ac.spread_dirty_pages = (gfp_mask & __GFP_WRITE);
 
-	/*
-	 * The preferred zone is used for statistics but crucially it is
-	 * also used as the starting point for the zonelist iterator. It
-	 * may get reset for allocations that ignore memory policies.
-	 */
 	ac.preferred_zoneref = first_zones_zonelist(ac.zonelist,
 					ac.high_zoneidx, ac.nodemask);
 	if (!ac.preferred_zoneref) {
@@ -3525,28 +3547,14 @@ retry_cpuset:
 	if (likely(page))
 		goto out;
 
-	/*
-	 * Runtime PM, block IO and its error handling path can deadlock
-	 * because I/O on the device might not complete.
-	 */
 	alloc_mask = memalloc_noio_flags(gfp_mask);
 	ac.spread_dirty_pages = false;
 
-	/*
-	 * Restore the original nodemask if it was potentially replaced with
-	 * &cpuset_current_mems_allowed to optimize the fast-path attempt.
-	 */
 	if (cpusets_enabled())
 		ac.nodemask = nodemask;
 	page = __alloc_pages_slowpath(alloc_mask, order, &ac);
 
 no_zone:
-	/*
-	 * When updating a task's mems_allowed, it is possible to race with
-	 * parallel threads in such a way that an allocation can fail while
-	 * the mask is being updated. If a page allocation is about to fail,
-	 * check if the cpuset changed during allocation and if so, retry.
-	 */
 	if (unlikely(!page && read_mems_allowed_retry(cpuset_mems_cookie))) {
 		alloc_mask = gfp_mask;
 		goto retry_cpuset;
@@ -4362,8 +4370,6 @@ kmem\_cache\_init可以分为六个阶段
 
 ## 13.6 创建缓存kmem\_cache\_create
 
-
-
 ## 13.7 分配对象kmem\_cache\_alloc
 
 **kmem\_cache\_alloc**用于**从特定的缓存获取对象**.类似于所有的**malloc函数**
@@ -4628,12 +4634,6 @@ kmem_cache_create(const char *name, size_t size, size_t align,
 		goto out_unlock;
 	}
 
-	/*
-	 * Some allocators will constraint the set of valid flags to a subset
-	 * of all flags. We expect them to define CACHE_CREATE_MASK in this
-	 * case, and we'll just provide them with a sanitized version of the
-	 * passed flags.
-	 */
 	flags &= CACHE_CREATE_MASK;
 
 	s = __kmem_cache_alias(name, size, align, flags, ctor);
@@ -5003,7 +5003,7 @@ if(s->refcount)为false的分支中，
 
 ## 15.1 基础原理
 
-缓存名称是kmalloc\-*size*是kmalloc函数的基础, 是**内核为不同内存长度提供的slab缓存*.
+缓存名称是kmalloc\-*size*是kmalloc函数的基础, 是**内核为不同内存长度提供的slab缓存**.
 
 类似伙伴系统机制，按照**内存块的2\^order**来创建多个slab描述符，例如16B、32B 、64B 、128B 、…、32MB等大小，系统会分别创建名为kmalloc\-16、kmalloc\-32、kmalloc\-64...的slab描述符，这在**系统启动**时在**create\_kmalloc\_caches()函数**中完成。
 
@@ -5247,7 +5247,7 @@ kmemleak的工作原理很简单，主要是对**kmalloc**()、**vmalloc**()、*
 
 3、 扫描完**灰色链表中的对象**，检查是否存在与kmemleak的**PRIO搜索树**管理的**跟踪内存地址匹配**的，因为某些标记为**白色的对象**可能变成了灰色的并被添加到链表的末端；
 
-4、 经过以上步骤后，**仍标记为白色的对象**将会被认定为**孤立的**，将会上报记录到/**sys/kernel/debug/kmemleak文件  **中。
+4、 经过以上步骤后，**仍标记为白色的对象**将会被认定为**孤立的**，将会上报记录到/**sys/kernel/debug/kmemleak文件**中。
 
 ..............
 
@@ -5566,11 +5566,72 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
 
 ### 18.4.2 \_\_vmalloc\_area\_node()
 
+```c
+static void *__vmalloc_area_node(struct vm_struct *area, gfp_t gfp_mask,
+				 pgprot_t prot, int node)
+{
+	const int order = 0;
+	struct page **pages;
+	unsigned int nr_pages, array_size, i;
+	const gfp_t nested_gfp = (gfp_mask & GFP_RECLAIM_MASK) | __GFP_ZERO;
+	const gfp_t alloc_mask = gfp_mask | __GFP_NOWARN;
+
+	nr_pages = get_vm_area_size(area) >> PAGE_SHIFT;
+	array_size = (nr_pages * sizeof(struct page *));
+
+	area->nr_pages = nr_pages;
+	/* Please note that the recursion is strictly bounded. */
+	if (array_size > PAGE_SIZE) {
+		pages = __vmalloc_node(array_size, 1, nested_gfp|__GFP_HIGHMEM,
+				PAGE_KERNEL, node, area->caller);
+	} else {
+		pages = kmalloc_node(array_size, nested_gfp, node);
+	}
+	area->pages = pages;
+	if (!area->pages) {
+		remove_vm_area(area->addr);
+		kfree(area);
+		return NULL;
+	}
+
+	for (i = 0; i < area->nr_pages; i++) {
+		struct page *page;
+
+		if (node == NUMA_NO_NODE)
+			page = alloc_kmem_pages(alloc_mask, order);
+		else
+			page = alloc_kmem_pages_node(node, alloc_mask, order);
+
+		if (unlikely(!page)) {
+			/* Successfully allocated i pages, free them in __vunmap() */
+			area->nr_pages = i;
+			goto fail;
+		}
+		area->pages[i] = page;
+		if (gfpflags_allow_blocking(gfp_mask))
+			cond_resched();
+	}
+
+	if (map_vm_area(area, prot, pages))
+		goto fail;
+	return area->addr;
+
+fail:
+	warn_alloc_failed(gfp_mask, order,
+			  "vmalloc: allocation failure, allocated %ld of %ld bytes\n",
+			  (area->nr_pages*PAGE_SIZE), area->size);
+	vfree(area->addr);
+	return NULL;
+}
+```
+
 该函数首先计算需要申请的**内存空间页面数量nr\_pages**以及需要**存储等量页面指针的数组空间大小**，如果**该数组所需内存空间超过单个页面**的时候，将通过\_\_**vmalloc\_node()申请**，否则使用**kmalloc\_node()进行申请**。
 
 如果**存放页面管理的数组空间申请失败**，则**内存申请失败**并对前面申请的**虚拟空间！！！**还回。
 
-接着**for循环**主要是根据**页面数量**，循环**申请内存页面空间**。**物理内存空间申请成功**后，将通过**map\_vm\_area**()进行**内存映射处理**。
+接着**for循环**主要是根据**页面数量**，循环**申请内存页面空间**, 这是一个页面一个页面申请分配.
+
+**物理内存空间申请成功**后，将通过**map\_vm\_area**()进行**内存映射处理**。
 
 vmalloc不连续内存页面空间的申请分析完毕。
 
@@ -5789,6 +5850,8 @@ int munmap(void *addr, size_t length);
 - **匿名映射**：**没有映射对应的相关文件**，这种映射的**内存区域的内容会被初始化为0**.
 
 - **文件映射**：映射和实际文件相关联，通常是把**文件的内容**映射到**进程地址空间**，这样**应用程序**就可以像**操作进程地址空间**一样**读写文件**。
+
+可以看得出来, 匿名映射 文件映射都指的是虚拟地址空间
 
 最后根据文件关联性和映射区域是否共享等属性，又可以分成如下4 种情况，见表
 
@@ -6127,7 +6190,7 @@ good_area:
 	check_v8086_mode(regs, address, tsk);
 }
 NOKPROBE_SYMBOL(__do_page_fault);
-```。
+```
 
 ## 22.3 内核空间异常处理
 
@@ -7060,7 +7123,7 @@ int kswapd_run(int nid)
 }
 ```
 
-kswapd传递的**参数是pg\_data\_t数据结构 **。
+kswapd传递的**参数是pg\_data\_t数据结构**。
 
 ```c
 [include/linux/mmzone.h]

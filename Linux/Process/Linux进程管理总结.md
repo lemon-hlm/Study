@@ -583,11 +583,13 @@ enum pid_type
 
 **线程组组长（也叫主线程**）的TGID与其PID相同；一个**进程没有使用线程**，则其TGID与PID也**相同**。
 
-该枚举没有包括线程组ID, 因为task\_struct已经有指向线程组的指针
+该枚举没有包括线程组ID, 因为task\_struct已经线程组ID
 
 ```c
-struct task_struct{
-    struct task_struct *group_leader;
+struct task_struct
+{
+    pid_t pid;  
+    pid_t tgid; 
 }
 ```
 
@@ -805,7 +807,7 @@ task\_struct结构信息
 | ------------- |:-------------|
 | pid | 指该进程的**进程描述符**。在**fork函数**中对其进行**赋值**的 |
 | tgid | 指该进程的**线程描述符**。在linux内核中对线程并没有做特殊的处理，还是由task\_struct来管理。所以从内核的角度看， **用户态的线程本质上还是一个进程**。对于**同一个进程**（用户态角度）中不同的线程其tgid是相同的，但是pid各不相同。 **主线程即group\_leader**（主线程会创建其他所有的子线程）。如果是单线程进程（用户态角度），它的pid等于tgid。|
-| group\_leader | 除了在**多线程的模式下指向主线程**，还有一个用处，当一些**进程组成一个群组**时（**PIDTYPE\_PGID**)， 该域指向该**群组的leader** |
+| group\_leader | 除了在**多线程的模式下指向主线程！！！**，还有一个用处，当一些**进程组成一个群组**时（**PIDTYPE\_PGID**)， 该域指向该**进程群组！！！的leader** |
 | pids | pids[0]是PIDTYPE\_PID类型的,指向自己的PID结构, 其余指向了**相应群组的leader的PID结构**,也就是组长的PID结构 |
 | nsproxy | 指针指向**namespace相关的域**，通过nsproxy域可以知道**该task\_struct属于哪个pid\_namespace** |
 
