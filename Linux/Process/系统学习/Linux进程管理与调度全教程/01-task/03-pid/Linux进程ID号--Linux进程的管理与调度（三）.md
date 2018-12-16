@@ -446,6 +446,8 @@ struct task_struct
     pid_t tgid; //thread group id
     struct task_struct *group_leader; // threadgroup leader
     struct pid_link pids[PIDTYPE_MAX];  
+    struct list_head thread_group;
+    struct list_head thread_node;
     struct nsproxy *nsproxy;
 };
 
@@ -475,10 +477,25 @@ struct upid
 
 对于struct upid，nr表示在**该命名空间**所分配的**进程的ID**，ns指向是该ID所属的命名空间，**pid\_chain 表示在该命名空间的散列表**。
 
-- 进程的结构体是task\_struct,**一个进程对应一个task\_struct结构体(一对一**).**一个进程**会有**PIDTYPE\_MAX个(3个)pid\_link结构体(一对多**),这**三个结构体中的pid**分别指向①该进程对应的**进程本身(PIDTYPE\_PID**)的真实的pid结构体();②该进程的**进程组(PIDTYPE\_PGID)的组长本身**的pid结构体;③该进程的**会话组(PIDTYPE\_SID)的组长**本身的pid结构体,所以**一个真实的进程只会有一个自身真实的pid结构体**
+- 进程的结构体是task\_struct,**一个进程对应一个task\_struct结构体(一对一**).**一个进程**会有**PIDTYPE\_MAX个(3个)pid\_link结构体(一对多**),这**三个结构体中的pid**分别指向①该进程对应的**进程本身(PIDTYPE\_PID**)的真实的pid结构体();②该进程的**进程组(PIDTYPE\_PGID)的组长本身**的pid结构体;③该进程的**会话组(PIDTYPE\_SID)的组长**本身的pid结构体,所以**一个真实的进程只会有一个自身真实的pid结构体**; **thread\_group**指向的是该线程所在**线程组的链表头**; thread\_node是**线程组中的结点**. 
 - 这三个pid\_link结构体里面有个哈希节点node,因为进程组、会话组等的存在,这个**node用来链接同一个组的进程task\_struct**,指向的是task\_struct中的pid\_link的node
 - pid结构体(不是一个ID号)代表**一个真实的进程(某个组的组长的pid也是这个结构体,因为组长也是真实的进程,也就有相应的真实的pid结构体,而组长身份是通过task\_struct引的**),所以里面会有①**该进程真实所处命名空间的level**;②**PIDTYPE\_MAX个(3个)散列表头**,tasks[PIDTYPE\_PID]指向自身进程(因为PIDTYPE\_PID是PID类型),如果该进程是进程组组长,那么tasks[PIDTYPE\_PGID]就是这个散列表的表头,指向下一个进程的相应组变量pids[PIDTYPE\_PGID]的node,如果该进程是会话组组长,那么tasks[PIDTYPE\_SID]就是这个散列表的表头,指向下一个进程的相应组变量pids[PIDTYPE\_SID]的node;③由于一个进程可能会呈现在多个pid命名空间,所以有该进程在其他命名空间中的信息结构体upid的数组,每个数组项代表一个
 - 结构体upid的数组number[1],**数组项个数取决于该进程pid的level值**,**每个数组项代表一个命名空间**,这个就是用来一个PID可以属于不同的命名空间,nr值表示该进程在该命名空间的pid值,ns指向该信息所在的命名空间,pid\_chain属于哈希表的节点.系统有一个pid\_hash[],通过pid在某个命名空间的nr值哈希到某个表项,如果多个nr值哈希到同一个表项,将其加入链表,这个节点就是upid的pid\_chain
+
+遍历线程所在线程组的所有线程函数while\_each\_thread(p, t)使用了:
+
+```c
+static inline struct task_struct *next_thread(const struct task_struct *p)
+{
+	return list_entry_rcu(p->thread_group.next,
+			      struct task_struct, thread_group);
+}
+
+#define while_each_thread(g, t) \
+	while ((t = next_thread(t)) != g)
+```
+
+扫描同一个**进程组**的可以, 扫描与current\->pids\[PIDTYPE\_PGID\](这是进程组组长pid结构体)对应的PIDTYPE\_PGID类型的散列表(因为是进程组组长,所以其真实的pid结构体中tasks[PIDTYPE\_PGID]是这个散列表的表头)中的每个PID链表
 
 举例来说，在**level 2**的**某个命名空间**上新建了一个进程，分配给它的**pid为45**，映射到**level 1的命名空间**，分配给它的**pid为134**；再映射到**level 0的命名空间**，分配给它的**pid为289**，对于这样的例子，如图所示为其表示：
 

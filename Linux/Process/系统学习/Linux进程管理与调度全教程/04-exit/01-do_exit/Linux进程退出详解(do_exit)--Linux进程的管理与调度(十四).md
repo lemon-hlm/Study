@@ -167,7 +167,22 @@ do\_group\_exit()函数杀死**属于current线程组**的**所有进程**。它
 
 2. 否则，设置**进程的SIGNAL\_GROUP\_EXIT标志**并把**终止代号**放到current\->signal\->group\_exit\_code字段。
 
-3. 调用**zap\_other\_threads**()函数**杀死current线程组中的其它进程**。为了完成这个步骤，函数扫描与**current->tgid(这是线程组组长真实的pid结构体)对应的PIDTYPE\_TGID类型**的**散列表(因为是线程组组长,所以其真实的pid结构体中task[PIDTYPE\_TGID]是散列表的表头)中的每个PID链表**，向表中所有**不同于current的进程发送SIGKILL信号**，结果，**所有这样的进程都将执行do\_exit()函数，从而被杀死**。
+3. 调用**zap\_other\_threads**()函数**杀死current线程组中的其它进程**。为了完成这个步骤，函数扫描当前线程所在线程组的链表，向表中所有**不同于current的进程发送SIGKILL信号**，结果，**所有这样的进程都将执行do\_exit()函数，从而被杀死**。
+
+遍历线程所在线程组的所有线程函数while\_each\_thread(p, t)使用了:
+
+```c
+static inline struct task_struct *next_thread(const struct task_struct *p)
+{
+	return list_entry_rcu(p->thread_group.next,
+			      struct task_struct, thread_group);
+}
+
+#define while_each_thread(g, t) \
+	while ((t = next_thread(t)) != g)
+```
+
+同一个进程组的可以, 扫描与current\->pids\[PIDTYPE\_PGID\](这是进程组组长pid结构体)对应的PIDTYPE\_PGID类型的散列表(因为是进程组组长,所以其真实的pid结构体中tasks[PIDTYPE\_PGID]是这个散列表的表头)中的每个PID链表
 
 4. 调用**do\_exit**()函数，把进程的终止代码传递给它。正如我们将在下面看到的，**do\_exit()杀死进程而且不再返回**。
 

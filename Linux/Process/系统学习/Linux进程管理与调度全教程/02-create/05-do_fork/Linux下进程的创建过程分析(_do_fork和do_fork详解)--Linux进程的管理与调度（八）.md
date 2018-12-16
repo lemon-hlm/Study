@@ -326,6 +326,9 @@ long _do_fork(unsigned long clone_flags,
     if (unlikely(trace))
         ptrace_event_pid(trace, pid);
   	
+  	/* 如果设置了 CLONE_VFORK 则将父进程插入等待队列，
+  	并挂起父进程直到子进程释放自己的内存空间
+  	*/
     /*  如果是 vfork，将父进程加入至等待队列，等待子进程完成  */
     if (clone_flags & CLONE_VFORK) {
         if (!wait_for_vfork_done(p, &vfork))
@@ -339,6 +342,8 @@ long _do_fork(unsigned long clone_flags,
     return nr;
 }
 ```
+
+如果是vfork调用，需要阻塞父进程，直到子进程执行exec
 
 ## 6.2 copy\_process流程
 
