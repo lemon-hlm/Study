@@ -5007,16 +5007,94 @@ if(s->refcount)为false的分支中，
 
 类似伙伴系统机制，按照**内存块的2\^order**来创建多个slab描述符，例如16B、32B 、64B 、128B 、…、32MB等大小，系统会分别创建名为kmalloc\-16、kmalloc\-32、kmalloc\-64...的slab描述符，这在**系统启动**时在**create\_kmalloc\_caches()函数**中完成。
 
+```c
+[mm/slab_common.c]
+void __init create_kmalloc_caches(unsigned long flags)
+{
+	int i;
+
+	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
+		if (!kmalloc_caches[i])
+			new_kmalloc_cache(i, flags);
+
+		if (KMALLOC_MIN_SIZE <= 32 && !kmalloc_caches[1] && i == 6)
+			new_kmalloc_cache(1, flags);
+		if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[2] && i == 7)
+			new_kmalloc_cache(2, flags);
+	}
+
+	/* Kmalloc array is now usable */
+	slab_state = UP;
+
+#ifdef CONFIG_ZONE_DMA
+	for (i = 0; i <= KMALLOC_SHIFT_HIGH; i++) {
+		struct kmem_cache *s = kmalloc_caches[i];
+
+		if (s) {
+			int size = kmalloc_size(i);
+			char *n = kasprintf(GFP_NOWAIT,
+				 "dma-kmalloc-%d", size);
+
+			BUG_ON(!n);
+			kmalloc_dma_caches[i] = create_kmalloc_cache(n,
+				size, SLAB_CACHE_DMA | flags);
+		}
+	}
+#endif
+}
+```
+
 例如**分配30Byte**的一个**小内存块**，可以用“kmalloc(30，GFP\_KERNEL)”，那么系统会从**名为“kmalloc\-32**”的**slab描述符**中**分配一个对象**出来。
 
 除极少例外，其长度都是**2的幂次**，长度的范围从**2\^5=32B**（用于**页大小为4KiB的计算机**）或**64B**（所有其他计算机）,到**225B**. 上界也可以更小，是由**KMALLOC\_MAX\_SIZE**设置,后者**根据系统页大小和最大允许的分配阶**计算:
 
 ```cpp
+[include/asm-generic/page.h]
+#define PAGE_SHIFT	12
+
+[include/linux/mmzone.h]
+#ifndef CONFIG_FORCE_MAX_ZONEORDER
+#define MAX_ORDER 11
+#else
+#define MAX_ORDER CONFIG_FORCE_MAX_ZONEORDER
+#endif
+#define MAX_ORDER_NR_PAGES (1 << (MAX_ORDER - 1))
+
 [slab.h]
-#define KMALLOC_SHIFT_HIGH ((MAX_ORDER + PAGE_SHIFT -1) <= 25 ? \
-(MAX_ORDER + PAGE_SHIFT -1) : 25)
-#define KMALLOC_MAX_SIZE (1UL << KMALLOC_SHIFT_HIGH)
-#define KMALLOC_MAX_ORDER (KMALLOC_SHIFT_HIGH -PAGE_SHIFT)
+#define KMALLOC_SHIFT_HIGH	((MAX_ORDER + PAGE_SHIFT - 1) <= 25 ? \
+				(MAX_ORDER + PAGE_SHIFT - 1) : 25)
+#define KMALLOC_SHIFT_MAX	KMALLOC_SHIFT_HIGH // 23 25
+#ifndef KMALLOC_SHIFT_LOW
+#define KMALLOC_SHIFT_LOW	5
+#endif
+#endif
+
+#ifdef CONFIG_SLUB
+#define KMALLOC_SHIFT_HIGH	(PAGE_SHIFT + 1)
+#define KMALLOC_SHIFT_MAX	(MAX_ORDER + PAGE_SHIFT) //23
+#ifndef KMALLOC_SHIFT_LOW
+#define KMALLOC_SHIFT_LOW	3
+#endif
+#endif
+
+#ifdef CONFIG_SLOB
+#define KMALLOC_SHIFT_HIGH	PAGE_SHIFT
+#define KMALLOC_SHIFT_MAX	30
+#ifndef KMALLOC_SHIFT_LOW
+#define KMALLOC_SHIFT_LOW	3
+#endif
+#endif
+
+/* Maximum allocatable size */
+#define KMALLOC_MAX_SIZE	(1UL << KMALLOC_SHIFT_MAX)
+/* Maximum size for which we actually use a slab cache */
+#define KMALLOC_MAX_CACHE_SIZE	(1UL << KMALLOC_SHIFT_HIGH)
+/* Maximum order allocatable via the slab allocagtor */
+#define KMALLOC_MAX_ORDER	(KMALLOC_SHIFT_MAX - PAGE_SHIFT)
+
+#ifndef KMALLOC_MIN_SIZE
+#define KMALLOC_MIN_SIZE (1 << KMALLOC_SHIFT_LOW)
+#endif
 ```
 
 每次**调用kmalloc**时,内核找到**最适合的缓存**,并从中**分配一个对象**满足请求(如果没有刚好适合的缓存，则分配稍大的对象，但不会分配更小的对象).
