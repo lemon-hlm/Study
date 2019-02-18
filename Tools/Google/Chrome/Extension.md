@@ -1,3 +1,5 @@
 - Tampermonkey：油猴，脚本管理工具
 - OneTab：一键杀死谷歌浏览器中所有标签页并通过提示恢复部分
+- chrome增强软件: https://shuax.com/project/greenchrome/
 - stylish：网站主题和皮肤
+- Ghelper: 翻墙
