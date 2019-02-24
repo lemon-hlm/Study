@@ -1,3 +1,7 @@
 默认布局:
 
 ![config](./images/7.png)
+
+![config](./images/8.png)
+
+![config](./images/9.png)

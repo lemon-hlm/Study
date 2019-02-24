@@ -8,6 +8,8 @@ Exuberant Ctags中文手册：http://easwy.com/blog/archives/exuberant-ctags-chi
 
 像IDE一样使用vim专栏：[spacevim](https://zhuanlan.zhihu.com/SpaceVim)
 
+SpaceVim: https://spacevim.org/cn/
+
 我使用的插件包括：
 
 - ctags：直接安装

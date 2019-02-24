@@ -1,6 +1,6 @@
 # 办公工具使用
 
-- 本地文件搜索: Everything, Listray(更好)
+- 本地文件搜索: Everything, Listary(更好)
 - Xshell、Xftp：终端仿真与文件传输
 - Sublime text 3：文本编辑器
 - Beyond Compare：代码、文件比较合并
@@ -25,7 +25,7 @@
 - 上交国家精品资源共享课：http://share.onlinesjtu.com/
 - 清华国家精品课：http://www.tsinghua.edu.cn/publish/newthu/newthu_cnt/education/edu-1-4.html
 - gvim：Windows等多平台vim工具
-- chrome的VPN插件：[tunnello](https://tunnello.com)
+- chrome的VPN插件：[tunnello](https://tunnello.com), Ghelper
 - IBM中文开发者社区：[IBM developerWorks](https://www.ibm.com/developerworks/cn/)，包含开发教程、工具和社区
 - 玲珑学院：线上学习平台，http://ifrog.cc/
 - PDF word PPT互相免费转换：https://smallpdf.com/

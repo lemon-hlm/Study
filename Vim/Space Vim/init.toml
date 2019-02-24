@@ -19,14 +19,17 @@
     # Disable statusline separator, if you want to use other value, please
     # install nerd fonts
 #statusline_separator = "curve"
-# statusline_inactive_separator = "bar"
+    statusline_inactive_separator = "bar"
     buffer_index_type = 0
-    windows_index_type = 1
-    enable_tabline_filetype_icon = false
-    enable_statusline_display_mode = false
+    windows_index_type = 3
+    enable_tabline_filetype_icon = true
+    enable_statusline_display_mode = true
 #statusline_unicode_symbols = false
     # Enable vim compatible mode, avoid changing origin vim key bindings
     vimcompatible = true
+    guifont = "SauceCodePro Nerd Font Mono:h13"
+    statusline_unicode_symbols = true
+    termguicolors = true
 
 # Enable autocomplete layer
 [[layers]]
@@ -39,5 +42,5 @@ name = 'shell'
 default_position = 'top'
 default_height = 30
 
-[[layers]]
-name = "lang#python"
+#[[layers]]
+#name = "lang#python"

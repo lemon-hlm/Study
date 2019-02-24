@@ -6,3 +6,4 @@ cp .SpaceVim/mode/basic.toml .SpaceVim.d/init.toml
 
 基本信息见: https://spacevim.org/cn/quick-start-guide/
 
+# 2 
