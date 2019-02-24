@@ -4,4 +4,4 @@
 
 ![config](./images/8.png)
 
-![config](./images/9.png)
+![config](./images/9.jpeg)
