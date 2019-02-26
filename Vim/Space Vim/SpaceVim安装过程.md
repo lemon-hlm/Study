@@ -2,7 +2,9 @@
 
 在特定终端(比如MobaXterm, Xshell等), 还需要设置终端的字体.
 
-参照: https://github.com/Gabirel/Hack-SpaceVim/blob/master/zh_CN/installation/installation-for-linux.md#%E5%9C%A8linux%E4%B8%8A%E5%AE%89%E8%A3%85spacevim
+参照(重要): https://github.com/Gabirel/Hack-SpaceVim/blob/master/zh_CN/installation/installation-for-linux.md#%E5%9C%A8linux%E4%B8%8A%E5%AE%89%E8%A3%85spacevim
+
+常见问题
 
 # 1 安装Python2和3
 
@@ -13,6 +15,8 @@ make install > install.log
 ```
 
 # 2 安装vim
+
+参照: https://github.com/Valloric/YouCompleteMe/wiki/Building-Vim-from-source
 
 1. 下载最新vim并安装
 
@@ -26,6 +30,8 @@ cd vim8/src
 下面关于Python的参数可以查看python安装时候的日志查看
 
 ```
+./configure --with-features=huge --enable-multibyte --enable-rubyinterp=yes --enable-pythoninterp=yes --with-python-config-dir=/lib64/python2.7/config --enable-python3interp=yes --with-python3-config-dir=/usr/lib64/python3.6/config-3.6m-x86_64-linux-gnu  --enable-perlinterp=yes --enable-luainterp=yes --enable-gui=gtk2 --enable-cscope 
+	   
 ./configure --with-features=huge --enable-multibyte --enable-pythoninterp=yes --enable-python3interp=yes --enable-luainterp=yes --with-python-config-dir=/usr/lib64/python2.7/config/ --with-python3-config-dir=/usr/local/lib/python3.6/config-3.6m-x86_64-linux-gnu --enable-perlinterp=yes --enable-luainterp=yes --enable-cscope --prefix=/usr --enable-fail-if-missing --with-lua-prefix=/usr/local
 ```
 
@@ -96,7 +102,7 @@ curl -sLf https://spacevim.org/cn/install.sh | bash -s -- -h
 
 SpaceVim 默认启用了Powerline 字体，默认的的字体文件是：[SourceCodePro Nerd Font Mono](https://github.com/ryanoasis/nerd-fonts/releases/download/v2.0.0/SourceCodePro.zip), 推荐个人也使用这个
 
-当然如果终端不识别这个, 可以使用 DejaVu Sans Mono for PowerLine 字体
+当然如果终端不识别这个, 可以使用 Source Code Pro for Powerline或者DejaVu Sans Mono for PowerLine 字体
 
 参考链接: https://spacevim.org/cn/documentation/
 
@@ -152,3 +158,15 @@ windows直接复制字体进相应目录即可
 # 3 配置相关
 
 通过rpmfind查找一个global的rpm安装
+
+或者通过yum源安装
+
+```
+yum install cscope global
+```
+
+# 4 项目相关
+
+参照gtags的使用
+
+https://spacevim.org/cn/layers/gtags/

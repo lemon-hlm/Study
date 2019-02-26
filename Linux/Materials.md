@@ -16,6 +16,8 @@ Linux专栏：[http://zhuanlan.zhihu.com/LearningLinux](http://zhuanlan.zhihu.co
 
 http://blog.csdn.net/unclerunning/article/category/6189110
 
+https://segmentfault.com/u/wuyangchun/articles?page=2&sort=vote
+
 https://blog.csdn.net/chenyu105
 
 http://www.360doc.com/userhome/12892305
