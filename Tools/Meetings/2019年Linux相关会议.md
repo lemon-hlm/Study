@@ -6,7 +6,8 @@
 |KVM Forum|10月30日\~11月1日|法国 里昂|KVM虚拟化年度会议, 讨论KVM虚拟化技术相关情况以及未来规划|https://events.linuxfoundation.org/events/kvm\-forum\-2019/|
 |中国内核开发者大会|预计10月中旬|大陆某地(待定)|中国内核开发者每年一度的大会, 内容对标上面的OSS, 国内内核相关人员多会到场|http://www.ckernel.org/|
 |KubeCon CloudNativeCon|11月18日\~11月21日|美国 加利福尼亚|云原生技术年度会议, Kubernetes云容器编排, GPU和Kubernetes扩展AI工作负载等|https://events.linuxfoundation.org/events/kubecon\-cloudnativecon\-north\-america\-2019/|
-|OpenStack峰会|4月29日～5月2日|美国 丹佛|openstack年度会议|https://www.openstack.org/summit/denver-2019/|
-|Red Hat Summit 2019|红帽系统/centos的性能调优, openstack管理, 容器和Kubernetes
+|OpenStack峰会|4月29日～5月2日|美国 丹佛|openstack年度会议|https://www.openstack.org/summit/denver\-2019/|
+|Red Hat Summit 2019|5月7日至9日|红帽系统/centos的性能调优, openstack管理, 容器和Kubernetes最佳实践和框架|https://www.redhat.com/en/summit/2019|
+
 
 
