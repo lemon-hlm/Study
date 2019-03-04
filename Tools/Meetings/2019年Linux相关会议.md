@@ -5,4 +5,4 @@
 |Linux Storage, Filesystem & Memory Management Summit |4月30日~5月2日|美国 波多黎各|聚集了Linux存储、文件系统和内存管理模块最重要的开发、研究专家和内核子系统maintainer|https://events.linuxfoundation.org/events/linux-storage-filesystem-mm-summit-2019/attend/|
 |KVM Forum|10月30日~11月1日|法国 里昂|KVM虚拟化年度会议, 讨论KVM虚拟化技术相关情况以及未来规划|https://events.linuxfoundation.org/events/kvm-forum-2019/|
 |中国内核开发者大会|预计10月底|大陆某地|中国内核开发者每年一度的大会, 内容对标上面的OSS, 国内内核相关人员多会到场|http://www.ckernel.org/|
-|
+|KubeCon CloudNativeCon|11月18日~11月21日|美国 加利福尼亚|原生云社区关于
