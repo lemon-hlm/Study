@@ -8,6 +8,9 @@
 |KubeCon CloudNativeCon|11月18日\~11月21日|美国 加利福尼亚|云原生技术年度会议, Kubernetes云容器编排, GPU和Kubernetes扩展AI工作负载等|https://events.linuxfoundation.org/events/kubecon\-cloudnativecon\-north\-america\-2019/|
 |OpenStack峰会|4月29日～5月2日|美国 丹佛|openstack年度会议|https://www.openstack.org/summit/denver\-2019/|
 |Red Hat Summit 2019|5月7日至9日|红帽系统/centos的性能调优, openstack管理, 容器和Kubernetes最佳实践和框架|https://www.redhat.com/en/summit/2019|
+|Open Source Summit North Ameria|8月21日至23日|美国|Linux、容器、云计算、网络、无服务器、边缘计算和AI. 也包括培训课程和Docker和rkt容器等技术的实践研讨会，以及Kubernetes和Prometheus容器监控。只要是开源的，全包括在内。|https://events.linuxfoundation.org/events/open%20source-summit-north-america-2019%20/|
+
+
 
 
 
