@@ -16,16 +16,13 @@ InfiniBand通过**交换机**在**节点之间**直接创建一个**私有的、
 
 # 2 什么是InfiniBand架构
 
-InfiniBand Architecture(IBA)是为硬件实现而设计的，而TCP则是为软件实现而设计的。因此，InfiniBand是比TCP更轻的传输服务，因为它不需要重新排序数据包，因为较低的链路层提供有序的数据包交付。传输层只需要检查包序列并按顺序发送包。
+**InfiniBand Architecture(IBA**)是为**硬件实现而设计**的，而**TCP**则是**为软件实现而设计**的。因此，InfiniBand是比TCP更轻的传输服务，因为它不需要重新排序数据包，因为较低的链路层提供有序的数据包交付。传输层只需要检查包序列并按顺序发送包。
 
 进一步，因为InfiniBand提供以信用为基础的流控制(发送方节点不给接收方发送超出广播 “信用“大小的数据包),传输层不需要像TCP窗口算法那样的包机制确定最优飞行包的数量。这使得高效的产品能够以非常低的延迟和可忽略的CPU利用率向应用程序交付56、100Gb/s的数据速率。
 
 IB是以通道(Channel)为基础的双向、串行式传输，在连接拓朴中是采用交换、切换式结构(Switched Fabric)，所以会有所谓的IBA交换器(Switch)，此外在线路不够长时可用IBA中继器(Repeater)进行延伸。
 
-
-
 而每一个IBA网络称为子网(Subnet)，每个子网内最高可有65,536个节点(Node)，IBASwitch、IBA Repeater仅适用于Subnet范畴，若要通跨多个IBA Subnet就需要用到IBA路由器(Router)或IBA网关器(Gateway)。
 
-
-
 至于节点部分，Node想与IBA Subnet接轨必须透过配接器(Adapter)，若是CPU、内存部分要透过HCA (Host Channel Adapter)，若为硬盘、I/O部分则要透过TCA (Target Channel Adapter)，之后各部分的衔接称为联机(Link)。上述种种构成了一个完整的IBA。
+
