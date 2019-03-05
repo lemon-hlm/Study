@@ -30,3 +30,5 @@ InfiniBand 采用**双队列程序提取技术**, 使**应用程序**直接将**
 
 每个端口具有一个GUID(Globally Unique Identifier)，GUID是全局唯一的，类似于以太网MAC地址。运行过程中，子网管理代理（SMA）会给端口分配一个本地标识（LID），LID仅在子网内部有用。
 
+![config](./images/2.png)
+
