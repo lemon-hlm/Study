@@ -95,7 +95,7 @@ InfiniBand规范定义了3个基本组件：
 - 一个目标信道适配器(TCA)
 - 一个网络交换机
 
-InfiniBand技术通过连接HCAs、TCAs、交换机和路由器而发挥作用（见 图 ）。位于页节点的InfiniBand设备是产生和使用信息包的信道适配器。
+InfiniBand技术通过连接HCAs、TCAs、交换机和路由器而发挥作用（见图）。位于叶节点的InfiniBand设备是**产生和使用信息包(中间节点只是转发**)的信道适配器。
 
 ![config](./images/14.gif)
 
