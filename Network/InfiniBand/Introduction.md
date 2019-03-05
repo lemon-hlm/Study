@@ -42,11 +42,13 @@ QP是infiniband的一个重要概念，它是指**发送队列**和**接收队�
 
 Infiniband的网络拓扑结构如图，其**组成单元**主要分为**四类**：
 
-（1）HCA（Host Channel Adapter），它是连接内存控制器和TCA的桥梁；
+（1）HCA（Host Channel Adapter），它是连接**内存控制器**和**TCA**的桥梁；
 
-（2）TCA(Target Channel Adapter)，它将I/O设备（例如网卡、SCSI控制器）的数字信号打包发送给HCA；
+（2）TCA(Target Channel Adapter)，它将**I/O设备（例如网卡、SCSI控制器**）的**数字信号打包**发送给**HCA**；
 
 （3）Infiniband link，它是连接HCA和TCA的光纤，InfiniBand架构允许硬件厂家以1条、4条、12条光纤3种方式连结TCA和HCA；
 
 （4）交换机和路由器；
+
+![config](./images/4.jpg)
 
