@@ -65,9 +65,15 @@ InfiniBand与其他网络的核心区别有两个方面。
 
 其次，InfiniBand支持远程直接内存访问（RDMA），具备在完全卸载CPU和操作系统的方式下，在两个远程系统的存储区域移动数据的能力。作为原始总线设计遗留下来的的理念，如要对分布式系统进行扩展，RDMA是关键。有RDMA的InfiniBand具备多种关键优势。
 
-
 InfiniBand的物理信号技术一直超前于其他网络技术，使得它都具备比其他任何网络协议都大的带宽。目前以56Gb/s运行的InfiniBand，其发展路线预计达到EDR(100Gb/s)的
-时间是一年半左右。InfiniBand这一名称本身即说明了其无限的带宽发展前景。InfiniBand路线图设计的目的就是要保证单个链路的带宽能够保持在大于PCIExpress(PCIe)总线数据速率的水平。这样，系统就能够以其可产生的最快速度，在网络间移动数据，并且不会因出现因网络限制而导致的备份。这样，就可让 InfiniBand具备无限带宽。
+时间是一年半左右。InfiniBand这一名称本身即说明了其无限的带宽发展前景。InfiniBand路线图设计的目的就是要保证**单个链路的带宽**能够保持在**大于PCIExpress(PCIe)总线数据速率(**的水平。这样，系统就能够以其可产生的最快速度，在网络间移动数据，并且不会因出现因网络限制而导致的备份。这样，就可让 InfiniBand具备无限带宽。
+
+而InfiniBand弥补了PCI总线的上述缺陷，以一种全新的方式把网络中常见的交换和路由概念引入了I/O子系统当中。在InfiniBand架构中，最主要的硬件部分就是HCA、TCA和IB Link。HCA是Host Channel Adapter的缩写，它是连接内存控制器和TCA的桥梁；TCA是Target Channel Adapter的缩写，它将I/O设备（例如网卡、SCSI控制器）的数字信号打包发送给HCA；IB Link包含了连接HCA和TCA的光纤以及光纤交换机、路由器等整套设备。在现阶段一根光纤的传输速率是2.5Git/s，支持全双工模式，并且可以把多条光纤捆绑到一起工作，目前的模式有x4、x12两种。
+一言以蔽之，InfiniBand架构的核心就是把I/O子系统从服务器主机中剥离出去，通过光纤介质，采用基于交换的端到端的传输模式连接它们
+
+下面我们看一下在InfiniBand架构中，数据是如何传输的。如图所示，InfiniBand架构相比PCI总线的方式更前进了一步，在内存控制器与HCA之间是通过Hub Link方式相连的，目前的标准是Hub Interface2.0。Hub Link是一种串行总线，它的工作频率可以提到很高，而它最大的优势就是良好的可扩展性，主板设计师可以根据需要的总线带宽在内存控制器和HCA之间选择多条Hub Link总线。
+
+![config](./images/13.jpg)
 
 IB是以**通道为基础**的**双向**、**串行式传输**，在**连接拓朴**中是采用**交换、切换式结构(Switched Fabric**)，在线路不够长时可用**IBA中继器(Repeater**)进行延伸。**每一个IBA网络**称为**子网(Subnet**)，**每个子网**内最高可有**65,536个节点(Node**)，IBA Switch、IBARepeater仅适用于Subnet范畴，若要通跨多个IBASubnet就需要用到IBA路由器(Router)或IBA网关器(Gateway)。
 
