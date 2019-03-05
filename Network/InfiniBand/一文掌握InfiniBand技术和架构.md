@@ -81,7 +81,7 @@ InfiniBand的**物理信号技术(！！！**)一直超前于其他网络技术�
 
 ![config](./images/13.jpg)
 
-![config](./images/.jpg)
+![config](./images/4.jpg)
 
 从图中可以看出，**数据**从**网卡或硬盘**首先通过**各自的I/O控制器**送给**TCA**，再由**TCA**通过**InfiniBand Link**经过**交换机**甚至**路由器送到HCA**，再通过**Hub Link总线**送到内存控制器
 
