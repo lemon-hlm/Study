@@ -75,6 +75,6 @@ InfiniBand也是一种**分层协议(类似TCP/IP协议**)，每层负责不同�
 
 ![config](./images/12.png)
 
-根据我们对高性能计算系统的认识，Infiniband 的低延迟、高带宽和原生的通道架构对于此类系统来说是非常重要的。**低延迟的 Infiniband 网络**可以在**保证性能**的前提下，**增大集群的规模**。**通道 I/O 架构**则可以提供可扩展的存储带宽性能，并且支持并行文件系统。
+根据我们对高性能计算系统的认识，Infiniband 的低延迟、高带宽和原生的通道架构对于此类系统来说是非常重要的。**低延迟的 Infiniband 网络**可以在**保证性能**的前提下，**增大集群的规模**。**通道 I/O 架构**则可以提供**可扩展的存储带宽性能**，并且**支持并行文件系统**。
 
-说道 HPC 就不能不提 MPI(Message Passing Interface)。MPI 是应用在 HPC 上主要的消息传递中间件标准。虽然 MPI 也可以应用在基于共享内存的系统上，但是，更多的则是被当作通讯层用作连接集群中的不同节点。MPI 通讯服务依赖于底层的提供节点间真正信息传递的消息服务。Infiniband 作为一种底层消息服务为 MPI 层提供了被称为 RDMA（Remote Direct Memory Access）的消息服务。在上面一章，我们讨论了应用程序之间如何通过 Infiniband 通讯架构来实现直接的通讯，从而绕过操作系统。在 HPC 中，我们可以认为 HPC 应用程式调用 MPI 通讯服务，而 MPI 则利用底层的 RDMA 消息服务实现节点间通讯。这就使得，HPC 应用程序具备了不消耗集群 CPU 资源的通讯能力。IBM PE（Parallel Environment）软件作为一种 MPI 标准的实现，加入了对 Infiniband 的支持。本文后面的章节会介绍如何启用 PE 对 Infiniband 的支持。
+说道 HPC 就不能不提 **MPI(Message Passing Interface**)。MPI 是应用在 HPC 上主要的**消息传递中间件标准**。虽然 MPI 也可以应用在**基于共享内存的系统**上，但是，更多的则是**被当作通讯层**用作**连接集群中的不同节点(！！！**)。MPI 通讯服务依赖于底层的提供节点间真正信息传递的消息服务。Infiniband 作为一种底层消息服务为 MPI 层提供了被称为 RDMA（Remote Direct Memory Access）的消息服务。在上面一章，我们讨论了应用程序之间如何通过 Infiniband 通讯架构来实现直接的通讯，从而绕过操作系统。在 HPC 中，我们可以认为 HPC 应用程式调用 MPI 通讯服务，而 MPI 则利用底层的 RDMA 消息服务实现节点间通讯。这就使得，HPC 应用程序具备了不消耗集群 CPU 资源的通讯能力。IBM PE（Parallel Environment）软件作为一种 MPI 标准的实现，加入了对 Infiniband 的支持。本文后面的章节会介绍如何启用 PE 对 Infiniband 的支持。
