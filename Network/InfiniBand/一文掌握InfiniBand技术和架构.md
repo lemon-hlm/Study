@@ -54,6 +54,21 @@ TCP/IP具有转发损失的数据包的能力，但是由于要不断地确认�
 
 ![config](./images/11.png)
 
+那么，什么是InfiniBand，为什么越来越多的存储系统销售商不管是背板还是网络连接都要用到此连接？InfiniBand是一种在2000年左右出现的，基于标准的网络协
+议。InfiniBand整合了NGIO和Future I/O(**PCI总线替换技术的竞争技术**)这两种技术。
+
+从设计上来说，InfiniBand具有总线技术的特点，但实际上，PCI Express——最终产生的PCI替换技术，从概述上来说是InfiniBand的一个子集。
+
+InfiniBand与其他网络的核心区别有两个方面。
+
+首先，其采用的是一种基于信用的流量控制系统（这个和PCIE一致）。即在接收对象未保证充足的缓冲之前，不会发送数据。这样，就使得InfiniBand成为像无损光纤通道网络架构那样的光纤通道。
+
+其次，InfiniBand支持远程直接内存访问（RDMA），具备在完全卸载CPU和操作系统的方式下，在两个远程系统的存储区域移动数据的能力。作为原始总线设计遗留下来的的理念，如要对分布式系统进行扩展，RDMA是关键。有RDMA的InfiniBand具备多种关键优势。
+
+
+InfiniBand的物理信号技术一直超前于其他网络技术，使得它都具备比其他任何网络协议都大的带宽。目前以56Gb/s运行的InfiniBand，其发展路线预计达到EDR(100Gb/s)的
+时间是一年半左右。InfiniBand这一名称本身即说明了其无限的带宽发展前景。InfiniBand路线图设计的目的就是要保证单个链路的带宽能够保持在大于PCIExpress(PCIe)总线数据速率的水平。这样，系统就能够以其可产生的最快速度，在网络间移动数据，并且不会因出现因网络限制而导致的备份。这样，就可让 InfiniBand具备无限带宽。
+
 IB是以**通道为基础**的**双向**、**串行式传输**，在**连接拓朴**中是采用**交换、切换式结构(Switched Fabric**)，在线路不够长时可用**IBA中继器(Repeater**)进行延伸。**每一个IBA网络**称为**子网(Subnet**)，**每个子网**内最高可有**65,536个节点(Node**)，IBA Switch、IBARepeater仅适用于Subnet范畴，若要通跨多个IBASubnet就需要用到IBA路由器(Router)或IBA网关器(Gateway)。
 
 每个节点(Node) 必须透过配接器(Adapter)与IBA Subnet连接，节点CPU、内存要透过HCA(Host Channel Adapter)连接到子网；节点硬盘、I/O则要透过TCA(TargetChannel Adapter)连接到子网，这样的一个拓扑结构就构成了一个完整的IBA。
