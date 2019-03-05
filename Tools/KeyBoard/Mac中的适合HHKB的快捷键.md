@@ -31,5 +31,3 @@ Ctrl+l 类似 clear 命令效果
 Ctrl+m 某些操作环境下可以当做回车（item2） 
 
 Ctrl+w 某些环境下删除前一个单词(item2)
-
-看上方
