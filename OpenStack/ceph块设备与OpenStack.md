@@ -1,0 +1,1 @@
+http://docs.ceph.org.cn/rbd/rbd-openstack/
