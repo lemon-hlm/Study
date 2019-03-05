@@ -57,3 +57,7 @@ iSER (iSCSI Extensions for RDMA)和NFSoRDMA (NFS over RDMA)，SRP (SCSI RDMA Pro
 # 5 InfiniBand管理软件
 
 OpenSM软件是符合InfiniBand的子网管理器(SM)，运行在Mellanox OFED软件堆栈进行IB 网络管理，管理控制流走业务通道，属于带内管理方式。
+
+![config](./images/7.png)
+
+OpenSM包括子网管理器、背板管理器和性能管理器三个组件，绑定在交换机内部的必备部件。提供非常完备的管理和监控能力，如设备自动发现、设备管理、Fabric可视化、智能分析、健康监测等等。
