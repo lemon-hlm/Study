@@ -44,3 +44,5 @@ cmd+shift+4+space（空格键）：对选定的某个应用程序界面窗口进
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
+- 快捷键设置
+
