@@ -36,4 +36,17 @@ InfiniBand 采用**双队列程序提取技术**, 使**应用程序**直接将**
 
 QP是infiniband的一个重要概念，它是指**发送队列**和**接收队列的组合**，用户调用API**发送接收数据**的时候，实际上是**将数据放入QP**当中，然后**以轮询的方式将QP中的请求一条条的处理**，其模式**类似于生产者\-消费者模式**。
 
+![config](./images/3.jpg)
+
+# 5 InfiniBand网络拓扑
+
+Infiniband的网络拓扑结构如图，其**组成单元**主要分为**四类**：
+
+（1）HCA（Host Channel Adapter），它是连接内存控制器和TCA的桥梁；
+
+（2）TCA(Target Channel Adapter)，它将I/O设备（例如网卡、SCSI控制器）的数字信号打包发送给HCA；
+
+（3）Infiniband link，它是连接HCA和TCA的光纤，InfiniBand架构允许硬件厂家以1条、4条、12条光纤3种方式连结TCA和HCA；
+
+（4）交换机和路由器；
 
