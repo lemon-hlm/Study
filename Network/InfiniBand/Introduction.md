@@ -52,3 +52,4 @@ Infiniband的网络拓扑结构如图，其**组成单元**主要分为**四类*
 
 ![config](./images/4.jpg)
 
+# 4 HCA和
