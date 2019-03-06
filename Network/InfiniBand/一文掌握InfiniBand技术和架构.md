@@ -121,6 +121,13 @@ IB的传输方式和介质相当灵活，在设备机内可用印刷电路板的
 
 InfiniBand也是一种**分层协议(类似TCP/IP协议**)，每层负责不同的功能，下层为上层服务，不同层次相互独立。 IB采用IPv6的报头格式。其数据包报头包括本地路由标识符LRH，全局路由标示符GRH，基本传输标识符BTH等。
 
+![config](./images/15.jpeg)
+
+Mellanox OFED是一个单一的软件堆栈，包括驱动、中间件、用户接口，以及一系列的标准协议IPoIB、SDP、SRP、iSER、RDS、DAPL(Direct Access Programming Library)，支持MPI、Lustre/NFS over RDMA等协议，并提供Verbs编程接口；Mellanox OFED由开源OpenFabrics组织维护。
+
+当然，Mellanox OFED软件堆栈是承载在InfiniBand硬件和协议之上的，软件通协议和硬件进行有效的数据传输。
+
+
 
 
 
