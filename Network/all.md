@@ -1,3 +1,3 @@
 网络通讯协议图:
 
-![config](./images/网络通讯协议图.png)
+![config](./images/3.png)
