@@ -1,1 +1,2 @@
-https://segmentfault.com/a/1190000009251098
+- https://segmentfault.com/a/1190000009251098
+- https://www.ibm.com/developerworks/cn/linux/1310_xiawc_networkdevice/

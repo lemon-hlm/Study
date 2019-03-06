@@ -4,6 +4,8 @@ https://www.ibm.com/developerworks/cn/aix/library/1105_luoming_infiniband/index.
 
 https://www.cnblogs.com/e-shannon/p/7122659.html
 
+https://weibo.com/p/1001603936363903889917?mod=zwenzhang
+
 Infiniband开放标准技术简化并加速了**服务器之间的连接**,同时支持**服务器**与**远程存储和网络设备的连接(！！！**)。OpenFabrics Enterprise Distribution (**OFED**)是一组开源软件驱动、核心内核代码、中间件和**支持InfiniBand Fabric的用户级接口程序**。
 
 2005年由OpenFabrics Alliance(OFA)发布第一个版本。**Mellanox OFED**用于Linux，Windows (WinOF)，包括各种诊断和性能工具，用于**监视InfiniBand网络**的运行情况，包括监视传输带宽和监视Fabric内部的拥塞情况。
