@@ -111,12 +111,6 @@ InfiniBand技术通过连接HCAs、TCAs、交换机和路由器而发挥作用�
 
 **交换机**放置在**信道适配器之间**。它们使几个甚至几千个**InfiniBand叶节点**可以在**任意位置互连进一个单一网络**，该网络同时支持**多个连接**。**交换机既不产生，也不使用信息包！！！**。它们只是根据信息包中路由器报头的**目的地地址**，将其传送过去。交换机对于节点而言是透明的，同时**信息包完整无损地经过交换机网**。
 
-
-
-
-
-
-
 IB是以**通道为基础**的**双向**、**串行式传输**，在**连接拓朴**中是采用**交换、切换式结构(Switched Fabric**)，在线路不够长时可用**IBA中继器(Repeater**)进行延伸。**每一个IBA网络**称为**子网(Subnet**)，**每个子网**内最高可有**65,536个节点(Node**)，IBA Switch、IBARepeater仅适用于Subnet范畴，若要通跨多个IBASubnet就需要用到IBA路由器(Router)或IBA网关器(Gateway)。
 
 每个节点(Node) 必须透过配接器(Adapter)与IBA Subnet连接，节点CPU、内存要透过HCA(Host Channel Adapter)连接到子网；节点硬盘、I/O则要透过TCA(TargetChannel Adapter)连接到子网，这样的一个拓扑结构就构成了一个完整的IBA。
