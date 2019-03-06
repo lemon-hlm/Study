@@ -6,5 +6,6 @@ https://mp.weixin.qq.com/s/AVnU8sh6eLGDE9cIvIMssA
 
 首先看看一个典型互联网服务端处理网络请求的典型过程。由图可以看到，主要处理步骤包括：
 
-![config](./images/3.jpeg)
+![config](./images/1.jpeg)
+
 
