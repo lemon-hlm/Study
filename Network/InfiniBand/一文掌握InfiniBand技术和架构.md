@@ -81,6 +81,10 @@ InfiniBand的**物理信号技术(！！！**)一直超前于其他网络技术�
 
 下面我们看一下在InfiniBand架构中，数据是如何传输的。如图所示，InfiniBand架构相比PCI总线的方式更前进了一步，在**内存控制器**与**HCA**之间是通过**Hub Link方式！！！**相连的，目前的标准是**Hub Interface2.0**。infiniband的HCA和内存控制器如何相连，以前是Hub link，现在吧呢？猜测还是PCIE吧
 
+没有研究infiniband和PCIE的竞争，价格优劣以及性能优劣，好像低端的超算的使用PCIE。
+
+没有评估infiniband和omini-path,cray的技术，市场，价格的。
+
 **Hub Link**是一种**串行总线**，它的工作频率可以提到很高，而它最大的优势就是**良好的可扩展性**，主板设计师可以根据需要的总线带宽在**内存控制器**和**HCA之间**选择**多条Hub Link总线**。
 
 ![config](./images/13.jpg)
