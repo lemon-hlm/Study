@@ -149,3 +149,9 @@ git log --pretty='%aN' | sort -u | wc -l
 ### 提交次数统计
 
 git log --oneline | wc -l 
+
+## 14 http不用输入用户名密码
+
+```
+git remote set-url origin git+ssh://git@github.com/Gerry-Lee/Study.git
+```
