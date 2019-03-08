@@ -19,4 +19,7 @@
 - 数据结构与算法的C语言实现：https://github.com/Wangchangchung/Data-structure
 
 - 维基百科
+
 - https://github.com/kdn251/interviews
+
+- 快速攻克算法和数据结构: https://www.zhihu.com/lives/795264798257479680
