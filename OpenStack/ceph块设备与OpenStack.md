@@ -18,7 +18,23 @@ ceph osd pool create vm 128
 
 # 2 配置Openstack的ceph客户端
 
-## 2.1 
+## 2.1 安装ceph客户端软件
+
+在运行 glance-api 的节点上你需要 librbd 的 Python 绑定：
+
+```
+sudo apt-get install python-rbd
+sudo yum install python-rbd
+```
+
+在 nova-compute 、 cinder-backup 和 cinder-volume 节点上，要安装 Python 绑定和客户端命令行工具：
+
+```
+sudo apt-get install ceph-common
+sudo yum install ceph
+```
+
+## 2.2 ceph配置文件
 
 运行着 glance\-api 、 cinder-volume 、 nova-compute 或 cinder-backup 的主机被当作 Ceph 客户端，它们都需要 ceph.conf 文件。
 
