@@ -267,4 +267,13 @@ $ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/cinder/cin
 
 配置Nova使用Ceph的nova用户使用vm存储池：
 
+```
+$ mkdir -p /etc/kolla/config/nova
 
+$ cat /etc/kolla/config/nova/nova-compute.conf
+[libvirt]
+images_rbd_pool=vm
+images_type=rbd
+images_rbd_ceph_conf=/etc/ceph/ceph.conf
+rbd_user=nova
+```
