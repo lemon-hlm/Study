@@ -158,7 +158,9 @@ exported keyring for client.nova
 
 ## 1.3 同步ceph配置文件
 
-
+```
+ssh {部署节点} sudo tee /etc/ceph/ceph.conf </etc/ceph/ceph.conf
+```
 
 # 2 配置Kolla-Ansible
 
@@ -183,4 +185,6 @@ nova_backend_ceph: "yes"
 
 ## 2.2 配置Glance
 
+配置glance使用glance用户以及images存储池
 
+在kolla\-ansible配置目录下
