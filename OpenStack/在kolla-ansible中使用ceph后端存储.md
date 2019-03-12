@@ -61,3 +61,16 @@ $ ceph auth get-or-create client.glance
 	key = AQC+3IVc37ZBEhAAS/F/FgSoGn5xYsclBs8bQg==
 
 $ ceph auth caps client.glance mon 'allow r' osd 'allow rwx pool=images'
+updated caps for client.glance
+```
+
+查看并保存glance用户的keyring文件
+
+```
+$ ceph auth get client.glance
+[client.glance]
+	key = AQC+3IVc37ZBEhAAS/F/FgSoGn5xYsclBs8bQg==
+	caps mon = "allow r"
+	caps osd = "allow rwx pool=images"
+
+$ 
