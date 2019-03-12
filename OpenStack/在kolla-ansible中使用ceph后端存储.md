@@ -73,4 +73,17 @@ $ ceph auth get client.glance
 	caps mon = "allow r"
 	caps osd = "allow rwx pool=images"
 
+$ ceph auth get client.glance -o /var/openstack/ceph/ceph.client.glance.keyring
+exported keyring for client.glance
+```
+
+### 1.2.2 创建Cinder用户
+
+创建cinder-volume用户, 并给volume存储池权限
+
+```
+$ ceph auth get-or-create client.cinder-volume
+[client.cinder-volume]
+	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
+
 $ 
