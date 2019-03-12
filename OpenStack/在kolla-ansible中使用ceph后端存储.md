@@ -22,8 +22,8 @@ pool 'images' created
 用于保存cinder的卷
 
 ```
-$ ceph osd pool create volumes 32 32
-pool 'volumes' created
+$ ceph osd pool create volume 32 32
+pool 'volume' created
 ```
 
 用于保存cinder的卷备份
@@ -38,19 +38,26 @@ pool 'backups' created
 用于保存虚拟机系统卷
 
 ```
-$ ceph osd pool create vms 32 32
-pool 'vms' created
+$ ceph osd pool create vm 32 32
+pool 'vm' created
 ```
 
 ### 1.1.4 查看pool
 
 ```
 $ sudo ceph osd lspools
-3 volumes,4 vms,5 images,6 rbd,7 backups,
+3 volume,4 vm,5 images,6 rbd,7 backups,
 ```
 
 ## 1.2 创建用户
 
 ### 1.2.1 创建Glance用户
 
-创建glance用户, 并给images存储池
+创建glance用户, 并给images存储池访问权限
+
+```
+$ ceph auth get-or-create client.glance
+[client.glance]
+	key = AQC+3IVc37ZBEhAAS/F/FgSoGn5xYsclBs8bQg==
+
+$ ceph auth caps client.glance mon 'allow r' osd 'allow rwx pool=images'
