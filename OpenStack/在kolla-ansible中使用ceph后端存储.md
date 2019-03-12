@@ -202,7 +202,7 @@ rbd_store_user = glance
 rbd_store_ceph_conf = /etc/ceph/ceph.conf
 ```
 
-新增glance的ceph客户端配置和glance用户的keyring文件
+新增glance的ceph客户端配置和glance用户的keyring文件, 参照ceph.conf文件内容
 
 ```
 $ cat /etc/kolla/config/glance/ceph.conf
@@ -214,7 +214,7 @@ auth_cluster_required = cephx
 auth_service_required = cephx
 auth_client_required = cephx
 
-$ cp /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/glance/
+$ cp /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/glance/ceph.client.glance.keyring
 ```
 
 ## 2.3 配置Cinder
@@ -252,5 +252,7 @@ restore_discard_excess_bytes = true
 新增Cinder的卷服务和卷备份服务的Ceph客户端配置和KeyRing文件：
 
 ```
+$ cp /etc/kolla/config/glance/ceph.conf /etc/kolla/config/cinder/ceph.conf
 
+$ mkdir -p /etc/kolla/config/cinder/cinder-backup/ 
 
