@@ -42,4 +42,15 @@ $ ceph osd pool create vms 32 32
 pool 'vms' created
 ```
 
-### 1.1
+### 1.1.4 查看pool
+
+```
+$ sudo ceph osd lspools
+3 volumes,4 vms,5 images,6 rbd,7 backups,
+```
+
+## 1.2 创建用户
+
+### 1.2.1 创建Glance用户
+
+创建glance用户, 并给images存储池
