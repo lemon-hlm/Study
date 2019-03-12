@@ -10,6 +10,8 @@ OpenStack 里有三个地方可以和 Ceph 块设备结合：
 
 ### 1.1.1 创建镜像pool
 
+用于保存Glance镜像
+
 ```
 $ ceph osd pool create images 32 32
 pool 'images' created
@@ -20,3 +22,24 @@ pool 'images' created
 用于保存cinder的卷
 
 ```
+$ ceph osd pool create volumes 32 32
+pool 'volumes' created
+```
+
+用于保存cinder的卷备份
+
+```
+$ ceph osd pool create backups 32 32
+pool 'backups' created
+```
+
+### 1.1.3 创建虚拟机pool
+
+用于保存虚拟机系统卷
+
+```
+$ ceph osd pool create vms 32 32
+pool 'vms' created
+```
+
+### 1.1
