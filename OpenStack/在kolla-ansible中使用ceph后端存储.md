@@ -107,3 +107,27 @@ exported keyring for client.cinder-volume
 创建cinder-backup用户, 并给volume和backups存储池权限
 
 ```
+$ ceph auth get-or-create client.cinder-backup
+[client.cinder-backup]
+	key = AQDH3oVcaAfVJxAAMvwYBYLKNP86OkT6lPNMRQ==
+
+$ ceph auth caps client.cinder-backup mon 'allow r' osd 'allow rwx pool=volume, allow rwx pool=backups'
+updated caps for client.cinder-backup
+```
+
+查看并保存cinder-backup用户的KeyRing文件
+
+```
+$ ceph auth get client.cinder-backup
+exported keyring for client.cinder-backup
+[client.cinder-backup]
+	key = AQDH3oVcaAfVJxAAMvwYBYLKNP86OkT6lPNMRQ==
+	caps mon = "allow r"
+	caps osd = "allow rwx pool=volume, allow rwx pool=backups"
+
+$ ceph auth get client.cinder-backup -o /opt/ceph/deploy/ceph.client.cinder-backup.keyring
+exported keyring for client.cinder-backup
+```
+
+
+
