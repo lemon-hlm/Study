@@ -156,4 +156,6 @@ $ ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
 exported keyring for client.nova
 ```
 
-#
+# 2 配置Kolla-Ansible
+
+
