@@ -158,4 +158,7 @@ exported keyring for client.nova
 
 # 2 配置Kolla-Ansible
 
+安装AutoStack配置, ceph相关
+
+```
 
