@@ -158,7 +158,11 @@ exported keyring for client.nova
 
 # 2 配置Kolla-Ansible
 
-安装AutoStack配置, ceph相关
+按照AutoStack配置, ceph相关配置如下
+
+在配置阶段, 修改global.yml的下面配置项
 
 ```
+# 禁止在当前节点部署ceph
+enable_ceph: "no"
 
