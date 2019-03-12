@@ -254,5 +254,17 @@ restore_discard_excess_bytes = true
 ```
 $ cp /etc/kolla/config/glance/ceph.conf /etc/kolla/config/cinder/ceph.conf
 
-$ mkdir -p /etc/kolla/config/cinder/cinder-backup/ 
+$ mkdir -p /etc/kolla/config/cinder/cinder-backup/ /etc/kolla/config/cinder/cinder-volume/
+
+$ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/cinder/cinder-backup/ceph.client.cinder-volume.keyring
+
+$ cp -v /etc/ceph/ceph.client.cinder-backup.keyring /etc/kolla/config/cinder/cinder-backup/ceph.client.cinder-backup.keyring
+
+$ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/cinder/cinder-volume/ceph.client.cinder-volume.keyring
+```
+
+## 2.4 配置nova
+
+配置Nova使用Ceph的nova用户使用vm存储池：
+
 
