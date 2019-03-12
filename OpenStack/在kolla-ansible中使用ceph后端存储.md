@@ -160,7 +160,7 @@ exported keyring for client.nova
 
 ```
 $ ssh {部署节点} sudo tee /etc/ceph/ceph.conf </etc/ceph/ceph.conf
-$ scp /var/openstack/ceph/* root@{部署节点}:
+$ scp /var/openstack/ceph/* root@{部署节点}:/etc/ceph/
 ```
 
 # 2 配置Kolla-Ansible
@@ -213,7 +213,15 @@ mon_host = 10.10.31.26
 auth_cluster_required = cephx
 auth_service_required = cephx
 auth_client_required = cephx
+
+$ cp /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/glance/
 ```
+
+## 2.3 配置Cinder
+
+配置Cinder卷服务使用Ceph的cinder-volume用户使用volume存储池，Cinder卷备份服务使用Ceph的cinder-backup用户使用backups存储池：
+
+
 
 
 
