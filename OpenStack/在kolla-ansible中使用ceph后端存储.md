@@ -187,4 +187,22 @@ nova_backend_ceph: "yes"
 
 配置glance使用glance用户以及images存储池
 
-在kolla\-ansible配置目录下
+在kolla\-ansible配置目录下创建目录glance
+
+```
+$ mkdir -p /etc/kolla/config/glance
+
+$ cat /etc/kolla/config/glance/glance-api.conf
+[glance_store]
+stores = rbd
+default_store = rbd
+rbd_store_pool = images
+rbd_store_user = glance
+rbd_store_ceph_conf = /etc/ceph/ceph.conf
+```
+
+新增glance的ceph客户端配置和glance用户的keyring文件
+
+
+
+
