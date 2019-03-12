@@ -156,9 +156,13 @@ $ ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
 exported keyring for client.nova
 ```
 
+## 1.3 同步ceph配置文件
+
+
+
 # 2 配置Kolla-Ansible
 
-按照AutoStack配置, 在其配置阶段做下面关于ceph的工作
+按照AutoStack配置, 在部署节点, 其配置阶段做下面关于ceph的工作
 
 ## 2.1 配置服务
 
