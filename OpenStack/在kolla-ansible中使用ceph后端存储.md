@@ -277,3 +277,13 @@ images_type=rbd
 images_rbd_ceph_conf=/etc/ceph/ceph.conf
 rbd_user=nova
 ```
+
+新增nova的客户端配置和keyring文件
+
+```
+$ cp -v /etc/kolla/config/glance/ceph.conf /etc/kolla/config/nova/ceph.conf
+
+$ cp -v /etc/ceph/ceph.client.nova.keyring config/nova/ceph.client.nova.keyring
+
+$ cp -v /etc/ceph/ceph.client.cinder-volume.keyring config/nova/ceph.client.cinder.keyring
+
