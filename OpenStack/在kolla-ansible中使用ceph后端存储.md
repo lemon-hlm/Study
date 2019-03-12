@@ -283,7 +283,13 @@ rbd_user=nova
 ```
 $ cp -v /etc/kolla/config/glance/ceph.conf /etc/kolla/config/nova/ceph.conf
 
-$ cp -v /etc/ceph/ceph.client.nova.keyring config/nova/ceph.client.nova.keyring
+$ cp -v /etc/ceph/ceph.client.nova.keyring /etc/kolla/config/nova/ceph.client.nova.keyring
 
-$ cp -v /etc/ceph/ceph.client.cinder-volume.keyring config/nova/ceph.client.cinder.keyring
+$ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/nova/ceph.client.cinder.keyring
+```
 
+注: 这里的nova使用cinder-volume的keyring文件必须改为cinder.keyring
+
+# 3 部署
+
+按照AutoStack的Deployment开始部署
