@@ -158,9 +158,9 @@ exported keyring for client.nova
 
 # 2 配置Kolla-Ansible
 
-按照AutoStack配置, ceph相关配置如下
+按照AutoStack配置, 在其配置阶段做下面关于ceph的工作
 
-## 2.1 配置
+## 2.1 配置服务
 
 在配置阶段, 修改global.yml的下面配置项
 
@@ -176,4 +176,7 @@ glance_backend_ceph: "yes"
 cinder_backend_ceph: "yes"
 nova_backend_ceph: "yes"
 ```
+
+## 2.2 配置Glance
+
 
