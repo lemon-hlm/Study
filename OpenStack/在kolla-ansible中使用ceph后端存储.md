@@ -125,9 +125,35 @@ exported keyring for client.cinder-backup
 	caps mon = "allow r"
 	caps osd = "allow rwx pool=volume, allow rwx pool=backups"
 
-$ ceph auth get client.cinder-backup -o /opt/ceph/deploy/ceph.client.cinder-backup.keyring
+$ ceph auth get client.cinder-backup -o /var/openstack/ceph/ceph.client.cinder-backup.keyring
 exported keyring for client.cinder-backup
 ```
 
+### 1.2.3 创建Nova用户
 
+创建nova用户, 并给vm存储池权限
 
+```
+$ ceph auth get-or-create client.nova
+[client.nova]
+	key = AQA334VczU4tOBAAdvUyAv2wsn02MdQiW4o8sg==
+
+$ ceph auth caps client.nova mon 'allow r' osd 'allow rwx pool=vm'
+updated caps for client.nova
+```
+
+查看并保存nova用户的keyring文件
+
+```
+$ sudo ceph auth get client.nova
+exported keyring for client.nova
+[client.nova]
+	key = AQA334VczU4tOBAAdvUyAv2wsn02MdQiW4o8sg==
+	caps mon = "allow r"
+	caps osd = "allow rwx pool=vm"
+
+$ ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
+exported keyring for client.nova
+```
+
+#
