@@ -221,7 +221,36 @@ $ cp /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/glance/
 
 配置Cinder卷服务使用Ceph的cinder-volume用户使用volume存储池，Cinder卷备份服务使用Ceph的cinder-backup用户使用backups存储池：
 
+```
+$ mkdir -p /etc/kolla/config/cinder
 
+$ cat /etc/kolla/config/cinder/cinder-volume.conf
+[DEFAULT]
+enabled_backends=rbd-1
 
+[rbd-1]
+rbd_ceph_conf=/etc/ceph/ceph.conf
+rbd_user=cinder-volume
+backend_host=rbd:volume
+rbd_pool=volume
+volume_backend_name=rbd-1
+volume_driver=cinder.volume.drivers.rbd.RBDDriver
+rbd_secret_uuid = {{ cinder_rbd_secret_uuid }}
+
+$ cat /etc/kolla/config/cinder/cinder-backup.conf
+[DEFAULT]
+backup_ceph_conf=/etc/ceph/ceph.conf
+backup_ceph_user=cinder-backup
+backup_ceph_chunk_size = 134217728
+backup_ceph_pool=backups
+backup_driver = cinder.backup.drivers.ceph
+backup_ceph_stripe_unit = 0
+backup_ceph_stripe_count = 0
+restore_discard_excess_bytes = true
+```
+
+新增Cinder的卷服务和卷备份服务的Ceph客户端配置和KeyRing文件：
+
+```
 
 
