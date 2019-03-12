@@ -160,9 +160,20 @@ exported keyring for client.nova
 
 按照AutoStack配置, ceph相关配置如下
 
+## 2.1 配置
+
 在配置阶段, 修改global.yml的下面配置项
 
 ```
 # 禁止在当前节点部署ceph
 enable_ceph: "no"
+
+# 开启cinder服务
+enable_cinder: "yes"
+
+# 开启cinder glance和nova的后端ceph功能
+glance_backend_ceph: "yes"
+cinder_backend_ceph: "yes"
+nova_backend_ceph: "yes"
+```
 
