@@ -156,10 +156,11 @@ $ ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
 exported keyring for client.nova
 ```
 
-## 1.3 同步ceph配置文件
+## 1.3 同步ceph配置文件以及用户keyring文件
 
 ```
-ssh {部署节点} sudo tee /etc/ceph/ceph.conf </etc/ceph/ceph.conf
+$ ssh {部署节点} sudo tee /etc/ceph/ceph.conf </etc/ceph/ceph.conf
+$ scp /var/openstack/ceph/* root@{部署节点}:
 ```
 
 # 2 配置Kolla-Ansible
@@ -203,6 +204,16 @@ rbd_store_ceph_conf = /etc/ceph/ceph.conf
 
 新增glance的ceph客户端配置和glance用户的keyring文件
 
+```
+$ cat /etc/kolla/config/glance/ceph.conf
+[global]
+fsid = 9853760c-b976-4e3c-8228-9f7a76c336bc
+mon_initial_members = BJ-IDC1-10-10-31-26
+mon_host = 10.10.31.26
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+```
 
 
 
