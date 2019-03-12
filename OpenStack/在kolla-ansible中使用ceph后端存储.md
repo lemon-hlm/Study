@@ -86,4 +86,24 @@ $ ceph auth get-or-create client.cinder-volume
 [client.cinder-volume]
 	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
 
-$ 
+$ ceph auth caps client.cinder-volume mon 'allow r' osd 'allow rwx pool=volume'
+updated caps for client.cinder-volume
+```
+
+查看并保存cinder-volume用户的keyring文件
+
+```
+$ sudo ceph auth get client.cinder-volume
+exported keyring for client.cinder-volume
+[client.cinder-volume]
+	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
+	caps mon = "allow r"
+	caps osd = "allow rwx pool=volume"
+
+$ ceph auth get client.cinder-volume -o /var/openstack/ceph/ceph.client.cinder-volume.keyring
+exported keyring for client.cinder-volume
+```
+
+创建cinder-backup用户, 并给volume和backups存储池权限
+
+```
