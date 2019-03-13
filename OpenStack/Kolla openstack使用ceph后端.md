@@ -182,6 +182,9 @@ enable_cinder: "yes"
 glance_backend_ceph: "yes"
 cinder_backend_ceph: "yes"
 nova_backend_ceph: "yes"
+
+# cinder backup功能
+enable_cinder_backup: "yes"
 ```
 
 根据自己的情况, 修改global.yml文件
