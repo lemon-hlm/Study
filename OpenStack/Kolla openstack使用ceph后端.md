@@ -60,7 +60,7 @@ $ ceph auth get-or-create client.glance
 [client.glance]
 	key = AQC+3IVc37ZBEhAAS/F/FgSoGn5xYsclBs8bQg==
 
-$ ceph auth caps client.glance mon 'allow r' osd 'allow rwx pool=images'
+$ sudo ceph auth caps client.glance mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=images'
 updated caps for client.glance
 ```
 
