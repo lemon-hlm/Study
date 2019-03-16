@@ -28,4 +28,4 @@ Intel凌动®️处理器, 主要是低功耗频率低, 有X3、X5、X7系列, �
 
 
 
-比如i7\-8700K, 全称是intel®️Core™ i7\-
+比如i7\-8700K, 全称是intel®️Core™ i7\-8700K processor, 表示为"第八代英特尔酷睿i7\-8700K处理器". 其中intel
