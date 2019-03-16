@@ -78,6 +78,8 @@ CPU常见核心如下
 
 AMD架构如下图
 
+![config](./imags/11.jpeg)
+
 
 
 
