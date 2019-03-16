@@ -8,6 +8,8 @@ CPU的参数主要有: 系列、核心、频率、架构、缓存
 
 # 1.1 系列
 
+![config](./imags/1.jpeg)
+
 Intel常见的系列有: 凌动ATOM、奔腾PENTIUM、赛扬CELERON、酷睿CORE、至强XEON
 
 Intel凌动®️处理器, 主要是低功耗频率低, 有X3、X5、X7系列, 主要应用在移动端设备上
