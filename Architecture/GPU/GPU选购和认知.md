@@ -92,7 +92,7 @@ A卡早期命名比较混乱, 这里列举近两代架构, 织女星和北极星
 
 ![config](./imags/13.jpeg)
 
-我们常能听到显卡双卡交火(AMD crossfire)和多卡互联
+# 7.3 AMD的双卡交火(AMD crossfire)和N卡的多卡互联(NVIDIA nvlink)
 
 
 
