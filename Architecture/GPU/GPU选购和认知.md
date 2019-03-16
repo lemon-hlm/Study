@@ -24,9 +24,12 @@ AMD的全球首款7nm工艺的Radeon VII显卡.
 
 ![config](./imags/3.jpeg)
 
-AMD的Vega系列显卡和英伟达的TITanV显卡, 显卡采用的都是HBM2显存, 相对于新出的GDDR6显存来说两者各有各的优势, 显存结构不一样, HBM2显存优势主要在于高位宽、低能耗以及面积占用小, 其成本也比较大, 而GDDR相对于上代的显存来说, 
+![config](./imags/4.jpeg)
 
-![config](./imags/.jpeg)
+AMD的Vega系列显卡和英伟达的TITanV显卡, 显卡采用的都是HBM2显存, 相对于新出的GDDR6显存来说两者各有各的优势, 显存结构不一样, HBM2显存优势主要在于高位宽、低能耗以及面积占用小, 其成本也比较大, 而GDDR相对于上代的显存来说, 频率增高、位宽增大、容量增大。
+
+![config](./imags/5.jpeg)
+
 
 
 
