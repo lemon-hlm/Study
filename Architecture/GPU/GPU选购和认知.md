@@ -6,4 +6,6 @@ AMD的全球首款7nm工艺的Radeon VII显卡.
 
 
 
+AMD是品牌, Radeon VII是显卡名称, 16GB代表显存容量, HBM2是显存类型, 1400\-1750MHz是
+
 
