@@ -39,3 +39,8 @@ defaults write com.apple.finder AppleShowAllFiles -bool false
 
 你只需选中目标文件，然后使用 Command+C 复制，然后用 Command +Option+V 将其移动到目标目录。
 
+# 3 重命名功能
+
+选中文件, 然后回车, 重命名后回车确认.
+
+就是用鼠标点击一下文件，就是选中文件，然后隔一秒钟之后我们再用鼠标点击你刚才选中的文件的文件名就可以对这个文件进行重命名了
