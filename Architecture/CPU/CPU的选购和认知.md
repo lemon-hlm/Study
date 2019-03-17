@@ -10,33 +10,33 @@ CPU的参数主要有: 系列、核心、频率、架构、缓存
 
 ### 1.1.1 Intel
 
-![config](./imags/1.jpeg)
+![config](./images/1.jpeg)
 
 Intel常见的系列有: 凌动ATOM、奔腾PENTIUM、赛扬CELERON、酷睿CORE、至强XEON
 
-![config](./imags/2.jpeg)
+![config](./images/2.jpeg)
 
 Intel凌动®️处理器, 主要是低功耗频率低, 有X3、X5、X7系列, 主要应用在移动端设备上
 
-![config](./imags/3.jpeg)
+![config](./images/3.jpeg)
 
 奔腾®️/赛扬®️, 主要应用在入门级的电脑设备, 一般都是品牌机里比较常见, 例如联想和惠普, 适用于简单的办公处理和网页浏览.
 
-![config](./imags/4.jpeg)
+![config](./images/4.jpeg)
 
 酷睿®️, 主流消费市场的CPU, 有i3、i5、i7、i9系列. i3系列定位入门级, 用于简单的基础办公、浏览网页和影音娱乐之类的场景, 适合日常家用; i5系列定位在中端级别, 同样适用于i3上面的使用场景, 还能做一些设计类和简单视频剪辑工作, 能玩中大型之类的游戏, 适合一般游戏用户; i7系列定位在高端级别, 同样适用i5的使用场景, 能处理大型的工作需求, 需要用到强大的多线程性能, 3D渲染、剪辑、硬件测试、软件多开、大型游戏玩家之类的用户; i9系列, 2017年5月在"台北国际电脑展"上发布, 目前为止最多可以有18个核, 主要面向高级游戏玩家和高性能需求者.
 
 酷睿系列产品型号
 
-![config](./imags/5.jpeg)
+![config](./images/5.jpeg)
 
 比如i7\-8700K, 全称是intel®️Core™ i7\-8700K processor, 表示为"第八代英特尔酷睿i7\-8700K处理器". 其中intel®️代表品牌名称, Core™代表品牌系列, i7代表品牌系列的等级, 四位数字8700中第一位"8"代表第八代酷睿处理器, 后面三位数字可理解为型号(SKU编号), 后缀字母K则代表不锁倍频且更高性能, 通常来说就是可以超频, processor是处理器英文
 
 常见的一些后缀解释, 如图所示.
 
- ![config](./imags/6.jpeg)
+ ![config](./images/6.jpeg)
 
-英特尔的字母u表示低电压版本。h表示主板和CPU为不可拆卸的。具体其他说明去英特尔官方去看。
+英特尔的字母u表示低电压版本。具体其他说明去英特尔官方去看。
 
 至强系列, 定位高端市场, 有**E、W、D、Platinum四个系列**, 主要应用于服务器和工作站级别, 针对不同种类的企业服务器、功能强大的移动工作站、入门级工作站、存储服务器、云工作站等应用。
 
@@ -44,7 +44,7 @@ Intel凌动®️处理器, 主要是低功耗频率低, 有X3、X5、X7系列, �
 
 AMD处理器分为5个类, 分别是锐龙(RYZEN)、速龙(ATHLON)、APU(A\-SERIES)、打桩机(FX\-SERIES)、霄龙
 
-![config](./imags/8.jpeg)
+![config](./images/8.jpeg)
 
 主要说明主流消费市场的锐龙系列处理器, 2017年2月21日发布, 分别是R3、R5、R7以及线程撕裂者THREADRIPPER系列, 前三款分别对标Intel的i3、i5、i7系列. 线程撕裂者, 2990WX, 高达32核心64线程, 面对专业的剪辑、渲染、特效等专业工作, 甚至开发了一个专门玩游戏的GAME MODE模式, 开启之后规格会变成8核16线程, 游戏兼容性更友好.
 
@@ -62,7 +62,7 @@ APU系列曾被广泛应用在笔记本上, 其自带的核心显卡和独显双
 
 CPU常见核心如下
 
-![config](./imags/9.jpeg)
+![config](./images/9.jpeg)
 
 ## 1.3 频率
 
@@ -76,24 +76,24 @@ CPU常见核心如下
 
 架构相当于一个环境, 每一代新发布的CPU都会更新一个架构, 同时也在不断提升CPU的性能, 英特尔从曾经的奔腾3 Tualatin架构, 到现在第9代的Coffee Lake\-Refresh架构, 制程工艺也从130nm到现在的14nm+++, 但是从2014年第五代broadwell架构开始, 14nm制程工艺似乎阻挡了英特尔的脚步, 下图是英特尔架构图
 
-![config](./imags/10.jpeg)
+![config](./images/10.jpeg)
 
 AMD架构如下图
 
-![config](./imags/11.jpeg)
+![config](./images/11.jpeg)
 
 在2019年年初的CES2019AMD展会上, Lias苏透露了7nm制程工艺的zen2架构的锐龙处理器将会2019年中左右发布, Intel也在CES上放出了10nm制程工艺的Sunnycove微架构的处理器.
 
 不仅如此, 部分CPU架构还关系到主板的插槽底座, 如市面上常见的英特尔的LGA1151 1150及1155的接口, 还有AMD的AM4 AM3+ FM2+的接口
 
-![config](./imags/12.jpeg)
+![config](./images/12.jpeg)
 
-![config](./imags/13.jpeg)
+![config](./images/13.jpeg)
 
 **不同接口需要对应相应的主板！！！**
 
-![config](./imags/14.jpeg)
+![config](./images/14.jpeg)
 
-![config](./imags/15.jpeg)
+![config](./images/15.jpeg)
 
 ## 1.4 缓存
