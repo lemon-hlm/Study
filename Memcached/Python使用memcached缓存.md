@@ -63,6 +63,62 @@ memcached内存管理采取预分配、分组管理的方式，分组管理就�
 - 已分配出去的page不能回收。
 - 对于key-value信息，最好不要超过1m的大小；同时信息长度最好相对是比较均衡稳定的，这样能够保障最大限度的使用内存；同时，memcached采用的LRU清理策略，合理甚至过期时间，提高命中率。
 
+# 4 使用场景
+
+key\-value能满足需求的前提下，使用memcached分布式集群是较好的选择，搭建与操作使用都比较简单；分布式集群在单点故障时，只影响小部分数据异常，目前还可以通过Magent缓存代理模式，做单点备份，提升高可用；整个缓存都是基于内存的，因此响应时间是很快，不需要额外的序列化、反序列化的程序，但同时由于基于内存，数据没有持久化，集群故障重启数据无法恢复。高版本的memcached已经支持CAS模式的原子操作，可以低成本的解决并发控制问题。
+
+# 5 安装启动
+
+```
+$ sudo apt-get install memcached
+$ memcached -m 32 -p 11211 -d
+# memcached将会以守护程序的形式启动 memcached（-d），为其分配32M内存（-m 32），并指定监听 localhost的11211端口。
+```
+
+# 6 python操作memcached
+
+在python中可通过memcache库来操作memcached，这个库使用很简单，声明一个client就可以读写memcached缓存了。
+
+## 6.1 python访问memcached
+
+```
+#!/usr/bin/env python
+
+import memcache
+
+mc = memcache.Client(['127.0.0.1:12000'],debug=0)
+
+mc.set("some_key", "Some value")
+value = mc.get("some_key")
+
+mc.set("another_key", 3)
+mc.delete("another_key")
+
+mc.set("key", "1")   # note that the key used for incr/decr must be a string.
+mc.incr("key")
+mc.decr("key")
+```
+
+然而，python-memcached默认的路由策略没有使用一致性哈希。
+
+```
+    def _get_server(self, key):
+        if isinstance(key, tuple):
+            serverhash, key = key
+        else:
+            serverhash = serverHashFunction(key)
+
+        if not self.buckets:
+            return None, None
+
+        for i in range(Client._SERVER_RETRIES):
+            server = self.buckets[serverhash % len(self.buckets)]
+            if server.connect():
+                # print("(using server %s)" % server,)
+                return server, key
+            serverhash = serverHashFunction(str(serverhash) + str(i))
+        return None, None
+```
 
 
 
