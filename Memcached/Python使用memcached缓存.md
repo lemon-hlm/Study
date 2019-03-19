@@ -55,6 +55,14 @@ slab是一个内存块，它是memcached一次申请内存的最小单位。在�
 
 memcached内存管理采取预分配、分组管理的方式，分组管理就是我们上面提到的slab class，按照chunk的大小slab被分为很多种类。内存预分配过程是怎样的呢？向memcached添加一个item时候，memcached首先会根据item的大小，来选择最合适的slab class：例如item的大小为190字节，默认情况下class 4的chunk大小为160字节显然不合适，class 5的chunk大小为200字节，大于190字节，因此该item将放在class 5中（显然这里会有10字节的浪费是不可避免的），计算好所要放入的chunk之后，memcached会去检查该类大小的chunk还有没有空闲的，如果没有，将会申请1M（1个slab）的空间并划分为该种类chunk。例如我们第一次向memcached中放入一个190字节的item时，memcached会产生一个slab class 2（也叫一个page），并会用去一个chunk，剩余5241个chunk供下次有适合大小item时使用，当我们用完这所有的5242个chunk之后，下次再有一个在160～200字节之间的item添加进来时，memcached会再次产生一个class 5的slab（这样就存在了2个pages）。
 
+# 3.3 注意事项
+
+- chunk是在page里面划分的，而page固定为1m，所以chunk最大不能超过1m。
+- chunk实际占用内存要加48B，因为chunk数据结构本身需要占用48B。
+- 如果用户数据大于1m，则memcached会将其切割，放到多个chunk内。
+- 已分配出去的page不能回收。
+- 对于key-value信息，最好不要超过1m的大小；同时信息长度最好相对是比较均衡稳定的，这样能够保障最大限度的使用内存；同时，memcached采用的LRU清理策略，合理甚至过期时间，提高命中率。
+
 
 
 
