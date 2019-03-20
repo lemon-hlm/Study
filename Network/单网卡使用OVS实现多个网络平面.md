@@ -103,7 +103,27 @@ b97e9aa2-620f-40ba-b2cd-2a5b6f46d824
 
 # 使用OVS实现单网卡多网络平面
 
+首先, 配置这个网卡的网桥使用, 记得备份哈
 
+```
+[root@controller124 ~]# cat /etc/sysconfig/network-scripts/ifcfg-br-ex
+DEVICE=br-ex
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=static
+IPADDR=10.121.2.124
+NETMASK=255.255.255.0
+GATEWAY=10.121.2.1
+DNS1=114.114.114.114
+[root@controller124 ~]# cat /etc/sysconfig/network-scripts/ifcfg-enp10s0f0
+TYPE=OVSPort
+DEVICETYPE=ovs
+DEVICE=enp10s0f0
+ONBOOT=yes
+OVS_BRIDGE=br-ex
+```
+
+然后使用分别创建网桥以及port连接
 
 ```
 [root@controller124 ~]# ovs-vsctl add-br br1
