@@ -172,6 +172,61 @@ br4
 [root@controller124 ~]# ovs-vsctl add-port br4 patch-to-br4-brex
 [root@controller124 ~]# ovs-vsctl set interface patch-to-br4-brex type=patch
 [root@controller124 ~]# ovs-vsctl set interface patch-to-br4-brex options:peer=patch-to-br4
+[root@controller ~]# ovs-vsctl show
+baea5b51-90c4-4cc2-b764-34719a29e7ac
+    Bridge br-ex
+        Port "patch-to-br3"
+            Interface "patch-to-br3"
+                type: patch
+                options: {peer="patch-to-br3-brex"}
+        Port "patch-to-br2"
+            Interface "patch-to-br2"
+                type: patch
+                options: {peer="patch-to-br2-brex"}
+        Port "patch-to-br4"
+            Interface "patch-to-br4"
+                type: patch
+                options: {peer="patch-to-br4-brex"}
+        Port "patch-to-br1"
+            Interface "patch-to-br1"
+                type: patch
+                options: {peer="patch-to-br1-brex"}
+        Port br-ex
+            Interface br-ex
+                type: internal
+    Bridge "br1"
+        Port "br1"
+            Interface "br1"
+                type: internal
+        Port "patch-to-br1-brex"
+            Interface "patch-to-br1-brex"
+                type: patch
+                options: {peer="patch-to-br1"}
+    Bridge "br4"
+        Port "br4"
+            Interface "br4"
+                type: internal
+        Port "patch-to-br4-brex"
+            Interface "patch-to-br4-brex"
+                type: patch
+                options: {peer="patch-to-br4"}
+    Bridge "br2"
+        Port "patch-to-br2-brex"
+            Interface "patch-to-br2-brex"
+                type: patch
+                options: {peer="patch-to-br2"}
+        Port "br2"
+            Interface "br2"
+                type: internal
+    Bridge "br3"
+        Port "br3"
+            Interface "br3"
+                type: internal
+        Port "patch-to-br3-brex"
+            Interface "patch-to-br3-brex"
+                type: patch
+                options: {peer="patch-to-br3"}
+    ovs_version: "2.0.0"
 
 [root@controller124 ~]# ip address add  10.121.2.134/24 dev br1
 [root@controller124 ~]# ip address add  10.121.2.135/24 dev br2
@@ -202,13 +257,13 @@ ovs-vsctl set interface patch-to-br3-brex type=patch
 ovs-vsctl set interface patch-to-br3-brex options:peer=patch-to-br3
 
 ovs-vsctl add-port br-ex patch-to-br4
-[root@controller124 ~]# ovs-vsctl set interface patch-to-br4 type=patch
-[root@controller124 ~]# ovs-vsctl set interface patch-to-br4 options:peer=patch-to-br4-brex
-[root@controller124 ~]# ovs-vsctl add-port br4 patch-to-br4-brex
-[root@controller124 ~]# ovs-vsctl set interface patch-to-br4-brex type=patch
-[root@controller124 ~]# ovs-vsctl set interface patch-to-br4-brex options:peer=patch-to-br4
+ovs-vsctl set interface patch-to-br4 type=patch
+ovs-vsctl set interface patch-to-br4 options:peer=patch-to-br4-brex
+ovs-vsctl add-port br4 patch-to-br4-brex
+ovs-vsctl set interface patch-to-br4-brex type=patch
+ovs-vsctl set interface patch-to-br4-brex options:peer=patch-to-br4
 
-[root@controller124 ~]# ip address add  10.121.2.134/24 dev br1
-[root@controller124 ~]# ip address add  10.121.2.135/24 dev br2
-[root@controller124 ~]# ip address add  10.121.2.136/24 dev br3
-[root@controller124 ~]# ip address add  10.121.2.137/24 dev br4
+ip address add  10.121.2.154/24 dev br1
+ip address add  10.121.2.155/24 dev br2
+ip address add  10.121.2.156/24 dev br3
+ip address add  10.121.2.157/24 dev br4
