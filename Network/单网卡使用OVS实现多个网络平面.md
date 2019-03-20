@@ -45,6 +45,7 @@ b97e9aa2-620f-40ba-b2cd-2a5b6f46d824
 
 
 
+# 使用
 ```
 [root@controller124 ~]# ovs-vsctl add-br br1
 [root@controller124 ~]# ovs-vsctl add-br br2
