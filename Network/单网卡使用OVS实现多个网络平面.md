@@ -121,6 +121,7 @@ IPADDR=10.121.2.124
 NETMASK=255.255.255.0
 GATEWAY=10.121.2.1
 DNS1=114.114.114.114
+ONBOOT=yes
 [root@controller124 ~]# cat /etc/sysconfig/network-scripts/ifcfg-enp10s0f0
 TYPE=OVSPort
 DEVICETYPE=ovs
