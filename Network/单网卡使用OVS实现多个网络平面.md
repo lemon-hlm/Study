@@ -103,11 +103,13 @@ b97e9aa2-620f-40ba-b2cd-2a5b6f46d824
 
 # 使用OVS实现单网卡多网络平面
 
-```
+首先, 安装openvswitch
 
 ```
+yum install openvswitch
+```
 
-首先, 配置这个网卡的网桥使用, 记得备份哈
+配置这个网卡的网桥使用, 记得备份哈
 
 ```
 [root@controller124 ~]# cat /etc/sysconfig/network-scripts/ifcfg-br-ex
@@ -176,3 +178,37 @@ br4
 [root@controller124 ~]# ip address add  10.121.2.136/24 dev br3
 [root@controller124 ~]# ip address add  10.121.2.137/24 dev br4
 ```
+
+ovs-vsctl add-port br-ex patch-to-br1
+ovs-vsctl set interface patch-to-br1 type=patch
+ovs-vsctl set interface patch-to-br1 options:peer=patch-to-br1-brex
+ovs-vsctl add-port br1 patch-to-br1-brex
+ovs-vsctl set interface patch-to-br1-brex type=patch
+ovs-vsctl set interface patch-to-br1-brex options:peer=patch-to-br1
+
+
+ovs-vsctl add-port br-ex patch-to-br2
+ovs-vsctl set interface  patch-to-br2 type=patch
+ovs-vsctl set interface patch-to-br2 options:peer=patch-to-br2-brex
+ovs-vsctl add-port br2 patch-to-br2-brex
+ovs-vsctl set interface patch-to-br2-brex type=patch
+ovs-vsctl set interface patch-to-br2-brex options:peer=patch-to-br2
+
+ovs-vsctl add-port br-ex patch-to-br3
+ovs-vsctl set interface patch-to-br3 type=patch
+ovs-vsctl set interface patch-to-br3 options:peer=patch-to-br3-brex
+ovs-vsctl add-port br3 patch-to-br3-brex
+ovs-vsctl set interface patch-to-br3-brex type=patch
+ovs-vsctl set interface patch-to-br3-brex options:peer=patch-to-br3
+
+ovs-vsctl add-port br-ex patch-to-br4
+[root@controller124 ~]# ovs-vsctl set interface patch-to-br4 type=patch
+[root@controller124 ~]# ovs-vsctl set interface patch-to-br4 options:peer=patch-to-br4-brex
+[root@controller124 ~]# ovs-vsctl add-port br4 patch-to-br4-brex
+[root@controller124 ~]# ovs-vsctl set interface patch-to-br4-brex type=patch
+[root@controller124 ~]# ovs-vsctl set interface patch-to-br4-brex options:peer=patch-to-br4
+
+[root@controller124 ~]# ip address add  10.121.2.134/24 dev br1
+[root@controller124 ~]# ip address add  10.121.2.135/24 dev br2
+[root@controller124 ~]# ip address add  10.121.2.136/24 dev br3
+[root@controller124 ~]# ip address add  10.121.2.137/24 dev br4
