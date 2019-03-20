@@ -29,8 +29,21 @@ ip address add 192.168.1.1/24 dev brname
 最后查看一个br的具体信息
 
 ```
-
+[root@compute1 ~]# ovs-vsctl show
+b97e9aa2-620f-40ba-b2cd-2a5b6f46d824
+    Bridge "br1"
+        Port "patch-to-br1-brex"
+            Interface "patch-to-br1-brex"
+                type: patch
+                options: {peer="patch-to-br1"}
+        Port "br1"
+            Interface "br1"
+                type: internal
 ```
+
+首先, 这里显示一个名为br1的桥(交换机), 这个交换机有两个接口, 一个是patch\-to\-br1\-brex, 一个是"br1". 上面说到，创建桥的时候会创建一个和桥名字一样的接口，并自动作为该桥的一个端口，那么这个虚拟接口的作用，一方面是可以作为交换机的管理端口，另一方面也是基于这个虚拟接口，实现了桥的功能。
+
+
 
 ```
 [root@controller124 ~]# ovs-vsctl add-br br1
