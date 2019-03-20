@@ -129,6 +129,11 @@ DEVICE=enp10s0f0
 ONBOOT=yes
 OVS_BRIDGE=br-ex
 ```
+重启网络服务
+
+```
+systemctl restart network
+```
 
 然后使用分别创建网桥以及port连接
 
