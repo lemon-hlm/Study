@@ -43,9 +43,68 @@ b97e9aa2-620f-40ba-b2cd-2a5b6f46d824
 
 首先, 这里显示一个名为br1的桥(交换机), 这个交换机有两个接口, 一个是patch\-to\-br1\-brex, 一个是"br1". 上面说到，创建桥的时候会创建一个和桥名字一样的接口，并自动作为该桥的一个端口，那么这个虚拟接口的作用，一方面是可以作为交换机的管理端口，另一方面也是基于这个虚拟接口，实现了桥的功能。
 
+# OVS常用操作
+
+以下操作都需要root权限运行，在所有命令中br0表示网桥名称，eth0为网卡名称。
+
+添加网桥：
+
+```
+#ovs-vsctl add-br br0
+```
+
+列出open vswitch中的所有网桥：
+
+```
+#ovs-vsctl list-br
+```
+
+判断网桥是否存在
+
+```
+#ovs-vsctl br-exists br0
+```
+
+将物理网卡挂接到网桥：
+
+```
+#ovs-vsctl add-port br0 eth0
+```
+
+列出网桥中的所有端口：
+
+```
+#ovs-vsctl list-ports br0
+```
+
+列出所有挂接到网卡的网桥：
+
+```
+#ovs-vsctl port-to-br eth0
+```
+
+查看open vswitch的网络状态：
+
+```
+#ovs-vsctl show
+```
+
+删除网桥上已经挂接的网口：
+
+```
+#vs-vsctl del-port br0 eth0
+```
+
+删除网桥：
+
+```
+#ovs-vsctl del-br br0
+```
+
+# 使用OVS实现单网卡多网络平面
 
 
-# 使用
+
 ```
 [root@controller124 ~]# ovs-vsctl add-br br1
 [root@controller124 ~]# ovs-vsctl add-br br2
