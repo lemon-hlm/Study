@@ -138,7 +138,7 @@ $ ceph auth get-or-create client.nova
 [client.nova]
 	key = AQA334VczU4tOBAAdvUyAv2wsn02MdQiW4o8sg==
 
-$ ceph auth caps client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vm'
+$ ceph auth caps client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vm, allow rwx pool=volumes, allow rwx pool=images'
 updated caps for client.nova
 ```
 
