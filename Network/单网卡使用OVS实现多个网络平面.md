@@ -1,3 +1,13 @@
+http://www.voidcn.com/article/p-ndfxasid-gr.html
+
+https://blog.csdn.net/Moolight_shadow/article/details/52909986
+
+https://blog.csdn.net/jiashanshan521/article/details/52266156
+
+http://sdnhub.cn/index.php/openv-switch-full-guide/
+
+https://blog.csdn.net/zengxiaosen/article/details/79083205
+
 在 OVS 中, 有几个非常重要的概念：
 
 - Bridge: Bridge 代表一个**以太网交换机（Switch**），一个主机中可以创建一个或者多个 Bridge 设备。
