@@ -22,7 +22,7 @@ pool 'images' created
 用于保存cinder的卷
 
 ```
-$ ceph osd pool create volume 32 32
+$ ceph osd pool create volumes 32 32
 pool 'volume' created
 ```
 
@@ -38,7 +38,7 @@ pool 'backups' created
 用于保存虚拟机系统卷
 
 ```
-$ ceph osd pool create vm 32 32
+$ ceph osd pool create vms 32 32
 pool 'vm' created
 ```
 
