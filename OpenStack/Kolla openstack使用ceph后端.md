@@ -111,7 +111,7 @@ $ ceph auth get-or-create client.cinder-backup
 [client.cinder-backup]
 	key = AQDH3oVcaAfVJxAAMvwYBYLKNP86OkT6lPNMRQ==
 
-$ ceph auth caps client.cinder-backup mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volume, allow rwx pool=backups'
+$ ceph auth caps client.cinder-backup mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=backups'
 updated caps for client.cinder-backup
 ```
 
@@ -138,7 +138,7 @@ $ ceph auth get-or-create client.nova
 [client.nova]
 	key = AQA334VczU4tOBAAdvUyAv2wsn02MdQiW4o8sg==
 
-$ ceph auth caps client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vm, allow rwx pool=volumes, allow rwx pool=images'
+$ ceph auth caps client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vms, allow rwx pool=volumes, allow rwx pool=images'
 updated caps for client.nova
 ```
 
