@@ -86,7 +86,7 @@ $ ceph auth get-or-create client.cinder-volume
 [client.cinder-volume]
 	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
 
-$ ceph auth caps client.cinder-volume mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volume'
+$ ceph auth caps client.cinder-volume mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes'
 updated caps for client.cinder-volume
 ```
 
