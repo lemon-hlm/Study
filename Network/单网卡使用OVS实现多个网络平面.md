@@ -14,6 +14,8 @@ https://blog.csdn.net/zengxiaosen/article/details/79083205
 - Port: 端口与物理交换机的端口概念类似，**每个 Port** 都隶属于**一个 Bridge**。
 - Interface: 连接到 Port 的网络接口设备。在通常情况下，Port 和 Interface 是一对一的关系, 只有在配置 Port 为 bond 模式后，Port 和 Interface 是一对多的关系。
 
+注意: 网桥名字最好不要带"-"
+
 # 1 OVS中的bridge
 
 一个桥就是一个交换机。在OVS中，

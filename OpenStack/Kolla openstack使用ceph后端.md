@@ -56,7 +56,7 @@ $ sudo ceph osd lspools
 创建glance用户, 并给images存储池访问权限
 
 ```
-$ ceph auth get-or-create client.glance
+$ sudo ceph auth get-or-create client.glance
 [client.glance]
 	key = AQC+3IVc37ZBEhAAS/F/FgSoGn5xYsclBs8bQg==
 
@@ -67,13 +67,14 @@ updated caps for client.glance
 查看并保存glance用户的keyring文件
 
 ```
-$ ceph auth get client.glance
+$ sudo ceph auth get client.glance
+exported keyring for client.glance
 [client.glance]
-	key = AQC+3IVc37ZBEhAAS/F/FgSoGn5xYsclBs8bQg==
+	key = AQAlbYdcA51nARAA7sxWRX8TIKSLHHnBvjbEpg==
 	caps mon = "allow r"
-	caps osd = "allow rwx pool=images"
+	caps osd = "allow class-read object_prefix rbd_children, allow rwx pool=images"
 
-$ ceph auth get client.glance -o /var/openstack/ceph/ceph.client.glance.keyring
+$ sudo ceph auth get client.glance -o /var/openstack/ceph/ceph.client.glance.keyring
 exported keyring for client.glance
 ```
 
@@ -98,34 +99,34 @@ exported keyring for client.cinder-volume
 [client.cinder-volume]
 	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
 	caps mon = "allow r"
-	caps osd = "allow rwx pool=volume"
+	caps osd = "allow rwx pool=volumes"
 
-$ ceph auth get client.cinder-volume -o /var/openstack/ceph/ceph.client.cinder-volume.keyring
+$ sudo ceph auth get client.cinder-volume -o /var/openstack/ceph/ceph.client.cinder-volume.keyring
 exported keyring for client.cinder-volume
 ```
 
 创建cinder-backup用户, 并给volume和backups存储池权限
 
 ```
-$ ceph auth get-or-create client.cinder-backup
+$ sudo ceph auth get-or-create client.cinder-backup
 [client.cinder-backup]
 	key = AQDH3oVcaAfVJxAAMvwYBYLKNP86OkT6lPNMRQ==
 
-$ ceph auth caps client.cinder-backup mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=backups'
+$ sudo ceph auth caps client.cinder-backup mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=backups'
 updated caps for client.cinder-backup
 ```
 
 查看并保存cinder-backup用户的KeyRing文件
 
 ```
-$ ceph auth get client.cinder-backup
+$ sudo ceph auth get client.cinder-backup
 exported keyring for client.cinder-backup
 [client.cinder-backup]
 	key = AQDH3oVcaAfVJxAAMvwYBYLKNP86OkT6lPNMRQ==
 	caps mon = "allow r"
-	caps osd = "allow rwx pool=volume, allow rwx pool=backups"
+	caps osd = "allow rwx pool=volumes, allow rwx pool=backups"
 
-$ ceph auth get client.cinder-backup -o /var/openstack/ceph/ceph.client.cinder-backup.keyring
+$ sudo ceph auth get client.cinder-backup -o /var/openstack/ceph/ceph.client.cinder-backup.keyring
 exported keyring for client.cinder-backup
 ```
 
@@ -134,11 +135,11 @@ exported keyring for client.cinder-backup
 创建nova用户, 并给vm存储池权限
 
 ```
-$ ceph auth get-or-create client.nova
+$ sudo ceph auth get-or-create client.nova
 [client.nova]
 	key = AQA334VczU4tOBAAdvUyAv2wsn02MdQiW4o8sg==
 
-$ ceph auth caps client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vms, allow rwx pool=volumes, allow rwx pool=images'
+$ sudo ceph auth caps client.nova mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=vms, allow rwx pool=volumes, allow rwx pool=images'
 updated caps for client.nova
 ```
 
@@ -152,7 +153,7 @@ exported keyring for client.nova
 	caps mon = "allow r"
 	caps osd = "allow rwx pool=vm"
 
-$ ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
+$ sudo ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
 exported keyring for client.nova
 ```
 
@@ -182,9 +183,6 @@ enable_cinder: "yes"
 glance_backend_ceph: "yes"
 cinder_backend_ceph: "yes"
 nova_backend_ceph: "yes"
-
-# cinder backup功能
-enable_cinder_backup: "yes"
 ```
 
 根据自己的情况, 修改global.yml文件
@@ -205,7 +203,9 @@ kolla网络相关参数
 
 配置glance使用glance用户以及images存储池
 
-在kolla\-ansible配置目录下创建目录glance
+### 2.2.1 glance服务的存储池相关配置文件
+
+最终效果是, 在kolla\-ansible配置目录下创建目录glance, 下面不要手动配置, 见下面操作
 
 ```
 $ mkdir -p /etc/kolla/config/glance
@@ -219,7 +219,43 @@ rbd_store_user = glance
 rbd_store_ceph_conf = /etc/ceph/ceph.conf
 ```
 
-新增glance的ceph客户端配置和glance用户的keyring文件, 参照ceph.conf文件内容
+下面针对上面需要生成的conf文件, 需要手动配置是如下内容
+
+其中, 当globals.yml中"glance\_backend\_ceph"为"yes"时候, 根据文件"kolla-ansible/ansible/roles/glance/defaults/main.yml"中的"glance\_store\_backends"会在"kolla-ansible/ansible/roles/glance/templates/glance\-api.conf.j2"文件中的"stores"值会变成
+
+```
+stores = rbd     
+```
+
+配置文件生成原理, 参见kolla-ansible/ansible/roles/cinder/tasks/config.yml中的"name: Copying over cinder.conf"
+
+当"glance\_backend\_ceph"为"yes"时, 在glance\-api.conf.j2中会显示为
+
+```          
+default_store = rbd
+```
+
+通过修改all.yml中的"ceph\_glance\_pool\_name"可定义如下属性
+
+```
+rbd_store_pool = images
+```
+
+当"glance\_backend\_ceph"为"yes"时, 在glance\-api.conf.j2中会显示为下面值, 当然可以自己修改该值或者在conf中和all.yml中添加变量, 尽量在all.yml中配置信息; 我已经修改了all.yml和glance\-api.conf.j2
+
+```
+rbd_store_user = glance
+```
+
+我已经修改glance\-api.conf.j2文件, 添加了"rbd_store\_ceph\_conf = {{ ceph_conf_path }}", 然后在all.yml中添加变量并赋值ceph_conf_path: "/etc/ceph/ceph.conf", 因为ceph的配置文件是全局的, 所以默认会生成
+
+```
+rbd_store_ceph_conf = /etc/ceph/ceph.conf
+```
+
+### 2.2.2 ceph客户端配置以及glance用户的keyring文件
+
+新增glance的ceph客户端配置, 参照ceph的ceph.conf文件内容, 这个文件在各个服务之间是通用的
 
 ```
 $ cat /etc/kolla/config/glance/ceph.conf
@@ -230,13 +266,21 @@ mon_host = 10.10.31.26
 auth_cluster_required = cephx
 auth_service_required = cephx
 auth_client_required = cephx
+```
 
+glance用户的keyring文件拷贝
+
+```
 $ cp /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/glance/ceph.client.glance.keyring
 ```
 
 ## 2.3 配置Cinder
 
 配置Cinder卷服务使用Ceph的cinder-volume用户使用volume存储池，Cinder卷备份服务使用Ceph的cinder-backup用户使用backups存储池：
+
+### 2.3.1 cinder\-volume服务的存储池相关配置文件
+
+最终效果是, 创建cinder目录, 下面不要手动配置, 见下面操作
 
 ```
 $ mkdir -p /etc/kolla/config/cinder
@@ -248,12 +292,48 @@ enabled_backends=rbd-1
 [rbd-1]
 rbd_ceph_conf=/etc/ceph/ceph.conf
 rbd_user=cinder-volume
-backend_host=rbd:volume
-rbd_pool=volume
+backend_host=rbd:volumes
+rbd_pool=volumes
 volume_backend_name=rbd-1
 volume_driver=cinder.volume.drivers.rbd.RBDDriver
 rbd_secret_uuid = {{ cinder_rbd_secret_uuid }}
+```
 
+下面针对上面需要生成的conf文件, 需要手动配置是如下内容
+
+其中, 我已修改main.yml, 使得global.yml中的"cinder\_backend\_ceph"为"yes", 根据"kolla-ansible/ansible/roles/cinder/defaults/main.yml"文件中的"cinder\_enabled\_backends"从而最终在"kolla\-ansible/ansible/roles/cinder/templates/cinder.conf.j2"中生成如下
+
+```
+enabled_backends=rbd-1
+```
+
+在all.yml中配置"ceph_conf_path"为全局配置
+
+```
+rbd_ceph_conf = /etc/ceph/ceph.conf
+```
+
+global.yml中的"cinder\_backend\_ceph"为"yes", 下面内容是默认的, 
+
+```
+volume_backend_name = rbd-1
+volume_driver = cinder.volume.drivers.rbd.RBDDriver
+rbd_secret_uuid = {{ cinder_rbd_secret_uuid }}
+```
+
+我已经添加了"backend\_host=rbd:{{ ceph\_cinder\_pool\_name }}", 所以在kolla-ansible/ansible/group_vars/all.yml中修改"ceph\_cinder\_pool\_name", 在kolla-ansible/ansible/group_vars/all.yml中修改"ceph_cinder_user_name"(这个对应cinder-volume的user名), 即可实现
+
+```
+backend_host=rbd:{{ ceph_cinder_pool_name }}
+rbd_pool={{ ceph_cinder_pool_name }}
+rbd_user={{ ceph_cinder_user_name }}
+```
+
+### 2.3.2 cinder\-backup服务的存储池相关配置文件
+
+最终效果, 先不手动配置
+
+```
 $ cat /etc/kolla/config/cinder/cinder-backup.conf
 [DEFAULT]
 backup_ceph_conf=/etc/ceph/ceph.conf
@@ -265,6 +345,31 @@ backup_ceph_stripe_unit = 0
 backup_ceph_stripe_count = 0
 restore_discard_excess_bytes = true
 ```
+
+通过all.yml中的"ceph_conf_path"配置ceph配置文件路径, 这是全局的.
+
+```
+backup_ceph_conf=/etc/ceph/ceph.conf
+```
+
+通过all.yml中的"ceph_cinder_backup_user_name"配置cinder-backup对应的pool的user名字, 通过"ceph_cinder_backup_pool_name"配置pool名字
+
+```
+backup_ceph_user=cinder-backup
+backup_ceph_pool=backups
+```
+
+下面是默认值, enable_cinder_backup为yes就可以了
+
+```
+backup_ceph_chunk_size = 134217728
+backup_driver = cinder.backup.drivers.ceph.CephBackupDriver
+backup_ceph_stripe_unit = 0
+backup_ceph_stripe_count = 0
+restore_discard_excess_bytes = true
+```
+
+### 2.3.3 ceph客户端配置和keyring文件
 
 新增Cinder的卷服务和卷备份服务的Ceph客户端配置和KeyRing文件：
 
@@ -278,22 +383,55 @@ $ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/cinder/cin
 $ cp -v /etc/ceph/ceph.client.cinder-backup.keyring /etc/kolla/config/cinder/cinder-backup/ceph.client.cinder-backup.keyring
 
 $ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/cinder/cinder-volume/ceph.client.cinder-volume.keyring
+
+$ cp -v /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/cinder/cinder-volume/ceph.client.glance.keyring
+
+$ cp -v /etc/ceph/ceph.client.nova.keyring /etc/kolla/config/cinder/cinder-volume/ceph.client.nova.keyring
 ```
 
 ## 2.4 配置nova
 
-配置Nova使用Ceph的nova用户使用vm存储池：
+### 2.4.1 nova\-compute服务的存储池相关配置文件
+
+配置Nova使用Ceph的nova用户使用vm存储池, 手动配置目的是, 新方案往下走：
 
 ```
 $ mkdir -p /etc/kolla/config/nova
 
 $ cat /etc/kolla/config/nova/nova-compute.conf
 [libvirt]
-images_rbd_pool=vm
+images_rbd_pool=vms
 images_type=rbd
 images_rbd_ceph_conf=/etc/ceph/ceph.conf
 rbd_user=nova
 ```
+
+配置all.yml的"ceph_nova_pool_name"即可
+
+```
+images_rbd_pool=vms
+```
+
+下面内容默认
+
+```
+images_type=rbd
+```
+
+通过all.yml中的"ceph_conf_path"配置ceph配置文件路径, 这是全局的.
+
+```
+images_rbd_ceph_conf=/etc/ceph/ceph.conf
+```
+
+通过all.yml中的ceph_nova_user_name即可修改
+
+```
+rbd_user=nova
+```
+
+### 2.4.2 ceph客户端配置和keyring文件
+
 
 新增nova的客户端配置和keyring文件
 
@@ -303,6 +441,8 @@ $ cp -v /etc/kolla/config/glance/ceph.conf /etc/kolla/config/nova/ceph.conf
 $ cp -v /etc/ceph/ceph.client.nova.keyring /etc/kolla/config/nova/ceph.client.nova.keyring
 
 $ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/nova/ceph.client.cinder.keyring
+
+$ cp -v /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/nova/ceph.client.glance.keyring
 ```
 
 注: 这里的nova使用cinder-volume的keyring文件必须改为cinder.keyring
@@ -310,3 +450,11 @@ $ cp -v /etc/ceph/ceph.client.cinder-volume.keyring /etc/kolla/config/nova/ceph.
 # 3 部署
 
 按照AutoStack的Deployment开始部署
+
+
+ansible.vars.hostvars.HostVarsVars object' has no attribute u'ansible_br-ex'
+
+查看group为"baremetal"的值:
+
+ansible baremetal -m setup -i ../../multinode > /home/baremetal
+
