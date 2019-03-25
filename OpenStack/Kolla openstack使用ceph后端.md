@@ -70,7 +70,7 @@ updated caps for client.glance
 $ sudo ceph auth get client.glance
 exported keyring for client.glance
 [client.glance]
-	key = AQAlbYdcA51nARAA7sxWRX8TIKSLHHnBvjbEpg==
+	key = AQDUwYhck8ztNhAAwi14fGR2OvMXQwLMPNJFVg==
 	caps mon = "allow r"
 	caps osd = "allow class-read object_prefix rbd_children, allow rwx pool=images"
 
@@ -83,7 +83,7 @@ exported keyring for client.glance
 创建cinder-volume用户, 并给volume存储池权限
 
 ```
-$ ceph auth get-or-create client.cinder-volume
+$ sudo ceph auth get-or-create client.cinder-volume
 [client.cinder-volume]
 	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
 
