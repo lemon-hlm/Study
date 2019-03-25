@@ -13,7 +13,7 @@ OpenStack 里有三个地方可以和 Ceph 块设备结合：
 用于保存Glance镜像
 
 ```
-$ ceph osd pool create images 32 32
+$ sudo ceph osd pool create images 2048 2048
 pool 'images' created
 ```
 
@@ -22,14 +22,14 @@ pool 'images' created
 用于保存cinder的卷
 
 ```
-$ ceph osd pool create volumes 32 32
+$ sudo ceph osd pool create volumes 2048 2048
 pool 'volume' created
 ```
 
 用于保存cinder的卷备份
 
 ```
-$ ceph osd pool create backups 32 32
+$ sudo ceph osd pool create backups 2048 2048
 pool 'backups' created
 ```
 
@@ -38,7 +38,7 @@ pool 'backups' created
 用于保存虚拟机系统卷
 
 ```
-$ ceph osd pool create vms 32 32
+$ sudo ceph osd pool create vms 2048 2048
 pool 'vm' created
 ```
 
