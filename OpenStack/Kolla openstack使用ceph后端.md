@@ -97,9 +97,9 @@ updated caps for client.cinder-volume
 $ sudo ceph auth get client.cinder-volume
 exported keyring for client.cinder-volume
 [client.cinder-volume]
-	key = AQAf3oVcN2nMORAAl740sqdkcwE/8a/niSTIeg==
+	key = AQDVwYhcaWb9IBAABJC+LDNPmVky6gFL0gK4yQ==
 	caps mon = "allow r"
-	caps osd = "allow rwx pool=volumes"
+	caps osd = "allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=vms, allow rx pool=images"
 
 $ sudo ceph auth get client.cinder-volume -o /var/openstack/ceph/ceph.client.cinder-volume.keyring
 exported keyring for client.cinder-volume
@@ -122,9 +122,9 @@ updated caps for client.cinder-backup
 $ sudo ceph auth get client.cinder-backup
 exported keyring for client.cinder-backup
 [client.cinder-backup]
-	key = AQDH3oVcaAfVJxAAMvwYBYLKNP86OkT6lPNMRQ==
+	key = AQDWwYhcZrliCxAAKDFlvyBQ7lY+tAFhDtwREg==
 	caps mon = "allow r"
-	caps osd = "allow rwx pool=volumes, allow rwx pool=backups"
+	caps osd = "allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=backups"
 
 $ sudo ceph auth get client.cinder-backup -o /var/openstack/ceph/ceph.client.cinder-backup.keyring
 exported keyring for client.cinder-backup
@@ -146,12 +146,12 @@ updated caps for client.nova
 查看并保存nova用户的keyring文件
 
 ```
-$ sudo ceph auth get client.nova
+$ $ sudo ceph auth get client.nova
 exported keyring for client.nova
 [client.nova]
-	key = AQA334VczU4tOBAAdvUyAv2wsn02MdQiW4o8sg==
+	key = AQDWwYhcHdDCMBAA5c1skJ54ZyjfaA68dUXhHw==
 	caps mon = "allow r"
-	caps osd = "allow rwx pool=vm"
+	caps osd = "allow class-read object_prefix rbd_children, allow rwx pool=vms, allow rwx pool=volumes, allow rwx pool=images"
 
 $ sudo ceph auth get client.nova -o /var/openstack/ceph/ceph.client.nova.keyring
 exported keyring for client.nova
