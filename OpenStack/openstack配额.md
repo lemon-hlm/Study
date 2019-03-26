@@ -128,3 +128,8 @@ neutron CLI is deprecated and will be removed in the future. Use openstack CLI i
 +---------------------+-------+
 ```
 
+
+# 4 镜像资源
+
+
+
