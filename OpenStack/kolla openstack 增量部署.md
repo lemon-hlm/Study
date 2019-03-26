@@ -9,3 +9,4 @@ ansible baremetal -m setup -i ../../multinode > /home/baremetal
 ```
 ./kolla-ansible deploy -i ../../multinode --limit controller124
 ```
+
