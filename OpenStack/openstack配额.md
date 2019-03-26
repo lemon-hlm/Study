@@ -131,10 +131,16 @@ neutron CLI is deprecated and will be removed in the future. Use openstack CLI i
 修改租户默认配额
 
 ```
-
+neutron quota-update --floatingip 100 1a3a9bd31e2b49b4893286535c825b97
 ```
 
 # 4 镜像资源
 
 
+编辑/etc/glance/glance-api.conf在[DEFAULT]下加入
 
+```
+user_storage_quota = 5368709120
+```
+
+大小为5G
