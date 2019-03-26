@@ -86,5 +86,45 @@ cinder quota-class-update default --backups 50
 查看租户的cinder配额
 
 ```
+$ cinder quota-show 1a3a9bd31e2b49b4893286535c825b97
++----------------------+--------+
+| Property             | Value  |
++----------------------+--------+
+| backup_gigabytes     | 1000   |
+| backups              | 500    |
+| gigabytes            | 400000 |
+| groups               | 500    |
+| per_volume_gigabytes | -1     |
+| snapshots            | 50000  |
+| volumes              | 500    |
++----------------------+--------+
+```
+
+更新租户的配额
 
 ```
+cinder quota-update --volumes 500 1a3a9bd31e2b49b4893286535c825b97
+```
+
+# 3 网络资源
+
+查看默认配额
+
+```
+$ neutron quota-default-show
+neutron CLI is deprecated and will be removed in the future. Use openstack CLI instead.
++---------------------+-------+
+| Field               | Value |
++---------------------+-------+
+| floatingip          | 50    |
+| network             | 100   |
+| port                | 500   |
+| rbac_policy         | 10    |
+| router              | 10    |
+| security_group      | 10    |
+| security_group_rule | 100   |
+| subnet              | 100   |
+| subnetpool          | -1    |
++---------------------+-------+
+```
+
