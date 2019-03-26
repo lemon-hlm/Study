@@ -51,3 +51,29 @@ nova quota-show --tenant 1a3a9bd31e2b49b4893286535c825b97
 | server_group_members | 10000  |
 +----------------------+--------+
 ```
+
+修改租户的配额
+
+```
+$ nova quota-update --instances 500 1a3a9bd31e2b49b4893286535c825b97
+```
+
+# 2 卷资源
+
+查看租户默认配额
+
+```
+$ cinder quota-defaults 1a3a9bd31e2b49b4893286535c825b97
++----------------------+--------+
+| Property             | Value  |
++----------------------+--------+
+| backup_gigabytes     | 1000   |
+| backups              | 10     |
+| gigabytes            | 400000 |
+| groups               | 10     |
+| per_volume_gigabytes | -1     |
+| snapshots            | 50000  |
+| volumes              | 500    |
++----------------------+--------+
+```
+
