@@ -1,4 +1,48 @@
-openstack quota show
+查看所有openstack配额
+
+```
+$ openstack quota show 1a3a9bd31e2b49b4893286535c825b97
++----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Field                | Value                                                                                                                                                                                       |
++----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| backup-gigabytes     | 1000                                                                                                                                                                                        |
+| backups              | 500                                                                                                                                                                                         |
+| cores                | 400                                                                                                                                                                                         |
+| fixed-ips            | -1                                                                                                                                                                                          |
+| floating-ips         | 100                                                                                                                                                                                         |
+| gigabytes            | 400000                                                                                                                                                                                      |
+| groups               | 500                                                                                                                                                                                         |
+| health_monitors      | None                                                                                                                                                                                        |
+| injected-file-size   | 102400000                                                                                                                                                                                   |
+| injected-files       | 5000                                                                                                                                                                                        |
+| injected-path-size   | 255000                                                                                                                                                                                      |
+| instances            | 500                                                                                                                                                                                         |
+| key-pairs            | 10000                                                                                                                                                                                       |
+| l7_policies          | None                                                                                                                                                                                        |
+| listeners            | None                                                                                                                                                                                        |
+| load_balancers       | None                                                                                                                                                                                        |
+| location             | Munch({'project': Munch({'domain_id': None, 'id': u'1a3a9bd31e2b49b4893286535c825b97', 'name': 'admin', 'domain_name': 'Default'}), 'cloud': '', 'region_name': 'RegionOne', 'zone': None}) |
+| name                 | None                                                                                                                                                                                        |
+| networks             | 100                                                                                                                                                                                         |
+| per-volume-gigabytes | -1                                                                                                                                                                                          |
+| pools                | None                                                                                                                                                                                        |
+| ports                | 500                                                                                                                                                                                         |
+| project              | 1a3a9bd31e2b49b4893286535c825b97                                                                                                                                                            |
+| project_name         | admin                                                                                                                                                                                       |
+| properties           | 128000                                                                                                                                                                                      |
+| ram                  | 960000                                                                                                                                                                                      |
+| rbac_policies        | 10                                                                                                                                                                                          |
+| routers              | 100                                                                                                                                                                                         |
+| secgroup-rules       | 100                                                                                                                                                                                         |
+| secgroups            | 10                                                                                                                                                                                          |
+| server-group-members | 10000                                                                                                                                                                                       |
+| server-groups        | 10000                                                                                                                                                                                       |
+| snapshots            | 50000                                                                                                                                                                                       |
+| subnet_pools         | -1                                                                                                                                                                                          |
+| subnets              | 100                                                                                                                                                                                         |
+| volumes              | 500                                                                                                                                                                                         |
++----------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+```
 
 # 1 计算资源
 
