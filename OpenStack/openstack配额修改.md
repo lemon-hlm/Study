@@ -1,3 +1,5 @@
+openstack quota show
+
 # 1 计算资源
 
 查看默认配额
