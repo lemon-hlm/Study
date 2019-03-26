@@ -108,10 +108,10 @@ cinder quota-update --volumes 500 1a3a9bd31e2b49b4893286535c825b97
 
 # 3 网络资源
 
-查看默认配额
+查看租户默认配额
 
 ```
-$ neutron quota-default-show
+$ neutron quota-default-show 1a3a9bd31e2b49b4893286535c825b97
 neutron CLI is deprecated and will be removed in the future. Use openstack CLI instead.
 +---------------------+-------+
 | Field               | Value |
@@ -128,6 +128,11 @@ neutron CLI is deprecated and will be removed in the future. Use openstack CLI i
 +---------------------+-------+
 ```
 
+修改租户默认配额
+
+```
+
+```
 
 # 4 镜像资源
 
