@@ -77,7 +77,13 @@ $ cinder quota-defaults 1a3a9bd31e2b49b4893286535c825b97
 +----------------------+--------+
 ```
 
-修改租户默认配额
+修改默认配额
+
+```
+cinder quota-class-update default --backups 50
+```
+
+查看租户的cinder配额
 
 ```
 
