@@ -93,8 +93,12 @@ vfio\-pci驱动是专门为现在支持DMAR和中断地址重映射的PCI设备�
 加载的命令：
 
 ```
+# 加载vfio-pci
 modprobe vfio
 modprobe vfio-pci
+
+# 加载vfio-iommu-type1以允许中断地址重映射，如果主机的主板不支持中断重映射功能则需要指定参数“allow_unsafe_interrupt=1”
+[root@node3 ~]# modprobe vfio-iommu-type1 allow_unsafe_interrupt=1
 ```
 
 查看是否加载成功的命令是：
@@ -231,6 +235,12 @@ ls /sys/bus/pci/devices/0000:00:01.0/iommu_group/devices
 
 ```
 echo 0000:00:01.0 > /sys/bus/pci/devices/0000:00:01.0/driver/unbind
+
+# 将虚拟网卡与原驱动解绑, 四个VF都解绑了
+[root@node3 ~]# echo 0000:04:10.0 > /sys/bus/pci/devices/0000\:04\:10.0/driver/unbind
+[root@node3 ~]# echo 0000:04:10.1 > /sys/bus/pci/devices/0000\:04\:10.1/driver/unbind
+[root@node3 ~]# echo 0000:04:10.2 > /sys/bus/pci/devices/0000\:04\:10.2/driver/unbind
+[root@node3 ~]# echo 0000:04:10.3 > /sys/bus/pci/devices/0000\:04\:10.3/driver/unbind
 ```
 
 ### 4.4 绑定vfio-pci驱动
