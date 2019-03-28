@@ -335,6 +335,8 @@ c, 创建VF，可以通过重新加载内核模块参数来创建VF：
 
 
 d, 接下来就可以把VF当做普通网卡给虚拟机独占使用了
+
+```
 # lshw -c network -businfo
 Bus info Device Class Description
 ========================================================
@@ -361,23 +363,32 @@ Kernel modules: igbvf
 -drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
 -nographic -vnc :2 \
 -net none -device vfio-pci,host=0000:08:10.0
+```
 
 进入虚拟机后查看网卡的驱动信息，可以看到是用的igbvf：
+
+```
 # ethtool -i eth0
 driver: igbvf
 version: 2.4.0-k
 …
+```
 
-5，pass through的麻烦之处在于需要指定具体的pci地址，比较麻烦，比如在虚拟机要做迁移的场景。
-因此另外一种据说性能也非常好的方式是通过Virtio网卡。首先需要在内核打开如下选项：
+5，pass through的麻烦之处在于**需要指定具体的pci地址**，比较麻烦，比如在虚拟机要做迁移的场景。
+
+因此另外一种据说性能也非常好的方式是通过**Virtio网卡**。首先需要在内核打开如下选项：
+
+```
 CONFIG_VIRTIO=m
 CONFIG_VIRTIO_RING=m
 CONFIG_VIRTIO_PCI=m
 CONFIG_VIRTIO_BALLOON=m
 CONFIG_VIRTIO_BLK=m
 CONFIG_VIRTIO_NET=m
+```
 
 CentOS 7自带内核默认已经打开，因此可以直接使用。
+```
 # cat /boot/config-3.10.0-862.el7.x86_64 | grep VIRTIO
 CONFIG_VIRTIO_VSOCKETS=m
 CONFIG_VIRTIO_VSOCKETS_COMMON=m
@@ -393,31 +404,40 @@ CONFIG_VIRTIO_PCI_LEGACY=y
 CONFIG_VIRTIO_BALLOON=m
 CONFIG_VIRTIO_INPUT=m
 # CONFIG_VIRTIO_MMIO is not set
+```
 
 执行kvm：
+
+```
 kvm -name centos7 -smp 4 -m 8192 \
 -drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
 -drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
 -nographic -vnc :2 \
 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,script=/home/vmhome/qemu-ifup,downscript=no
+```
 
 注意最后一行的网卡设置：
--device virtio-net-pci：指定了一个使用virtio-net-pci的设备，对应
-,netdev=net0：和后面的id=net0关联起来，net0是任意值，只要一致就可以。
--netdev tap,id=net0,script=/home/vmhome/qemu-ifup,downscript=no：宿主机上对应桥接到交换机上的端口
+- \-device virtio-net-pci：指定了一个使用**virtio-net-pci的设备**，而netdev=net0：和后面的id=net0关联起来，net0是任意值，只要一致就可以。
+- \-netdev tap,id=net0,script=/home/vmhome/qemu-ifup,downscript=no：宿主机上对应桥接到交换机上的端口
 
 进入虚拟机，查看网卡驱动，可以看到如下：
+
+```
 # ethtool -i eth0
 driver: virtio_net
 version: 1.0.0
 …
+```
 
 根据注1，如果采用如下命令，性能会非常差：
+
+```
 kvm -name centos7 -smp 4 -m 8192 \
 -drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
 -drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
 -nographic -vnc :2 \
 -net nic,model=virtio -net tap,script=/home/vmhome/qemu-ifup,downscript=no
+```
 
 但是根据注2，这两种写法应该是一样的，只不过-net nic,model=virtio是旧语法（old -net..-net syntax），实践验证后一种kvm启动的虚拟机里通过ethtool查看网卡的驱动也是virtio_net。难道是另外的某些原因还不得而知。
 
