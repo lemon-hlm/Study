@@ -54,6 +54,8 @@ INTEL_IOMMU
 
 BIOS中打开，内核编译选项勾选还不够。还需要在引导程序中添加上内核启动参数 intel\_iommu=on.
 
+此处读者可能会将intel-iommu与iommu混淆，前者控制的是基于Intel VT-d的IOMMU，它可以使系统进行设备的DMA地址重映射（DMAR）等多种高级操作为虚拟机使用做准备，且此项默认关闭，而后者主要控制是GART（Graphics Address Remapping Table） IOMMU，目的是让有32位内存访问大小的设备可以进行DMAR操作，通常用于USB设备、声卡、集成显卡等，会在主机内存3GB以上的系统中默认开启。
+
 ### 2.4 确认IOMMU功能确实打开
 
 所有的准备工作做完，重启主机后为了保证一切无误，可以采用如下方法检查是否已经enable了IOMMU.
