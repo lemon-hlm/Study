@@ -52,7 +52,7 @@ INTEL_IOMMU
 
 ### 2.3 内核启动参数enable IOMMU
 
-BIOS中打开，内核编译选项勾选还不够。还需要在引导程序中添加上内核启动参数 intel_iommu=on.
+BIOS中打开，内核编译选项勾选还不够。还需要在引导程序中添加上内核启动参数 intel\_iommu=on.
 
 ### 2.4 确认IOMMU功能确实打开
 
