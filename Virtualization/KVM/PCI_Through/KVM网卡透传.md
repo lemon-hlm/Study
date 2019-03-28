@@ -203,7 +203,8 @@ kvm -name centos7 -smp 4 -m 8192 \
 -drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
 -drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
 -nographic -vnc :2 \
--net none -device pci-assign,host=0000:08:00.0
+-net none \
+-device pci-assign,host=0000:08:00.0
 ```
 
 注意最后两个参数：
@@ -219,12 +220,17 @@ kvm: -device pci-assign,host=0000:08:00.0: Device ‘kvm-pci-assign’ could not
 ```
 
 然后我前面的配置都ok啊，经过搜索，问题在于最新的内核里，已建议废除KVM_ASSIGN机制，而只支持vfio，我这里查看CentOS 7的内核编译选项也果真如此：
+
+```
 # cat /boot/config-3.10.0-862.el7.x86_64 | grep KVM_DEVICE
 # CONFIG_KVM_DEVICE_ASSIGNMENT is not set
+```
 
-所以换用vfio驱动。VFIO可以用于实现高效的用户态驱动。在虚拟化场景可以用于device passthrough。通过用户态配置IOMMU接口，可以将DMA地址空间映射限制在进程虚拟空间中。这对高性能驱动和虚拟化场景device passthrough尤其重要。相对于传统方式，VFIO对UEFI支持更好。VFIO技术实现了用户空间直接访问设备。无须root特权，更安全，功能更多。
+所以换用**vfio驱动**。VFIO可以用于实现高效的用户态驱动。在虚拟化场景可以用于device passthrough。通过**用户态配置IOMMU接口**，可以将DMA地址空间映射限制在进程虚拟空间中。这对高性能驱动和虚拟化场景device passthrough尤其重要。相对于传统方式，VFIO对UEFI支持更好。VFIO技术实现了用户空间直接访问设备。无须root特权，更安全，功能更多。
 
 重新解除绑定和再绑定：
+
+```
 # modprobe vfio
 # modprobe vfio-pci
 # lspci -s 0000:08:00.0 -n
@@ -237,13 +243,18 @@ kvm: -device pci-assign,host=0000:08:00.0: Device ‘kvm-pci-assign’ could not
 Subsystem: Intel Corporation Device 0000
 Kernel driver in use: vfio-pci
 Kernel modules: igb
+```
 
 启动虚拟机：
+
+```
 kvm -name centos7 -smp 4 -m 8192 \
 -drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
 -drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
 -nographic -vnc :2 \
--net none -device vfio-pci,host=0000:08:00.0
+-net none \
+-device vfio-pci,host=0000:08:00.0
+```
 
 这次一切OK，顺利启动并进入到CentOS 7虚拟机。
 
@@ -252,3 +263,17 @@ https://blog.csdn.net/leoufung/article/details/52144687
 https://www.linux-kvm.org/page/10G_NIC_performance:_VFIO_vs_virtio
 
 http://www.linux-kvm.org/page/How_to_assign_devices_with_VT-d_in_KVM
+
+5，虚拟机独占物理网卡总是资源浪费，而且如果虚拟机比较多，又到哪有找那么多物理网卡。因此为了实现多个虚机共享一个物理设备，并且达到直接分配的目的，PCI-SIG组织发布了SR-IOV（Single Root I/O Virtualization and sharing）规范，它定义了一个标准化的机制用以原生地支持实现多个客户机共享一个设备。当前SR-IOV（单根I/O虚拟化）最广泛地应用还是网卡上。
+
+SR-IOV使得一个单一的功能单元（比如，一个以太网端口）能看起来像多个独立的物理设备。一个带有SR-IOV功能的物理设备能被配置为多个功能单元。
+
+SR-IOV使用两种功能（function）：
+
+- 物理功能（Physical Functions，PF）：这是完整的带有SR-IOV能力的PCIe设备。PF能像普通PCI设备那样被发现、管理和配置。
+
+- 虚拟功能（Virtual Functions，VF）：简单的PCIe功能，它只能处理I/O。每个VF都是从PF中分离出来的。每个物理硬件都有一个VF数目的限制。一个PF，能被虚拟成多个VF用于分配给多个虚拟机。
+Hypervisor能将一个或者多个VF分配给一个虚机。在某一时刻，一个VF只能被分配给一个虚机。一个虚机可以拥有多个VF。在虚机的操作系统看来，一个VF网卡看起来和一个普通网卡没有区别。SR-IOV驱动是在内核中实现的。
+
+
+
