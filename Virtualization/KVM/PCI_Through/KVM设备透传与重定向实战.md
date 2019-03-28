@@ -258,6 +258,18 @@ lspci -ns 0000:00:01.0
 
 ```
 echo 8086 0412 > /sys/bus/pci/drivers/vfio-pci/new_id
+
+# 将虚拟网卡按照设备ID全部与vfio-pci驱动绑定
+[root@node3 ~]# echo 8086 10ed > /sys/bus/pci/drivers/vfio-pci/new_id
+
+# 查看虚拟设备现在使用的驱动
+[root@node3 ~]# lspci -k -s 04:10.0
+04:10.0 Ethernet controller: Intel Corporation 82599 Ethernet Controller Virtual Function (rev 01)
+Subsystem: Intel Corporation Device 7b11
+Kernel driver in use: vfio-pci
 ```
+
+然后我们即可在虚拟机中使用这些虚拟网卡，需要在QEMU命令行中添加设备选项，形似“-device vfio-pci,host=04:10.0,id=hostdev0,bus=pci.0,multifunction=on,addr=0x9”
+
 
 大功告成～现在你就可以执行最开始的那段代码运行带有直通设备的虚拟机了～
