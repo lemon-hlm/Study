@@ -442,8 +442,11 @@ kvm -name centos7 -smp 4 -m 8192 \
 但是根据注2，这两种写法应该是一样的，只不过-net nic,model=virtio是旧语法（old -net..-net syntax），实践验证后一种kvm启动的虚拟机里通过ethtool查看网卡的驱动也是virtio_net。难道是另外的某些原因还不得而知。
 
 ps：通过如下命令可以查看当前qemu支持的网卡类型
+
+```
 # kvm -net nic,model=?
 qemu: Supported NIC models: ne2k_pci,i82551,i82557b,i82559er,rtl8139,e1000,pcnet,virtio
+```
 
 注：
 1，https://www.linux-kvm.org/page/10G_NIC_performance:_VFIO_vs_virtio
