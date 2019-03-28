@@ -140,13 +140,19 @@ GRUB_CMDLINE_LINUX=”crashkernel=auto rd.lvm.lv=centos/root rd.lvm.lv=centos/sw
 # grub2-mkconfig -o /boot/grub2/grub.cfg
 # diff /boot/grub2/grub.cfg ~/grub.cfg.bak
 ```
+
 可以diff比较一下参数是否正确加上。
 
 重启机器后执行如下两条命令进行确认：
+
+```
 # find /sys/kernel/iommu_groups/ -type l
 # dmesg | grep -e DMAR -e IOMMU
+```
 
 如果有输出，那就说明ok了。如果没有，那再验证BIOS、内核编译项、内核启动参数等是否没有正确配置。比如内核是否已经编译了IOMMO：
+
+```
 # cat /boot/config-3.10.0-862.el7.x86_64 |grep IOMMU
 CONFIG_GART_IOMMU=y
 # CONFIG_CALGARY_IOMMU is not set
@@ -159,6 +165,7 @@ CONFIG_IOMMU_IOVA=y
 CONFIG_AMD_IOMMU=y
 CONFIG_AMD_IOMMU_V2=m
 CONFIG_INTEL_IOMMU=y
+```
 
 c, 找一个没用的网卡设备，因为pass through是虚拟机独占，所以肯定不能用远程ip所对应的网卡设备，否则远程网络就断了。比如我的远程网卡为enp4s0f0，那么我这里拿enp8s0f0作为pass through网卡。
 
