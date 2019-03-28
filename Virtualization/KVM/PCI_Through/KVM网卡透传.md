@@ -170,22 +170,31 @@ CONFIG_INTEL_IOMMU=y
 c, 找一个没用的网卡设备，因为pass through是虚拟机独占，所以肯定不能用远程ip所对应的网卡设备，否则远程网络就断了。比如我的远程网卡为enp4s0f0，那么我这里拿enp8s0f0作为pass through网卡。
 
 通过ethtool查看网卡的bus信息：
+
+```
 # ethtool -i enp8s0f0 | grep bus
 bus-info: 0000:08:00.0
+```
 
 解除绑定（注意里面的0000:08:00.0是上一步获得的bus信息）：
+
+```
 # lspci -s 0000:08:00.0 -n
 08:00.0 0200: 8086:10c9 (rev 01)
 # modprobe pci_stub
 # echo 0000:08:00.0 > /sys/bus/pci/devices/0000\:08\:00.0/driver/unbind
 # echo “8086 10c9″ > /sys/bus/pci/drivers/pci-stub/new_id
+```
 
 驱动确认（注意里面的：Kernel driver in use: pci-stub）：
+
+```
 # lspci -s 0000:08:00.0 -k
 08:00.0 Ethernet controller: Intel Corporation 82576 Gigabit Network Connection (rev 01)
 Subsystem: Intel Corporation Device 0000
 Kernel driver in use: pci-stub
 Kernel modules: igb
+```
 
 启动虚拟机：
 kvm -name centos7 -smp 4 -m 8192 \
