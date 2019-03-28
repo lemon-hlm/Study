@@ -141,7 +141,49 @@ VF字面上的理解就是虚拟设备。实际上是通过硬件和软件手段
 
 重新加载网卡驱动模块，并设置模块中的最大VF数以使得设备虚拟出一定数量的网卡。不同厂商的网卡的驱动模块不同，其打开虚拟功能的参数也不同。另外，部分设备由于厂商策略原因，Linux内核自带的驱动不一定拥有VF相关设置，需要从官网单独下载并替换原有驱动。
 
-自从有了sysfs接口，使能VF变得简洁多了。方法就是向需要使能的PF设备的sysfs文件写入一个需要使能的VF个数。
+```
+# 查看网络设备总线地址，此款网卡拥有双万兆网口
+[root@node3 ~]# lspci -nn | grep -i ethernet
+04:00.0 Ethernet controller [0200]: Intel Corporation Ethernet 10G 2P X520 Adapter [8086:154d] (rev 01)
+04:00.1 Ethernet controller [0200]: Intel Corporation Ethernet 10G 2P X520 Adapter [8086:154d] (rev 01)
+
+# 查看设备驱动
+[root@node3 ~]# lspci -s 04:00.0 -k
+04:00.0 Ethernet controller: Intel Corporation Ethernet 10G 2P X520 Adapter (rev 01)
+Subsystem: Intel Corporation 10GbE 2P X520 Adapter
+Kernel driver in use: ixgbe
+
+# 查看驱动参数
+
+[root@node3 ~]# modinfo ixgbe
+filename:       /lib/modules/3.10.0-327.3.1.el7.x86_64/kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
+version:        4.0.1-k-rh7.2
+license:        GPL
+description:    Intel(R) 10 Gigabit PCI Express Network Driver
+author:         Intel Corporation, <linux.nics@intel.com>
+rhelversion:    7.2
+srcversion:     FFFD5E28DF8860A5E458CCB
+alias:          pci:v00008086d000015ADsv*sd*bc*sc*i*
+..
+alias:          pci:v00008086d000010B6sv*sd*bc*sc*i*
+depends:        mdio,ptp,dca
+intree:         Y
+vermagic:       3.10.0-327.3.1.el7.x86_64 SMP mod_unload modversions
+signer:         CentOS Linux kernel signing key
+sig_key:        3D:4E:71:B0:42:9A:39:8B:8B:78:3B:6F:8B:ED:3B:AF:09:9E:E9:A7
+sig_hashalgo:   sha256
+parm:           max_vfs:Maximum number of virtual functions to allocate per physical function - default is zero and maximum value is 63 (uint)
+parm:           allow_unsupported_sfp:Allow unsupported and untested SFP+ modules on 82599-based adapters (uint)
+parm:           debug:Debug level (0=none,...,16=all) (int)
+
+# 重新加载内核，修改max_vfs为4，并将此参数写入/etc/modprobe.d/下的文件以便开机加载
+[root@node3 ~]# modprobe -r ixgbe; modprobe ixgbe max_vfs=4
+[root@node3 ~]# cat >> /etc/modprobe.d/ixgbe.conf<<EOF
+options ixgbe max_vfs=4
+EOF
+```
+
+也可以通过sysfs接口，使能VF变得简洁。方法就是向需要使能的PF设备的sysfs文件写入一个需要使能的VF个数。
 
 假设PF的设备编号为0000:00:01.0， 想要使能10个VF
 
@@ -154,7 +196,15 @@ echo 10 > /sys/bus/pci/devices/0000:00:01.0/sriov_numvfs
 一般情况下VF的设备名会带有”Virtual Function”字样，所以通过搜索lspci的输出可以确认是否使能成功。
 
 ```
-lspci | grep "Virtual Function"
+# 再次查看网络设备，可发现多了4个虚拟网卡，并且设备ID不同于物理网卡
+[root@node3 ~]# lspci | grep -i ethernet
+02:00.3 Ethernet controller [0200]: Broadcom Corporation NetXtreme BCM5719 Gigabit Ethernet PCIe [14e4:1657] (rev 01)
+04:00.0 Ethernet controller [0200]: Intel Corporation Ethernet 10G 2P X520 Adapter [8086:154d] (rev 01)
+04:00.1 Ethernet controller [0200]: Intel Corporation Ethernet 10G 2P X520 Adapter [8086:154d] (rev 01)
+04:10.0 Ethernet controller [0200]: Intel Corporation 82599 Ethernet Controller Virtual Function [8086:10ed] (rev 01)
+04:10.1 Ethernet controller [0200]: Intel Corporation 82599 Ethernet Controller Virtual Function [8086:10ed] (rev 01)
+04:10.2 Ethernet controller [0200]: Intel Corporation 82599 Ethernet Controller Virtual Function [8086:10ed] (rev 01)
+04:10.3 Ethernet controller [0200]: Intel Corporation 82599 Ethernet Controller Virtual Function [8086:10ed] (rev 01)
 ```
 
 如果相对于使能前多出了相同指定个数的pci设备，则表示使能成功。
