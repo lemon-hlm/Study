@@ -88,11 +88,13 @@ DMAR: IOMMU enabled
 
 如果上述选项设置是built-in的，那就不需要加载了。如果是模块的话，那需要加载并且这样还能确认是否选项勾选正确。
 
+vfio\-pci驱动是专门为现在支持DMAR和中断地址重映射的PCI设备开发的驱动模块，它依赖于VFIO驱动框架，并且借助于vfio\-iommu\-type1模块实现IOMMU的重用
+
 加载的命令：
 
 ```
 modprobe vfio
-mod prove vfio-pci
+modprobe vfio-pci
 ```
 
 查看是否加载成功的命令是：
