@@ -273,7 +273,164 @@ SR-IOV使用两种功能（function）：
 - 物理功能（Physical Functions，PF）：这是完整的带有SR-IOV能力的PCIe设备。PF能像普通PCI设备那样被发现、管理和配置。
 
 - 虚拟功能（Virtual Functions，VF）：简单的PCIe功能，它只能处理I/O。每个VF都是从PF中分离出来的。每个物理硬件都有一个VF数目的限制。一个PF，能被虚拟成多个VF用于分配给多个虚拟机。
-Hypervisor能将一个或者多个VF分配给一个虚机。在某一时刻，一个VF只能被分配给一个虚机。一个虚机可以拥有多个VF。在虚机的操作系统看来，一个VF网卡看起来和一个普通网卡没有区别。SR-IOV驱动是在内核中实现的。
+Hypervisor能将一个或者多个VF分配给一个虚机。在某一时刻，一个VF只能被分配给一个虚机。一个虚机可以拥有多个VF。在虚机的操作系统看来，一个VF网卡看起来和一个普通网卡没有区别。**SR-IOV驱动是在内核**中实现的。
+
+a, 检查设备是否支持SR-IOV：
+
+```
+# lspci -s 0000:08:00.0 -vvv | grep -i “Single Root I/O Virtualization”
+Capabilities: [160 v1] Single Root I/O Virtualization (SR-IOV)
+```
+
+看来我这个设备上的这个网卡是支持的。
+
+b, 重新绑定到igb驱动：
+
+```
+# echo 0000:08:00.0 > /sys/bus/pci/devices/0000\:08\:00.0/driver/unbind
+# echo “8086 10c9″ > /sys/bus/pci/drivers/igb/new_id
+bash: echo: write error: File exists
+# echo “8086 10c9″ > /sys/bus/pci/drivers/igb/bind
+bash: echo: write error: No such device
+```
+
+出现上面这些错误，当前还不知道怎么回事，可能是因为我关闭kvm都是直接在宿主机里kill掉进程的，导致bus信息未释放？待进一步分析。
+
+```
+# echo igb > /sys/bus/pci/devices/0000\:08\:00.0/driver_override
+# echo 0000:08:00.0 > /sys/bus/pci/drivers_probe
+# lspci -s 0000:08:00.0 -k
+08:00.0 Ethernet controller: Intel Corporation 82576 Gigabit Network Connection (rev 01)
+Subsystem: Intel Corporation Device 0000
+Kernel driver in use: igb
+Kernel modules: igb
+```
+
+c, 创建VF，可以通过重新加载内核模块参数来创建VF：
+
+```
+# modprobe -r igb; modprobe igb max_vfs=7
+```
+
+如果远程网卡也是用的igb，则会导致断网。因此还是直接只对0000:08:00.0网卡开启VF：
+
+```
+# lspci -nn | grep “Virtual Function”
+# echo 2 > /sys/bus/pci/devices/0000\:08\:00.0/sriov_numvfs
+# lspci -nn | grep “Virtual Function”
+08:10.0 Ethernet controller [0200]: Intel Corporation 82576 Virtual Function [8086:10ca] (rev 01)
+08:10.2 Ethernet controller [0200]: Intel Corporation 82576 Virtual Function [8086:10ca] (rev 01)
+# echo 0 > /sys/bus/pci/devices/0000\:08\:00.0/sriov_numvfs
+# lspci -nn | grep “Virtual Function”
+```
+
+
+也就是对sriov_numvfs进行数字写入，表示创建几个VF，写入0则删除所有VF。
+
+如果要**重启生效**，那还是在**模块加载时指定参数**：
+
+```
+# echo “options igb max_vfs=2″ >>/etc/modprobe.d/igb.conf
+```
+
+
+d, 接下来就可以把VF当做普通网卡给虚拟机独占使用了
+# lshw -c network -businfo
+Bus info Device Class Description
+========================================================
+…
+pci@0000:08:10.0 enp8s16 network 82576 Virtual Function
+pci@0000:08:10.2 enp8s16f2 network 82576 Virtual Function
+…
+# ethtool -i enp8s16 | grep bus
+bus-info: 0000:08:10.0
+# lspci -s 0000:08:10.0 -n
+08:10.0 0200: 8086:10ca (rev 01)
+# modprobe vfio
+# modprobe vfio-pci
+# echo 0000:08:10.0 > /sys/bus/pci/devices/0000\:08\:10.0/driver/unbind
+# echo “8086 10ca” > /sys/bus/pci/drivers/vfio-pci/new_id
+# echo 0000:08:10.0 > /sys/bus/pci/drivers/vfio-pci/bind
+# lspci -s 0000:08:10.0 -k
+08:10.0 Ethernet controller: Intel Corporation 82576 Virtual Function (rev 01)
+Subsystem: Intel Corporation Device 0000
+Kernel driver in use: vfio-pci
+Kernel modules: igbvf
+# kvm -name centos7 -smp 4 -m 8192 \
+-drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
+-drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
+-nographic -vnc :2 \
+-net none -device vfio-pci,host=0000:08:10.0
+
+进入虚拟机后查看网卡的驱动信息，可以看到是用的igbvf：
+# ethtool -i eth0
+driver: igbvf
+version: 2.4.0-k
+…
+
+5，pass through的麻烦之处在于需要指定具体的pci地址，比较麻烦，比如在虚拟机要做迁移的场景。
+因此另外一种据说性能也非常好的方式是通过Virtio网卡。首先需要在内核打开如下选项：
+CONFIG_VIRTIO=m
+CONFIG_VIRTIO_RING=m
+CONFIG_VIRTIO_PCI=m
+CONFIG_VIRTIO_BALLOON=m
+CONFIG_VIRTIO_BLK=m
+CONFIG_VIRTIO_NET=m
+
+CentOS 7自带内核默认已经打开，因此可以直接使用。
+# cat /boot/config-3.10.0-862.el7.x86_64 | grep VIRTIO
+CONFIG_VIRTIO_VSOCKETS=m
+CONFIG_VIRTIO_VSOCKETS_COMMON=m
+CONFIG_VIRTIO_BLK=m
+CONFIG_SCSI_VIRTIO=m
+CONFIG_VIRTIO_NET=m
+CONFIG_VIRTIO_CONSOLE=m
+CONFIG_HW_RANDOM_VIRTIO=m
+CONFIG_DRM_VIRTIO_GPU=m
+CONFIG_VIRTIO=m
+CONFIG_VIRTIO_PCI=m
+CONFIG_VIRTIO_PCI_LEGACY=y
+CONFIG_VIRTIO_BALLOON=m
+CONFIG_VIRTIO_INPUT=m
+# CONFIG_VIRTIO_MMIO is not set
+
+执行kvm：
+kvm -name centos7 -smp 4 -m 8192 \
+-drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
+-drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
+-nographic -vnc :2 \
+-device virtio-net-pci,netdev=net0 -netdev tap,id=net0,script=/home/vmhome/qemu-ifup,downscript=no
+
+注意最后一行的网卡设置：
+-device virtio-net-pci：指定了一个使用virtio-net-pci的设备，对应
+,netdev=net0：和后面的id=net0关联起来，net0是任意值，只要一致就可以。
+-netdev tap,id=net0,script=/home/vmhome/qemu-ifup,downscript=no：宿主机上对应桥接到交换机上的端口
+
+进入虚拟机，查看网卡驱动，可以看到如下：
+# ethtool -i eth0
+driver: virtio_net
+version: 1.0.0
+…
+
+根据注1，如果采用如下命令，性能会非常差：
+kvm -name centos7 -smp 4 -m 8192 \
+-drive file=/home/vmhome/centos7.qcow2,if=virtio,media=disk,index=0,format=qcow2 \
+-drive file=/home/lenky/CentOS-7-x86_64-DVD-1804.iso,media=cdrom,index=1 \
+-nographic -vnc :2 \
+-net nic,model=virtio -net tap,script=/home/vmhome/qemu-ifup,downscript=no
+
+但是根据注2，这两种写法应该是一样的，只不过-net nic,model=virtio是旧语法（old -net..-net syntax），实践验证后一种kvm启动的虚拟机里通过ethtool查看网卡的驱动也是virtio_net。难道是另外的某些原因还不得而知。
+
+ps：通过如下命令可以查看当前qemu支持的网卡类型
+# kvm -net nic,model=?
+qemu: Supported NIC models: ne2k_pci,i82551,i82557b,i82559er,rtl8139,e1000,pcnet,virtio
+
+注：
+1，https://www.linux-kvm.org/page/10G_NIC_performance:_VFIO_vs_virtio
+2，http://www.linux-kvm.org/page/Virtio
+3，https://www.cnblogs.com/sammyliu/p/4548194.html
+4，https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/virtualization_host_configuration_and_guest_installation_guide/sect-virtualization_host_configuration_and_guest_installation_guide-sr_iov-how_sr_iov_libvirt_works
+5，https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/drivers/pci/pci-driver.c?h=v3.16&id=782a985d7af26db39e86070d28f987cad21313c0
 
 
 
