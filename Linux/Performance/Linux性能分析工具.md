@@ -8,7 +8,7 @@
 
 上图是Brendan Gregg 的一次性能分析的分享，这里面的所有工具都可以通过man来获得它的帮助文档，下面简单介绍介绍一下常规的用法：
 
-# 1 vmstat -- 虚拟内存统计
+## 1.1 vmstat -- 虚拟内存统计
 
 vmstat(VirtualMeomoryStatistics,虚拟内存统计) 是Linux中监控内存的常用工具,可对操作系统的虚拟内存、进程、CPU等的整体情况进行监视。
 
@@ -43,7 +43,7 @@ cpu：显示所有的**cpu时间花费在各类操作的百分比**，包括执�
 
 **内存不足**的表现：free memory急剧减少，回收buffer和cacher也无济于事，大量使用交换分区（swpd）,页面交换（swap）频繁，读写磁盘数量（io）增多，缺页中断（in）增多，上下文切换（cs）次数增多，等待IO的进程数（b）增多，大量CPU时间用于等待IO（wa）
 
-# 2 iostat -- 用于设备的IO统计信息
+## 1.2 iostat -- 用于设备的IO统计信息
 
 iostat用于报告**中央处理器（CPU）统计信息**和整个系统、适配器、tty 设备、磁盘和 CD\-ROM 的输入/输出统计信息，默认显示了与vmstat相同的cpu使用信息，使用以下命令显示扩展的设备统计：
 
@@ -90,7 +90,7 @@ svctm：实际请求（服务）时间。
 
 %util：至少有一个活跃请求所占时间的百分比。
 
-# 3 dstat -- 系统监控工具
+## 1.3 dstat -- 系统监控工具
 
 dstat显示了**cpu使用情况**，**磁盘io情况**，**网络发包情况**和**换页情况**，输出是彩色的，可读性较强，相对于vmstat和iostat的输入更加详细且较为直观。在使用时，直接输入命令即可，当然也可以使用特定参数。
 
@@ -123,7 +123,7 @@ usr sys idl wai hiq siq| read  writ| 1m   5m  15m | used  buff  cach  free| recv
   0   0 100   0   0   0|   0     0 |   0 0.01 0.05| 841M 3436k 2780M 11.8G|1195B  538B|  0   0   0|   0  8000M|  54    51 >^C
 ```
 
-# 4 iotop -- Linux进程对IO的实时监控工具
+## 1.4 iotop -- Linux进程对IO的实时监控工具
 
 iotop命令是专门显示硬盘IO的命令，界面风格类似top命令，可以显示IO负载具体是由哪个进程产生的。是一个用来监视磁盘I/O使用状况的top类工具，具有与top相似的UI，其中包括PID、用户、I/O、进程等相关信息。
 
@@ -131,7 +131,7 @@ iotop命令是专门显示硬盘IO的命令，界面风格类似top命令，可�
 
 查看每个进程的I/O，可以使用pidstat，pidstat –d instat。
 
-# 5 pidstat -- 监控进程对系统资源情况
+## 1.5 pidstat -- 监控进程对系统资源情况
 
 pidstat主要用于监控全部或指定进程占用系统资源的情况,如CPU,内存、设备IO、任务切换、线程等。
 
@@ -141,7 +141,7 @@ pidstat还可以用以统计CPU使用信息：pidstat –u interval；
 
 统计内存信息：pidstat –r interval。
 
-# 6 top
+## 1.6 top
 
 top命令的汇总区域显示了五个方面的系统性能信息：
 
@@ -183,7 +183,7 @@ KiB Swap:  8191996 total,  8191996 free,        0 used. 15013356 avail Mem
    17 root      rt   0       0      0      0 S   0.0  0.0   0:01.72 watchdog/2
 ```
 
-# 7 htop -- 进程查看器
+## 1.7 htop -- 进程查看器
 
 htop 是Linux系统中的一个互动的进程查看器,一个文本模式的应用程序(在控制台或者X终端中),需要ncurses。
 
@@ -209,7 +209,7 @@ Htop可让用户交互式操作，支持颜色主题，可横向或纵向滚动�
 
 htop支持鼠标操作。
 
-# 8 mpstat -- 多处理器实时系统监控工具
+## 1.8 mpstat -- 多处理器实时系统监控工具
 
 mpstat 是Multiprocessor Statistics的缩写，是实时系统监控工具。其报告与CPU的一些统计信息，这些信息存放在/proc/stat文件中。在多CPUs系统里，其不但能查看所有CPU的平均状况信息，而且能够查看特定CPU的信息。常见用法：mpstat –P ALL interval times。
 
@@ -249,7 +249,7 @@ Linux 3.10.0-957.5.1.el7.x86_64 (localhost.localdomain) 	2019年04月04日 	_x86
 ^C
 ```
 
-# 9 netstat -- 网络连接信息
+## 1.9 netstat -- 网络连接信息
 
 Netstat用于显示与IP、TCP、UDP和ICMP协议相关的统计数据，一般用于检验本机各端口的网络连接情况。
 
@@ -261,7 +261,7 @@ netstat –rn 打印路由表信息。
 
 netstat –in 提供系统上的接口信息，打印每个接口的MTU,输入分组数，输入错误，输出分组数，输出错误，冲突以及当前的输出队列的长度。
 
-# 10 ps -- 显示当前进程的状态
+## 1.10 ps -- 显示当前进程的状态
 
 ps参数太多，具体使用方法可以参考man ps，常用的方法：ps aux #hsserver；ps –ef |grep #hundsun
 
@@ -277,7 +277,7 @@ ps aux | grep mysqld | grep –v grep | awk ‘{print $2 }’ xargs kill -9
 ps –eal | awk ‘{if ($2 == “Z”){print $4}}’ | xargs kill -9
 ```
 
-# 11 strace -- 跟踪程序执行过程中系统调用及收到的信号
+## 1.11 strace -- 跟踪程序执行过程中系统调用及收到的信号
 
 跟踪程序执行过程中产生的系统调用及接收到的信号，帮助分析程序或命令执行中遇到的异常情况。
 
@@ -287,11 +287,11 @@ ps –eal | awk ‘{if ($2 == “Z”){print $4}}’ | xargs kill -9
 strace –e stat64 mysqld –print –defaults > /dev/null
 ```
 
-# 12 uptime -- 系统运行时间与平均负荷
+## 1.12 uptime -- 系统运行时间与平均负荷
 
 能够打印系统总共运行了多长时间和系统的平均负载，uptime命令最后输出的三个数字的含义分别是1分钟，5分钟，15分钟内系统的平均负荷。
 
-# 13 lsof -- 列出当前系统打开文件
+## 1.13 lsof -- 列出当前系统打开文件
 
 lsof(list open files)是一个列出当前系统打开文件的工具。通过lsof工具能够查看这个列表对系统检测及排错，常见的用法：
 
@@ -305,7 +305,7 @@ lsof(list open files)是一个列出当前系统打开文件的工具。通过ls
 
 查看远程已打开的网络链接 lsof –i @192.168.34.128
 
-# 14 perf -- 性能调优工具
+## 1.14 perf -- 性能调优工具
 
 perf是Linux kernel自带的系统性能优化工具。优势在于与Linux Kernel的紧密结合，它可以最先应用到加入Kernel的new feature，用于查看热点函数，查看cashe miss的比率，从而帮助开发者来优化程序性能。
 
@@ -315,6 +315,14 @@ perf是Linux kernel自带的系统性能优化工具。优势在于与Linux Kern
 
 汇总：结合以上常用的性能测试命令并联系文初的性能分析工具的图，就可以初步了解到性能分析过程中哪个方面的性能使用哪方面的工具（命令）。
 
-【常用的性能测试工具】
+# 2 常用的性能测试工具
 
+熟练并精通了第二部分的性能分析命令工具，引入几个性能测试的工具，介绍之前先简单了解几个性能测试工具：
 
+## 2.1 perf\_events
+
+perf\_events: 一款随 Linux 内核代码一同发布和维护的性能诊断工具，由内核社区维护和发展。Perf 不仅可以用于应用程序的性能统计分析，也可以应用于内核代码的性能统计和分析。
+
+更多参考：http://blog.sina.com.cn/s/blog_98822316010122ex.html。
+
+eBPF tools: 一款使用bcc进行的性能追踪的工具,eBPF map可以使用定制的eBPF程序被广泛应用于内核调优方面，也可以读取用户级的异步代码。重要的是这个外部的数据可以在用户空间管理。这个k-v格式的map数据体是通过在用户空间调用bpf系统调用创建、添加、删除等操作管理的。more: http://blog.csdn.net/ljy1988123/article/details/50444693。
