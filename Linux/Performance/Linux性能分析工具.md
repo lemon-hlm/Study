@@ -121,8 +121,10 @@ usr sys idl wai hiq siq| read  writ| 1m   5m  15m | used  buff  cach  free| recv
   0   0 100   0   0   0|   0     0 |   0 0.01 0.05| 841M 3436k 2780M 11.8G|1195B  538B|  0   0   0|   0  8000M|  54    51 >^C
 ```
 
-# 4 iotop -- Linux进程实时监控工具
+# 4 iotop -- Linux进程对IO的实时监控工具
 
 iotop命令是专门显示硬盘IO的命令，界面风格类似top命令，可以显示IO负载具体是由哪个进程产生的。是一个用来监视磁盘I/O使用状况的top类工具，具有与top相似的UI，其中包括PID、用户、I/O、进程等相关信息。
 
-可以以非交互的方式使用：iotop –bod interval，查看每个进程的I/O，可以使用pidstat，pidstat –d instat。
+可以以非交互的方式使用：iotop –bod interval
+
+查看每个进程的I/O，可以使用pidstat，pidstat –d instat。
