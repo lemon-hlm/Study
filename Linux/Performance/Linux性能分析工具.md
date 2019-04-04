@@ -138,3 +138,48 @@ pidstat主要用于监控全部或指定进程占用系统资源的情况,如CPU
 pidstat还可以用以统计CPU使用信息：pidstat –u interval；
 
 统计内存信息：pidstat –r interval。
+
+# 6 top
+
+top命令的汇总区域显示了五个方面的系统性能信息：
+
+1.负载：时间，登陆用户数，系统平均负载；
+
+2.进程：运行，睡眠，停止，僵尸；
+
+3.cpu:用户态，核心态，NICE,空闲，等待IO,中断等；
+
+4.内存：总量，已用，空闲（系统角度），缓冲，缓存；
+
+5.交换分区：总量，已用，空闲
+
+任务区域默认显示：进程ID,有效用户，**进程优先级**，**NICE值**，进程使用的**虚拟内存**，**物理内存**和**共享内存**，进程状态，CPU占用率，内存占用率，**累计CPU时间**，进程命令行信息。
+
+```
+top - 12:54:00 up 5 days, 19:59,  3 users,  load average: 0.00, 0.01, 0.05
+Tasks: 271 total,   1 running, 270 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni, 99.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16114600 total, 12401332 free,   618816 used,  3094452 buff/cache
+KiB Swap:  8191996 total,  8191996 free,        0 used. 15013356 avail Mem
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 8729 gdm       20   0 3917124 135348  45460 S   0.7  0.8   1:31.04 gnome-shell
+25540 root      20   0  162172   2480   1600 R   0.3  0.0   0:00.18 top
+    1 root      20   0  191916   4900   2640 S   0.0  0.0   0:20.76 systemd
+    2 root      20   0       0      0      0 S   0.0  0.0   0:00.07 kthreadd
+    3 root      20   0       0      0      0 S   0.0  0.0   0:01.67 ksoftirqd/0
+    5 root       0 -20       0      0      0 S   0.0  0.0   0:00.00 kworker/0:0H
+    7 root      rt   0       0      0      0 S   0.0  0.0   0:00.08 migration/0
+    8 root      20   0       0      0      0 S   0.0  0.0   0:00.00 rcu_bh
+    9 root      20   0       0      0      0 S   0.0  0.0  10:13.84 rcu_sched
+   10 root       0 -20       0      0      0 S   0.0  0.0   0:00.00 lru-add-drain
+   11 root      rt   0       0      0      0 S   0.0  0.0   0:01.96 watchdog/0
+   12 root      rt   0       0      0      0 S   0.0  0.0   0:01.88 watchdog/1
+   13 root      rt   0       0      0      0 S   0.0  0.0   0:00.11 migration/1
+   14 root      20   0       0      0      0 S   0.0  0.0   0:00.04 ksoftirqd/1
+   16 root       0 -20       0      0      0 S   0.0  0.0   0:00.00 kworker/1:0H
+   17 root      rt   0       0      0      0 S   0.0  0.0   0:01.72 watchdog/2
+```
+
+# 7 htop
+
