@@ -275,4 +275,14 @@ ps aux | grep mysqld | grep –v grep | awk ‘{print $2 }’ xargs kill -9
 ps –eal | awk ‘{if ($2 == “Z”){print $4}}’ | xargs kill -9
 ```
 
+# 11 strace -- 跟踪程序执行过程中系统调用及收到的信号
 
+跟踪程序执行过程中产生的系统调用及接收到的信号，帮助分析程序或命令执行中遇到的异常情况。
+
+举例：查看mysqld在linux上加载哪种配置文件，可以通过运行下面的命令：
+
+```
+strace –e stat64 mysqld –print –defaults > /dev/null
+```
+
+# 12 uptime -- 
