@@ -285,4 +285,22 @@ ps –eal | awk ‘{if ($2 == “Z”){print $4}}’ | xargs kill -9
 strace –e stat64 mysqld –print –defaults > /dev/null
 ```
 
-# 12 uptime -- 
+# 12 uptime -- 系统运行时间与平均负荷
+
+能够打印系统总共运行了多长时间和系统的平均负载，uptime命令最后输出的三个数字的含义分别是1分钟，5分钟，15分钟内系统的平均负荷。
+
+# 13 lsof -- 列出当前系统打开文件
+
+lsof(list open files)是一个列出当前系统打开文件的工具。通过lsof工具能够查看这个列表对系统检测及排错，常见的用法：
+
+查看文件系统阻塞 lsof /boot
+
+查看端口号被哪个进程占用 lsof -i :3306
+
+查看用户打开哪些文件 lsof –u username
+
+查看进程打开哪些文件 lsof –p 4838
+
+查看远程已打开的网络链接 lsof –i @192.168.34.128
+
+# 14 perf 
