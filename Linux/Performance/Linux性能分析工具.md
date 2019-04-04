@@ -181,7 +181,7 @@ KiB Swap:  8191996 total,  8191996 free,        0 used. 15013356 avail Mem
    17 root      rt   0       0      0      0 S   0.0  0.0   0:01.72 watchdog/2
 ```
 
-# 7 htop
+# 7 htop -- 进程查看器
 
 htop 是Linux系统中的一个互动的进程查看器,一个文本模式的应用程序(在控制台或者X终端中),需要ncurses。
 
@@ -207,7 +207,7 @@ Htop可让用户交互式操作，支持颜色主题，可横向或纵向滚动�
 
 htop支持鼠标操作。
 
-# 8 mpstat
+# 8 mpstat -- 多处理器实时系统监控工具
 
 mpstat 是Multiprocessor Statistics的缩写，是实时系统监控工具。其报告与CPU的一些统计信息，这些信息存放在/proc/stat文件中。在多CPUs系统里，其不但能查看所有CPU的平均状况信息，而且能够查看特定CPU的信息。常见用法：mpstat –P ALL interval times。
 
@@ -247,5 +247,16 @@ Linux 3.10.0-957.5.1.el7.x86_64 (localhost.localdomain) 	2019年04月04日 	_x86
 ^C
 ```
 
-# 9 netstat
+# 9 netstat -- 网络连接信息
 
+Netstat用于显示与IP、TCP、UDP和ICMP协议相关的统计数据，一般用于检验本机各端口的网络连接情况。
+
+常见用法：
+
+netstat –npl 可以查看你要打开的端口是否已经打开。
+
+netstat –rn 打印路由表信息。
+
+netstat –in 提供系统上的接口信息，打印每个接口的MTU,输入分组数，输入错误，输出分组数，输出错误，冲突以及当前的输出队列的长度。
+
+# 10 ps -- 显示当前进程的状态
