@@ -41,7 +41,7 @@ cpu：显示所有的**cpu时间花费在各类操作的百分比**，包括执�
 
 **内存不足**的表现：free memory急剧减少，回收buffer和cacher也无济于事，大量使用交换分区（swpd）,页面交换（swap）频繁，读写磁盘数量（io）增多，缺页中断（in）增多，上下文切换（cs）次数增多，等待IO的进程数（b）增多，大量CPU时间用于等待IO（wa）
 
-# 2 iostat -- 用于报告中央处理器统计信息
+# 2 iostat -- 用于设备的IO统计信息
 
 iostat用于报告**中央处理器（CPU）统计信息**和整个系统、适配器、tty 设备、磁盘和 CD\-ROM 的输入/输出统计信息，默认显示了与vmstat相同的cpu使用信息，使用以下命令显示扩展的设备统计：
 
@@ -121,4 +121,8 @@ usr sys idl wai hiq siq| read  writ| 1m   5m  15m | used  buff  cach  free| recv
   0   0 100   0   0   0|   0     0 |   0 0.01 0.05| 841M 3436k 2780M 11.8G|1195B  538B|  0   0   0|   0  8000M|  54    51 >^C
 ```
 
-# 4 iotop -- 
+# 4 iotop -- Linux进程实时监控工具
+
+iotop命令是专门显示硬盘IO的命令，界面风格类似top命令，可以显示IO负载具体是由哪个进程产生的。是一个用来监视磁盘I/O使用状况的top类工具，具有与top相似的UI，其中包括PID、用户、I/O、进程等相关信息。
+
+可以以非交互的方式使用：iotop –bod interval，查看每个进程的I/O，可以使用pidstat，pidstat –d instat。
