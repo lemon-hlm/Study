@@ -58,3 +58,5 @@ cmd+shift+4+space（空格键）：对选定的某个应用程序界面窗口进
 - 快捷键设置
 
 ![config](./images/4.png)
+
+- Clipy: 剪切板工具
