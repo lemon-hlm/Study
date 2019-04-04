@@ -260,3 +260,19 @@ netstat –rn 打印路由表信息。
 netstat –in 提供系统上的接口信息，打印每个接口的MTU,输入分组数，输入错误，输出分组数，输出错误，冲突以及当前的输出队列的长度。
 
 # 10 ps -- 显示当前进程的状态
+
+ps参数太多，具体使用方法可以参考man ps，常用的方法：ps aux #hsserver；ps –ef |grep #hundsun
+
+杀掉某一程序的方法：
+
+```
+ps aux | grep mysqld | grep –v grep | awk ‘{print $2 }’ xargs kill -9
+```
+
+杀掉僵尸进程：
+
+```
+ps –eal | awk ‘{if ($2 == “Z”){print $4}}’ | xargs kill -9
+```
+
+
