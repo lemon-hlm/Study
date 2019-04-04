@@ -183,3 +183,15 @@ KiB Swap:  8191996 total,  8191996 free,        0 used. 15013356 avail Mem
 
 # 7 htop
 
+htop 是Linux系统中的一个互动的进程查看器,一个文本模式的应用程序(在控制台或者X终端中),需要ncurses。
+
+安装:
+
+```
+# 在CentOS 7上启用epel版本
+yum -y install epel-release
+
+# 安装
+yum -y install htop
+```
+
