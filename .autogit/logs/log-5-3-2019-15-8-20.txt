@@ -1,0 +1,20 @@
+-------------------- Auto-Git Log --------------------
+		Fri Apr 05 2019 15:08:20 GMT+0800 (CST)
+------------------------------------------------------
+
+Modified files:
+* Git/Tips.md
+* "Tools/Visual Studio Code/Tips.md"
+* "Tools/Visual Studio Code/安装配置.md"
+* "Virtualization/系统虚拟化/第2章 x86架构及操作系统概述/4. 中断与异常.md"
+
+
+Created files:
+* .autogit/autogit.json
+* "Tools/Visual Studio Code/images/1.png"
+
+
+Deleted files:
+
+
+Renamed files:
