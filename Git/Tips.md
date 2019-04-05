@@ -155,3 +155,19 @@ git log --oneline | wc -l
 ```
 git remote set-url origin git+ssh://git@github.com/Gerry-Lee/Study.git
 ```
+
+## 15 编辑配置项
+
+1.查看Git所有配置
+
+git config --list
+
+2.删除全局配置项
+
+(1)终端执行命令：
+
+git config --global --unset user.name
+
+(2)编辑配置文件：
+
+git config --global --edit
