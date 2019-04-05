@@ -339,3 +339,52 @@ Flame Graphs:是一款使用perf,system tap,ktap可视化的图形软件，允�
 
 ## 2.1 Linux observability tools | Linux性能测试工具
 
+![config](./images/2.jpg)
+
+首先学习的Basic Tool有如下： uptime、top(htop)、mpstat、isstat、vmstat、free、ping、nicstat、dstat。
+
+高级的命令如下： sar、netstat、pidstat、strace、tcpdump、blktrace、iotop、slabtop、sysctl、/proc。
+
+更多参考：http://www.open-open.com/lib/view/open1434589043973.html，详细的命令使用方法可以参考man 
+
+## 2.2 Linux benchmarking tools | Linux 性能测评工具
+
+![config](./images/3.jpg)
+
+性能测评工具，对于不同模块的性能测试可以使用相应的工具，想要深入了解，可以参考最下文的附件文档。
+
+## 2.3 Linux tuning tools | Linux 性能调优工具
+
+![config](./images/4.jpg)
+
+性能调优工具，主要是从linux内核源码层进行的调优，想要深入了解，可以参考下文附件文档。
+
+## 2.4 Linux observability sar | linux性能观测工具
+
+![config](./images/5.jpg)
+
+sar（System Activity Reporter系统活动情况报告）是目前LINUX上最为全面的系统性能分析工具之一，可以从多方面对系统的活动进行报告，包括：文件的读写情况、系统调用的使用情况、磁盘I/O、CPU效率、内存使用状况、进程活动及IPC有关的活动等方面。
+
+sar的常归使用方式：sar [options] [-A] [-o file] t [n] 其中： t为采样间隔，n为采样次数，默认值是1； -o file表示将命令结果以二进制格式存放在文件中，file 是文件名。 options 为命令行选项
+
+更多参考: http://blog.csdn.net/mig_davidli/article/details/52149993
+
+# 3 参考详单
+
+参考详单：
+ 
+LCA2017_BPF_tracing_and_more
+ 
+LISA2014_LinuxPerfAnalysisNewTools
+ 
+Percona2016_LinuxSystemsPerf
+ 
+SCaLE_Linux_vs_Solaris_Performance2014
+ 
+SCALE2015_Linux_perf_profiling
+ 
+SCALE2016_Broken_Linux_Performance_Tools
+ 
+SREcon_2016_perf_checklists
+ 
+Velocity2015_LinuxPerfTools
