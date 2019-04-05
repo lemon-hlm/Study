@@ -25,4 +25,8 @@
 
 或 Code → 首选项 → 键盘快捷方式 可打开
 
-# 5 
+# 5 MPE使用
+
+https://zhuanlan.zhihu.com/p/56699805
+
+https://shd101wyy.github.io/markdown-preview-enhanced/#/zh-cn/
