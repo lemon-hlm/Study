@@ -87,4 +87,8 @@ NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applicatio
     - 针对虚拟机的NVIDIA vGPU software graphics drivers驱动
 - 根据软件厂商文档安装以下软件:
     - Hypervisor, 比如KVM
-    - 虚拟机管理软件, 比如
+    - 管理Hypervisor的软件, 比如VMware vCenter Server
+    - 
+
+## 2.2 给KVM安装NVIDIA Virtual GPU Manager
+
