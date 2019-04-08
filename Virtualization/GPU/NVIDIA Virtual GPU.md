@@ -99,3 +99,13 @@ NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applicatio
 
 验证
 
+```
+# lsmod | grep vfio
+nvidia_vgpu_vfio       27099  0
+nvidia              12316924  1 nvidia_vgpu_vfio
+vfio_mdev              12841  0
+mdev                   20414  2 vfio_mdev,nvidia_vgpu_vfio
+vfio_iommu_type1       22342  0
+vfio                   32331  3 vfio_mdev,nvidia_vgpu_vfio,vfio_iommu_type1
+```
+
