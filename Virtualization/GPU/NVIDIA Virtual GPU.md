@@ -58,3 +58,20 @@ vGPU类型名称中的板类型后面的数字表示分配给该类型的vGPU的
 
 ## 1.4 Guest VM支持
 
+NVIDIA vGPU支持Windows和Linux虚拟机. 支持的vGPU类型取决于虚拟机的操作系统.
+
+### 1.4.1 Windows虚拟机
+
+支持所有的NVIDIA vGPU类型.
+
+### 1.4.2 Linux虚拟机
+
+64位Linux只支持Q\-series和B\-series系列NVIDIA vGPU
+
+## 1.5 NVIDIA vGPU软件功能
+
+NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applications.
+
+# 2 安装和配置NVIDIA Virtual GPU Manager
+
+根据Hypervisor的不同而不同. 这步完成后, 
