@@ -44,3 +44,17 @@ NVIDIA vGPU作为licensed产品在Tesla GPU上可用.
 
 vGPU类型名称中的板类型后面的数字表示分配给该类型的vGPU的帧缓冲区的数量。例如，在特斯拉M60板上为M60\-2Q类型的vGPU分配2048兆字节的帧缓冲器。
 
+由于资源要求不同，可以在物理GPU上同时创建的最大vGPU数量因vGPU类型而异。例如，Tesla M60主板可以在其两个物理GPU的每一个上支持最多4个M60-2Q vGPU，总共8个vGPU，但只有2个M60-4Q vGPU，总共4个vGPU。
+
+注: NVIDIA vGPU在所有GPU板上都是许可证产品。需要软件许可证才能启用客户机中的vGPU的所有功能。所需的许可证类型取决于vGPU类型。
+
+- Q-series virtual GPU types需要Quadro vDWS许可证。
+- B-series virtual GPU types需要GRID Virtual PC许可证，但也可以与Quadro vDWS许可证一起使用。
+- A-series virtual GPU types需要GRID虚拟应用程序许可证。
+
+以Tesla V100 SXM2 32GB为例
+
+![config](./images/3.png)
+
+## 1.4 Guest VM支持
+
