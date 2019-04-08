@@ -34,4 +34,13 @@ NVIDIA vGPU作为licensed产品在Tesla GPU上可用.
 
 ### 1.3.1 Virtual GPU Types
 
-每个物理GPU能够支持几种不同类型的
+每个物理GPU能够支持几种不同类型的Virtual GPU. Virtual GPU类型有一定数量的frame buffer, 一定数量的display heads以及最大数目的resolution. 
+
+它们根据目标工作负载的不同类别分为不同的系列. 每个系列都由vGPU类型名称的最后一个字母标识.
+
+- Q-series virtual GPU types面向设计人员和高级用户.
+- B-series virtual GPU types面向高级用户.
+- A-series virtual GPU types面向虚拟应用用户.
+
+vGPU类型名称中的板类型后面的数字表示分配给该类型的vGPU的帧缓冲区的数量。例如，在特斯拉M60板上为M60\-2Q类型的vGPU分配2048兆字节的帧缓冲器。
+
