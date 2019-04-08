@@ -74,4 +74,17 @@ NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applicatio
 
 # 2 安装和配置NVIDIA Virtual GPU Manager
 
-根据Hypervisor的不同而不同. 这步完成后, 
+根据Hypervisor的不同而不同. 这步完成后, 可以给虚拟机安装驱动并能license任何NVIDIA vGPU
+
+## 2.1 准备工作
+
+开始之前, 确保下面条件已经满足:
+
+- 已经建好server platform, 用来托管Hypervisor和支持NVIDIA vGPU软件的NVIDIA GPU
+- 在server platform, 已经安装了
+- 已经下载好了适用于Hypervisor的NVIDIA vGPU软件包, 包含:
+    - 针对hypervisor的NVIDIA Virtual GPU Manager管理软件
+    - 针对虚拟机的NVIDIA vGPU software graphics drivers驱动
+- 根据软件厂商文档安装以下软件:
+    - Hypervisor, 比如KVM
+    - 虚拟机管理软件, 比如
