@@ -92,3 +92,10 @@ NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applicatio
 
 ## 2.2 给KVM安装NVIDIA Virtual GPU Manager
 
+```
+# sh ./NVIDIA-Linux-x86_64-390.113-vgpu-kvm.run
+# systemctl reboot
+```
+
+验证
+
