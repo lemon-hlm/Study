@@ -22,3 +22,16 @@ Hypervisor安装NVIDIA Virtual GPU Manager管理物理GPU, 从而物理GPU能够
 
 虚拟机使用NVIDIA Driver驱动操作vGPU.
 
+NVIDIA vGPU内部架构:
+
+![config](./images/2.png)
+
+## 1.3 支持的GPU
+
+NVIDIA vGPU作为licensed产品在Tesla GPU上可用.
+
+要求的平台和支持的GPU, 见[NVIDIA Virtual GPU Software Documentation](https://docs.nvidia.com/grid/latest/)
+
+### 1.3.1 Virtual GPU Types
+
+每个物理GPU能够支持几种不同类型的
