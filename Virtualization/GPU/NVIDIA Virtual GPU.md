@@ -425,6 +425,10 @@ Tue Apr  9 15:58:54 2019
 
 ## 3.6 删除vGPU
 
+```
+# cd /sys/class/mdev_bus/domain\:bus\:slot.function/mdev_supported_types/
+```
+
 
 
 # 4 给虚拟机安装驱动
