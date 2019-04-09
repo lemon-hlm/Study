@@ -344,7 +344,17 @@ sudo sh ./NVIDIA-Linux-x86_64-390.115-grid.run \
 
 ![](./images/2019-04-09-16-07-23.png)
 
+warning没事
 
 
-# 3 License这个vGPU
+
+# 5 License这个vGPU
+
+我们使用配置文件来license
+
+修改/etc/nvidia/gridd.conf, 如果不存在, 那就从/etc/nvidia/gridd.conf.template拷贝一份
+
+```
+# vim /etc/nvidia/gridd.conf
+```
 
