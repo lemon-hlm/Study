@@ -255,12 +255,12 @@ enabled_vgpu_types = nvidia-194
 
 ## 2.7 确认vGPU已经创建
 
-如果安装了libvirt的话可以调用命令
+查看虚拟机的信息
 
 ```
-virsh 
 ```
 
+查看系统的mdev设备
 
 ```
 # ll /sys/bus/mdev/devices/
