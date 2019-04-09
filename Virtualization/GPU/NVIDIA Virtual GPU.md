@@ -284,10 +284,17 @@ ec6c61ab-ace5-4607-8118-e9b52c5550af
 </device>
 ```
 
+启动虚拟机
+
 ```
 # virsh start vm-name
 ```
 
+## 3.2 QEMU命令
+
+前3步和Virsh命令使用一样
+
+4. 
 
 ## 3.3 OpenStack使用
 
