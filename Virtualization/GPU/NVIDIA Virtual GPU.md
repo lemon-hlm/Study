@@ -161,7 +161,7 @@ Tue Apr  9 14:26:40 2019
 +-----------------------------------------------------------------------------+
 ```
 
-## 2.3 添加一个vGPU
+## 2.3 确定vGPU type
 
 确保想要使用vGPU的虚拟机关闭
 
@@ -227,4 +227,23 @@ GRID V100DX-1Q
 所以, 对于"GRID V100DX-1Q" vGPU类型, mdev\_type标识符是"nvidia\-194"
 
 libvirt用的就是这个mdev\_type标识符
+
+## 2.4 添加vGPU type
+
+修改nova配置文件, "/etc/kolla/nova-compute/nova.conf", 添加
+
+```
+[devices]
+enabled_vgpu_types = nvidia-194
+```
+
+然后重启nova\-compute服务
+
+## 2.5 创建flavor
+
+创建一个需要1个vGPU的flavor
+
+```
+openstack flavor set vgpu_1 --property "resources:VGPU=1"
+```
 
