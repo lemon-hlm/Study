@@ -258,6 +258,17 @@ enabled_vgpu_types = nvidia-194
 查看虚拟机的信息
 
 ```
+# vim /run/libvirt/qemu/instance-0000031d.xml
+
+...
+      <hostdev mode='subsystem' type='mdev' managed='no' model='vfio-pci' display='off'>
+        <source>
+          <address uuid='d878445d-df99-4510-b467-c67a4c1a7c34'/>
+        </source>
+        <alias name='hostdev0'/>
+        <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+      </hostdev>
+...
 ```
 
 查看系统的mdev设备
@@ -270,3 +281,4 @@ lrwxrwxrwx. 1 root root 0 4月   9 15:24 d878445d-df99-4510-b467-c67a4c1a7c34 ->
 ```
 
 ## 2.8 给虚拟机安装驱动
+
