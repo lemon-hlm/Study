@@ -294,7 +294,17 @@ ec6c61ab-ace5-4607-8118-e9b52c5550af
 
 前3步和Virsh命令使用一样
 
-4. 
+4. 修改QEMU命令
+
+添加设备命令
+
+```
+-device vfio-pci,sysfsdev=/sys/bus/mdev/devices/vgpu-uuid \
+-device vfio-pci,sysfsdev=/sys/bus/mdev/devices/vgpu-uuid \
+-uuid vm_id
+```
+
+其中, device属性是vgpu的id, 多个vgpu需要添加多个, uuid属性带的是虚拟机id
 
 ## 3.3 OpenStack使用
 
@@ -321,7 +331,7 @@ enabled_vgpu_types = nvidia-194
 
 在"实例类型"选择"vgpu_1"
 
-### 3.3.3 确认vGPU已经创建
+## 3.4 确认vGPU已经创建
 
 查看虚拟机的信息
 
@@ -345,6 +355,10 @@ enabled_vgpu_types = nvidia-194
 # ll /sys/bus/mdev/devices/
 总用量 0
 lrwxrwxrwx. 1 root root 0 4月   9 15:24 d878445d-df99-4510-b467-c67a4c1a7c34 -> ../../../devices/pci0000:85/0000:85:00.0/0000:86:00.0/0000:87:08.0/0000:89:00.0/d878445d-df99-4510-b467-c67a4c1a7c34
+```
+
+```
+
 ```
 
 查看
@@ -389,6 +403,10 @@ Tue Apr  9 15:58:54 2019
 |    5     25651    C+G   vgpu                                        8176MiB |
 +-----------------------------------------------------------------------------+
 ```
+
+## 3.5 设置vGPU的参数
+
+用来控制vGPU的行为, 
 
 # 4 给虚拟机安装驱动
 
