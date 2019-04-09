@@ -179,8 +179,52 @@ b2:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
 b3:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
 ```
 
-确定可用的vGPU类型对应的调解设备类型(mediated device type, mdev\_type)号
+确定可用的vGPU类型对应的调解设备类型(mediated device type, mdev\_type)
 
 ```
+# # ls /sys/class/mdev_bus/*/mdev_supported_types
+/sys/class/mdev_bus/0000:1a:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
 
+/sys/class/mdev_bus/0000:1b:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+/sys/class/mdev_bus/0000:3d:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+/sys/class/mdev_bus/0000:3e:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+/sys/class/mdev_bus/0000:88:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+/sys/class/mdev_bus/0000:89:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+/sys/class/mdev_bus/0000:b2:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+/sys/class/mdev_bus/0000:b3:00.0/mdev_supported_types:
+nvidia-194  nvidia-196  nvidia-198  nvidia-200  nvidia-202  nvidia-204  nvidia-206  nvidia-219
+nvidia-195  nvidia-197  nvidia-199  nvidia-201  nvidia-203  nvidia-205  nvidia-207
+
+# cat /sys/class/mdev_bus/0000\:1a\:00.0/mdev_supported_types/nvidia-194/name
+GRID V100DX-1Q
+
+# cat /sys/class/mdev_bus/0000\:1a\:00.0/mdev_supported_types/nvidia-194/available_instances
+32
 ```
+
+其中, "GRID V100DX-1Q"是vGPU type的名字, "nvidia\-194"是"mdev\_type"标识符
+
+所以, 对于"GRID V100DX-1Q" vGPU类型, mdev\_type标识符是"nvidia\-194"
+
+libvirt用的就是这个mdev\_type标识符
+
