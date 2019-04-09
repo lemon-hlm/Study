@@ -165,4 +165,8 @@ Tue Apr  9 14:26:40 2019
 
 确保想要使用vGPU的虚拟机关闭
 
-确定
+确定可用的vGPU类型对应的调解设备类型(mediated device type, mdev\_type)号
+
+```
+
+```
