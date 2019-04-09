@@ -244,6 +244,29 @@ enabled_vgpu_types = nvidia-194
 创建一个需要1个vGPU的flavor
 
 ```
-openstack flavor set vgpu_1 --property "resources:VGPU=1"
+# openstack flavor create --ram 2048 --disk 20 --vcpus 2 vgpu_1
+
+# openstack flavor set vgpu_1 --property "resources:VGPU=1"
 ```
 
+## 2.6 创建虚拟机
+
+在"实例类型"选择"vgpu_1"
+
+## 2.7 确认vGPU已经创建
+
+如果安装了libvirt的话可以调用命令
+
+```
+virsh 
+```
+
+
+```
+# ll /sys/bus/mdev/devices/
+总用量 0
+lrwxrwxrwx. 1 root root 0 4月   8 22:20 b86b7c8b-ca32-435d-a980-43da86484fa0 -> ../../../devices/pci0000:85/0000:85:00.0/0000:86:00.0/0000:87:08.0/0000:89:00.0/b86b7c8b-ca32-435d-a980-43da86484fa0
+lrwxrwxrwx. 1 root root 0 4月   9 15:24 d878445d-df99-4510-b467-c67a4c1a7c34 -> ../../../devices/pci0000:85/0000:85:00.0/0000:86:00.0/0000:87:08.0/0000:89:00.0/d878445d-df99-4510-b467-c67a4c1a7c34
+```
+
+## 2.8 给虚拟机安装驱动
