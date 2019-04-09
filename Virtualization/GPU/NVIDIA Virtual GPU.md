@@ -255,6 +255,38 @@ ec6c61ab-ace5-4607-8118-e9b52c5550af
 # ls -l /sys/bus/mdev/devices/
 ```
 
+前三步, virsh和qemu一样操作.
+
+4. 修改xml文件
+
+查看所有的虚拟机
+
+```
+# virsh ls --all
+```
+
+确保想要使用vGPU的虚拟机关机, 修改虚拟机配置
+
+```
+# virsh edit vm-name
+```
+
+在\<device\>中添加\<hostdev\>, 如果有多个的话添加多个
+
+```
+<device>
+...
+  <hostdev mode='subsystem' type='mdev' model='vfio-pci'>
+    <source>
+      <address uuid='a618089-8b16-4d01-a136-25a0f3c73123'/>
+    </source>
+  </hostdev>
+</device>
+```
+
+```
+# virsh start vm-name
+```
 
 
 ## 3.3 OpenStack使用
