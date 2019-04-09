@@ -165,6 +165,20 @@ Tue Apr  9 14:26:40 2019
 
 确保想要使用vGPU的虚拟机关闭
 
+查看物理GPU的BDF
+
+```
+# lspci | grep NVIDIA
+1a:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+1b:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+3d:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+3e:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+88:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+89:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+b2:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+b3:00.0 3D controller: NVIDIA Corporation Device 1db5 (rev a1)
+```
+
 确定可用的vGPU类型对应的调解设备类型(mediated device type, mdev\_type)号
 
 ```
