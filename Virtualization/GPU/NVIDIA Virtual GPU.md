@@ -358,7 +358,9 @@ lrwxrwxrwx. 1 root root 0 4月   9 15:24 d878445d-df99-4510-b467-c67a4c1a7c34 ->
 ```
 
 ```
-
+# cd /sys/bus/mdev/devices/d878445d-df99-4510-b467-c67a4c1a7c34/nvidia/
+# cat vm_name
+instance-0000031d
 ```
 
 查看
@@ -406,7 +408,12 @@ Tue Apr  9 15:58:54 2019
 
 ## 3.5 设置vGPU的参数
 
-用来控制vGPU的行为, 
+用来控制vGPU的行为, 包括限制之类的
+
+```
+# cd /sys/bus/mdev/devices/d878445d-df99-4510-b467-c67a4c1a7c34/nvidia
+
+```
 
 # 4 给虚拟机安装驱动
 
