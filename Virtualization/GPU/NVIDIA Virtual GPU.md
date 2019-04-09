@@ -92,10 +92,20 @@ NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applicatio
 
 ## 2.2 给KVM安装NVIDIA Virtual GPU Manager
 
+准备工作:
+
+- 编译工具: gcc
+- kernel headers: yum install kernel-headers -y
+- 将相应版本内核源码放置到/usr/src/kernels/{uname -r}/
+
+安装
+
 ```
 # sh ./NVIDIA-Linux-x86_64-390.113-vgpu-kvm.run
 # systemctl reboot
 ```
+
+注: 如果内核源码目录不在/usr/src/kernels/{uname -r}/, 可通过--kernel-source-path=指定
 
 验证
 
@@ -107,5 +117,47 @@ vfio_mdev              12841  0
 mdev                   20414  2 vfio_mdev,nvidia_vgpu_vfio
 vfio_iommu_type1       22342  0
 vfio                   32331  3 vfio_mdev,nvidia_vgpu_vfio,vfio_iommu_type1
+```
+
+```
+# nvidia-smi 
+Tue Apr  9 14:26:40 2019
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 390.113                Driver Version: 390.113                   |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  Tesla V100-SXM2...  On   | 00000000:1A:00.0 Off |                  Off |
+| N/A   33C    P0    26W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   1  Tesla V100-SXM2...  On   | 00000000:1B:00.0 Off |                  Off |
+| N/A   37C    P0    26W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   2  Tesla V100-SXM2...  On   | 00000000:3D:00.0 Off |                  Off |
+| N/A   34C    P0    25W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   3  Tesla V100-SXM2...  On   | 00000000:3E:00.0 Off |                  Off |
+| N/A   34C    P0    25W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   4  Tesla V100-SXM2...  On   | 00000000:88:00.0 Off |                  Off |
+| N/A   33C    P0    25W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   5  Tesla V100-SXM2...  On   | 00000000:89:00.0 Off |                  Off |
+| N/A   34C    P0    27W / 300W |   8224MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   6  Tesla V100-SXM2...  On   | 00000000:B2:00.0 Off |                  Off |
+| N/A   35C    P0    25W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   7  Tesla V100-SXM2...  On   | 00000000:B3:00.0 Off |                  Off |
+| N/A   33C    P0    24W / 300W |     40MiB / 32767MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                       GPU Memory |
+|  GPU       PID   Type   Process name                             Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
 ```
 
