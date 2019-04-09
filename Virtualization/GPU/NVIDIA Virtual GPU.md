@@ -229,7 +229,7 @@ GRID V100DX-1Q
 
 libvirt用的就是这个mdev\_type标识符
 
-## 2.4 添加vGPU type
+# 3 使用vGPU
 
 修改nova配置文件, "/etc/kolla/nova-compute/nova.conf", 添加
 
@@ -240,7 +240,7 @@ enabled_vgpu_types = nvidia-194
 
 然后重启nova\-compute服务
 
-## 2.5 创建flavor
+## 3.1 创建flavor
 
 创建一个需要1个vGPU的flavor
 
@@ -250,11 +250,11 @@ enabled_vgpu_types = nvidia-194
 # openstack flavor set vgpu_1 --property "resources:VGPU=1"
 ```
 
-## 2.6 创建虚拟机
+## 3.2 创建虚拟机
 
 在"实例类型"选择"vgpu_1"
 
-## 2.7 确认vGPU已经创建
+## 3.3 确认vGPU已经创建
 
 查看虚拟机的信息
 
@@ -277,7 +277,6 @@ enabled_vgpu_types = nvidia-194
 ```
 # ll /sys/bus/mdev/devices/
 总用量 0
-lrwxrwxrwx. 1 root root 0 4月   8 22:20 b86b7c8b-ca32-435d-a980-43da86484fa0 -> ../../../devices/pci0000:85/0000:85:00.0/0000:86:00.0/0000:87:08.0/0000:89:00.0/b86b7c8b-ca32-435d-a980-43da86484fa0
 lrwxrwxrwx. 1 root root 0 4月   9 15:24 d878445d-df99-4510-b467-c67a4c1a7c34 -> ../../../devices/pci0000:85/0000:85:00.0/0000:86:00.0/0000:87:08.0/0000:89:00.0/d878445d-df99-4510-b467-c67a4c1a7c34
 ```
 
@@ -322,11 +321,10 @@ Tue Apr  9 15:58:54 2019
 |  GPU       PID   Type   Process name                             Usage      |
 |=============================================================================|
 |    5     25651    C+G   vgpu                                        8176MiB |
-|    5    104441    C+G   vgpu                                        8176MiB |
 +-----------------------------------------------------------------------------+
 ```
 
-## 2.8 给虚拟机安装驱动
+# 4 给虚拟机安装驱动
 
 准备工作
 
@@ -341,4 +339,12 @@ Tue Apr  9 15:58:54 2019
 sudo sh ./NVIDIA-Linux-x86_64-390.115-grid.run \
 –kernel-source-path=/usr/src/kernels/3.10.0-693.el7.x86_64
 ```
+
+安装过程中
+
+![](./images/2019-04-09-16-07-23.png)
+
+
+
+# 3 License这个vGPU
 
