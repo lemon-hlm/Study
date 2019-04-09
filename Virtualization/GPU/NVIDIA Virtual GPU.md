@@ -226,7 +226,7 @@ GRID V100DX-1Q
 
 所以, 对于"GRID V100DX-1Q" vGPU类型, mdev\_type标识符是"nvidia\-194"
 
-确保vGPU type的
+确保vGPU type的available_instances大于1
 
 libvirt用的就是这个mdev\_type标识符
 
@@ -235,6 +235,25 @@ libvirt用的就是这个mdev\_type标识符
 下面介绍三种方式使用vGPU, 包括virsh命令、QEMU命令以及OpenStack的集成
 
 ## 3.1 Virsh命令
+
+1. 给vGPU生成一个UUID
+
+```
+# uuidgen
+ec6c61ab-ace5-4607-8118-e9b52c5550af
+```
+
+2. 写uuid到想要创建的vGPU type的create文件
+
+```
+# echo "ec6c61ab-ace5-4607-8118-e9b52c5550af" > /sys/class/mdev_bus/0000\:1a\:00.0/mdev_supported_types/nvidia-194/create
+```
+
+3. 确保已经创建
+
+```
+# ls -l /sys/bus/mdev/devices/
+```
 
 
 
@@ -263,7 +282,7 @@ enabled_vgpu_types = nvidia-194
 
 在"实例类型"选择"vgpu_1"
 
-## 3.4 确认vGPU已经创建
+### 3.3.3 确认vGPU已经创建
 
 查看虚拟机的信息
 
@@ -324,7 +343,6 @@ Tue Apr  9 15:58:54 2019
 |   7  Tesla V100-SXM2...  On   | 00000000:B3:00.0 Off |                  Off |
 | N/A   33C    P0    24W / 300W |     40MiB / 32767MiB |      0%      Default |
 +-------------------------------+----------------------+----------------------+
-
 +-----------------------------------------------------------------------------+
 | Processes:                                                       GPU Memory |
 |  GPU       PID   Type   Process name                             Usage      |
