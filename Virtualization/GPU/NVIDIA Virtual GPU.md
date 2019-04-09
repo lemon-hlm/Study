@@ -88,7 +88,6 @@ NVIDIA vGPU软件包括Quadro vDWS, GRID Virtual PC, 和 GRID Virtual Applicatio
 - 根据软件厂商文档安装以下软件:
     - Hypervisor, 比如KVM
     - 管理Hypervisor的软件, 比如VMware vCenter Server
-    - 
 
 ## 2.2 给KVM安装NVIDIA Virtual GPU Manager
 
@@ -346,7 +345,17 @@ sudo sh ./NVIDIA-Linux-x86_64-390.115-grid.run \
 
 warning没事
 
+![](./images/2019-04-09-16-26-30.png)
 
+选"No"
+
+![](./images/2019-04-09-16-26-58.png)
+
+选"yes"
+
+最后提示成功
+
+![](./images/2019-04-09-16-27-26.png)
 
 # 5 License这个vGPU
 
@@ -356,5 +365,22 @@ warning没事
 
 ```
 # vim /etc/nvidia/gridd.conf
+
+ServerAddress="10.5.8.208"
+FeatureType=1
 ```
 
+重启nvidia\-gridd服务
+
+```
+# systemctl restart nvidia-gridd.service
+```
+
+确认
+
+```
+# grep gridd /var/log/messages
+...
+Apr  9 16:23:56 localhost nvidia-gridd: Calling load_byte_array(tra)
+Apr  9 16:23:58 localhost nvidia-gridd: License acquired successfully. (Info: http://10.5.8.208:7070/request; Quadro-Virtual-DWS,5.0)
+```
