@@ -412,7 +412,15 @@ Tue Apr  9 15:58:54 2019
 
 ```
 # cd /sys/bus/mdev/devices/d878445d-df99-4510-b467-c67a4c1a7c34/nvidia
+# echo "frame_rate_limiter=0, disable_vnc=1" > vgpu_params
+```
 
+参数列表都是以`parameter-name=value`形式
+
+清空参数
+
+```
+# echo " " > vgpu_params
 ```
 
 # 4 给虚拟机安装驱动
