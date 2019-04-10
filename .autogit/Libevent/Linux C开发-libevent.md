@@ -8,6 +8,7 @@
 	* [2.1 创建event\_base](#21-创建event_base)
 	* [2.2 查看IO模型](#22-查看io模型)
 	* [2.3 销毁event\_base](#23-销毁event_base)
+	* [2.4 事件循环 event loop](#24-事件循环-event-loop)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -68,6 +69,56 @@ const char *event_base_get_method(const struct event_base *base);
 void event_base_free(struct event_base *base);
 ```
 
+## 2.4 事件循环 event loop
+
+上面说到 event\_base是一组event的集合，我们也可以将event事件注册到这个集合中。当需要事件监听的时候，我们就需要对这个event\_base进行循环。
+
+下面这个函数非常重要，会在内部不断的循环监听注册上来的事件。
+
+```c
+int event_base_dispatch(struct event_base *base);
+```
+
+返回值：0 表示成功退出  -1 表示存在错误信息。
+
+还可以用这个方法：
+
+```c
+#define EVLOOP_ONCE             0x01
+#define EVLOOP_NONBLOCK         0x02
+#define EVLOOP_NO_EXIT_ON_EMPTY 0x04
+ 
+int event_base_loop(struct event_base *base, int flags);
+```
+
+event_base_loop这个方法会比event_base_dispatch这个方法更加灵活一些。
+
+- EVLOOP\_ONCE: 阻塞直到有一个活跃的event，然后执行完活跃事件的回调就退出。
+
+- EVLOOP\_NONBLOCK: 不阻塞，检查哪个事件准备好，调用优先级最高的那一个，然后退出。
+
+0：如果参数填了0，则只有事件进来的时候才会调用一次事件的回调函数，比较常用
+
+事件循环停止的情况：
+
+1. event_base中没有事件event
+
+2. 调用event_base_loopbreak()，那么事件循环将停止
+
+3. 调用event_base_loopexit()，那么事件循环将停止
+
+4. 程序错误，异常退出
+
+两个退出的方法：
+
+```c
+// 这两个函数成功返回 0 失败返回 -1
+// 指定在 tv 时间后停止事件循环
+// 如果 tv == NULL 那么将无延时的停止事件循环
+int event_base_loopexit(struct event_base *base,const struct timeval *tv);
+// 立即停止事件循环（而不是无延时的停止）
+int event_base_loopbreak(struct event_base *base);
+```
 
 
 
