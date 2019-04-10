@@ -237,7 +237,7 @@ int event_del(struct event *event);
 
 ## 3.3 注册event
 
-该方法将用于向event_base注册事件。
+该方法将用于**向event_base注册事件**。
 
 参数：ev 为事件指针；tv 为时间指针。当tv = NULL的时候则无超时时间。
 
@@ -256,9 +256,9 @@ event_add(ev1, &five_seconds);
 
 ## 3.4 event\_assign
 
-event_new每次都会在堆上分配内存。有些场景下并不是每次都需要在堆上分配内存的，这个时候我们就可以用到event\_assign方法。
+**event\_new**每次都会**在堆上分配内存**。有些场景下并不是每次都需要在堆上分配内存的，这个时候我们就可以用到event\_assign方法。
 
-已经初始化或者处于 pending 的 event，首先需要调用 event_del() 后再调用 event_assign()。这个时候就可以重用这个event了。
+已经初始化或者处于 pending 的 event，首先需要调用 event\_del() 后再调用 event_assign()。这个时候就可以重用这个event了。
 
 ```cpp
 // 此函数用于初始化 event（包括可以初始化栈上和静态存储区中的 event）
