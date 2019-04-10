@@ -12,6 +12,12 @@
 	* [2.5 event\_base的例子](#25-event_base的例子)
 * [3 event事件](#3-event事件)
 	* [3.1 创建一个事件event](#31-创建一个事件event)
+	* [3.2 释放event\_free](#32-释放event_free)
+	* [3.3 注册event](#33-注册event)
+	* [3.4 event\_assign](#34-event_assign)
+	* [3.5 信号事件](#35-信号事件)
+	* [3.6 event细节](#36-event细节)
+* [参考](#参考)
 
 <!-- /code_chunk_output -->
 
@@ -195,6 +201,101 @@ libevent是基于事件的，也就是说只有在事件到来的这种条件下
 what参数 event各种条件：
 
 ```c
+// 超时
+#define EV_TIMEOUT 0x01
+// event 相关的文件描述符可以读了
+#define EV_READ 0x02
+// event 相关的文件描述符可以写了
+#define EV_WRITE 0x04
+// 被用于信号检测（详见下文）
+#define EV_SIGNAL 0x08
+// 用于指定 event 为 persistent 持久类型。当事件执行完毕后，不会被删除，继续保持pending等待状态;
+// 如果是非持久类型，则回调函数执行完毕后，事件就会被删除，想要重新使用这个事件，就必须将这个事件继续添加event_add 
+#define EV_PERSIST 0x10
+// 用于指定 event 会被边缘触发
+#define EV_ET 0x20
+```
+
+## 3.2 释放event\_free
+
+真正的释放event的内存。
+
+```c
+void event_free(struct event *event);
+```
+
+event_del 清理event的内存。这个方法并不是真正意义上的释放内存。
+
+当函数会将事件转为 非pending和非activing的状态。
+
+```c
+int event_del(struct event *event);
+```
+
+## 3.3 注册event
+
+该方法将用于向event_base注册事件。
+
+参数：ev 为事件指针；tv 为时间指针。当tv = NULL的时候则无超时时间。
+
+函数返回：0表示成功 -1 表示失败。
+
+```c
+int event_add(struct event *ev, const struct timeval *tv);
+```
+
+tv时间结构例子：
+
+```c
+struct timeval five_seconds = {5, 0};
+event_add(ev1, &five_seconds);
+```
+
+## 3.4 event\_assign
+
+event_new每次都会在堆上分配内存。有些场景下并不是每次都需要在堆上分配内存的，这个时候我们就可以用到event\_assign方法。
+
+已经初始化或者处于 pending 的 event，首先需要调用 event_del() 后再调用 event_assign()。这个时候就可以重用这个event了。
+
+```c
+// 此函数用于初始化 event（包括可以初始化栈上和静态存储区中的 event）
+// event_assign() 和 event_new() 除了 event 参数之外，使用了一样的参数
+// event 参数用于指定一个未初始化的且需要初始化的 event
+// 函数成功返回 0 失败返回 -1
+int event_assign(struct event *event, struct event_base *base,evutil_socket_t fd, short what,void (*callback)(evutil_socket_t, short, void *), void *arg);
+     
+// 类似上面的函数，此函数被信号 event 使用
+event_assign(event, base, signum, EV_SIGNAL|EV_PERSIST, callback, arg)
+```
+
+## 3.5 信号事件
+
+信号事件也可以对信号进行事件的处理。用法和event_new类似。只不过处理的是信号而已。
+
+```c
+// base --- event_base
+// signum --- 信号，例如 SIGHUP
+// callback --- 信号出现时调用的回调函数
+// arg --- 用户自定义数据
+evsignal_new(base, signum, cb, arg)
+     
+//将信号 event 注册到 event_base
+evsignal_add(ev, tv) 
+     
+// 清理信号 event
+evsignal_del(ev) 
+```
+
+## 3.6 event细节
+
+1. 每一个事件event都需要通过event_new初始化生成。event_new生成的事件是在堆上分配的内存。
+
+2. 当一个事件通过event_add被注册到event_base上的时候，这个事件处于pending（等待状态），当只有有事件进来的时候，event才会被激活active状态，相关的回调函数就会被调用。
+
+3. persistent 如果event_new中的what参数选择了EV_PERSIST，则是持久的类型。持久的类型调用玩回调函数后，会继续转为pending状态，就会继续等待事件进来。大部分情况下会选择持久类型的事件。
+
+3. 而非持久的类型的事件，调用玩一次之后，就会变成初始化的状态。这个时候需要调用event_add 继续将事件注册到event_base上之后才能使用。
+
 
 
 # 参考
