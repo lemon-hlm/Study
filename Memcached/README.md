@@ -24,3 +24,5 @@ memcached作为高速运行的分布式缓存服务器，具有以下的特点�
 教程: http://www.runoob.com/memcached/memcached-tutorial.html
 
 http://calixwu.com/2014/11/memcached-yuanmafenxi-from-set.html
+
+memcached 1.4源码注释: <https://github.com/y123456yz/Reading-and-comprehense-memcached-1.4.22>
