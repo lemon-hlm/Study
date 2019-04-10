@@ -447,6 +447,49 @@ $ cp -v /etc/ceph/ceph.client.glance.keyring /etc/kolla/config/nova/ceph.client.
 
 注: 这里的nova使用cinder-volume的keyring文件必须改为cinder.keyring
 
+```
+# ll /etc/kolla/config/*/
+/etc/kolla/config/cinder/:
+总用量 12
+-rw-r--r--. 1 root root 276 4月   9 23:43 ceph.conf
+drwxr-xr-x. 2 root root  88 4月   9 23:43 cinder-backup
+-rw-r--r--. 1 root root 291 4月   9 23:42 cinder-backup.conf
+drwxr-xr-x. 2 root root 113 4月   9 23:44 cinder-volume
+-rw-r--r--. 1 root root 264 4月   9 23:42 cinder-volume.conf
+
+/etc/kolla/config/glance/:
+总用量 12
+-rw-r--r--. 1 root root 167 4月   9 23:41 ceph.client.glance.keyring
+-rw-r--r--. 1 root root 276 4月   9 23:41 ceph.conf
+-rw-r--r--. 1 root root 138 4月   9 23:38 glance-api.conf
+
+/etc/kolla/config/nova/:
+总用量 20
+-rw-r--r--. 1 root root 217 4月   9 23:44 ceph.client.cinder.keyring
+-rw-r--r--. 1 root root 167 4月   9 23:44 ceph.client.glance.keyring
+-rw-r--r--. 1 root root 209 4月   9 23:44 ceph.client.nova.keyring
+-rw-r--r--. 1 root root 276 4月   9 23:44 ceph.conf
+-rw-r--r--. 1 root root 101 4月   9 23:44 nova-compute.conf
+```
+
+```
+# ll /etc/kolla/config/cinder/*
+-rw-r--r--. 1 root root 276 4月   9 23:43 /etc/kolla/config/cinder/ceph.conf
+-rw-r--r--. 1 root root 291 4月   9 23:42 /etc/kolla/config/cinder/cinder-backup.conf
+-rw-r--r--. 1 root root 264 4月   9 23:42 /etc/kolla/config/cinder/cinder-volume.conf
+
+/etc/kolla/config/cinder/cinder-backup:
+总用量 8
+-rw-r--r--. 1 root root 199 4月   9 23:43 ceph.client.cinder-backup.keyring
+-rw-r--r--. 1 root root 217 4月   9 23:43 ceph.client.cinder-volume.keyring
+
+/etc/kolla/config/cinder/cinder-volume:
+总用量 12
+-rw-r--r--. 1 root root 217 4月   9 23:43 ceph.client.cinder-volume.keyring
+-rw-r--r--. 1 root root 167 4月   9 23:43 ceph.client.glance.keyring
+-rw-r--r--. 1 root root 209 4月   9 23:44 ceph.client.nova.keyring
+```
+
 # 3 部署
 
 按照AutoStack的Deployment开始部署
