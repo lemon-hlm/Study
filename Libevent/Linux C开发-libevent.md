@@ -417,14 +417,14 @@ evutil_make_listen_socket_reuseable(server_socketfd); //设置端口重用
 evutil_make_socket_nonblocking(server_socketfd); //设置无阻赛
 ```
 
-2. 我们首选建立的事件主要用于监听客户端的连入。当客户端有socket连接到服务器端的时候，回调函数do_accept就会去执行；当空闲的时候，这个事件就会是一个pending等待状态，等待有新的连接进来，新的连接进来了之后又会继续执行。
+2. 我们首先建立的事件主要用于**监听客户端的连入**。当客户端有socket连接到服务器端的时候，回调函数do_accept就会去执行；当空闲的时候，这个事件就会是一个pending等待状态，等待有新的连接进来，新的连接进来了之后又会继续执行。
 
 ```cpp
 struct event *ev;
 ev = event_new(base_ev, server_socketfd, EV_TIMEOUT|EV_READ|EV_PERSIST, do_accept, base_ev);
 ```
 
-3. 在do_accept事件中我们创建了一个新的事件，这个事件的回调函数是do_read。主要用来循环监听客户端上传的数据。do_read这个方法会一直循环执行，接收到客户端数据就会进行处理。
+3. 在do_accept事件中我们创建了一个新的事件，这个事件的回调函数是do\_read。主要用来**循环监听客户端上传的数据**。do\_read这个方法会一直循环执行，接收到客户端数据就会进行处理。
 
 ```cpp
 //创建一个事件，这个事件主要用于监听和读取客户端传递过来的数据
