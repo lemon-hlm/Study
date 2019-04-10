@@ -17,6 +17,9 @@
 	* [3.4 event\_assign](#34-event_assign)
 	* [3.5 信号事件](#35-信号事件)
 	* [3.6 event细节](#36-event细节)
+* [4 Socket实例](#4-socket实例)
+* [5 Bufferevent](#5-bufferevent)
+	* [5.1 创建Bufferevent API](#51-创建bufferevent-api)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -257,7 +260,7 @@ event_new每次都会在堆上分配内存。有些场景下并不是每次都�
 
 已经初始化或者处于 pending 的 event，首先需要调用 event_del() 后再调用 event_assign()。这个时候就可以重用这个event了。
 
-```c
+```cpp
 // 此函数用于初始化 event（包括可以初始化栈上和静态存储区中的 event）
 // event_assign() 和 event_new() 除了 event 参数之外，使用了一样的参数
 // event 参数用于指定一个未初始化的且需要初始化的 event
@@ -294,7 +297,184 @@ evsignal_del(ev)
 
 3. persistent 如果event_new中的what参数选择了EV_PERSIST，则是持久的类型。持久的类型调用玩回调函数后，会继续转为pending状态，就会继续等待事件进来。大部分情况下会选择持久类型的事件。
 
-3. 而非持久的类型的事件，调用玩一次之后，就会变成初始化的状态。这个时候需要调用event_add 继续将事件注册到event_base上之后才能使用。
+3. 而非持久的类型的事件，调用完一次之后，就会变成初始化的状态。这个时候需要调用event_add 继续将事件注册到event_base上之后才能使用。
+
+# 4 Socket实例
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>    
+#include <sys/socket.h>    
+#include <netinet/in.h>    
+#include <arpa/inet.h>   
+#include <string.h>
+#include <fcntl.h> 
+ 
+#include <event2/event.h>
+#include <event2/bufferevent.h>
+ 
+//读取客户端
+void do_read(evutil_socket_t fd, short event, void *arg) {
+    //继续等待接收数据  
+    char buf[1024];  //数据传送的缓冲区    
+    int len;  
+    if ((len = recv(fd, buf, 1024, 0)) > 0)  {  
+        buf[len] = '\0';    
+        printf("%s\n", buf);    
+        if (send(fd, buf, len, 0) < 0) {    //将接受到的数据写回客户端
+            perror("write");    
+        }
+    } 
+}
+ 
+ 
+//回调函数，用于监听连接进来的客户端socket
+void do_accept(evutil_socket_t fd, short event, void *arg) {
+    int client_socketfd;//客户端套接字    
+    struct sockaddr_in client_addr; //客户端网络地址结构体   
+    int in_size = sizeof(struct sockaddr_in);  
+    //客户端socket  
+    client_socketfd = accept(fd, (struct sockaddr *) &client_addr, &in_size); //等待接受请求，这边是阻塞式的  
+    if (client_socketfd < 0) {  
+        puts("accpet error");  
+        exit(1);
+    }  
+ 
+    //类型转换
+    struct event_base *base_ev = (struct event_base *) arg;
+ 
+    //socket发送欢迎信息  
+    char * msg = "Welcome to My socket";  
+    int size = send(client_socketfd, msg, strlen(msg), 0);  
+ 
+    //创建一个事件，这个事件主要用于监听和读取客户端传递过来的数据
+    //持久类型，并且将base_ev传递到do_read回调函数中去
+    struct event *ev;
+    ev = event_new(base_ev, client_socketfd, EV_TIMEOUT|EV_READ|EV_PERSIST, do_read, base_ev);
+    event_add(ev, NULL);
+}
+ 
+ 
+//入口主函数
+int main() {
+ 
+    int server_socketfd; //服务端socket  
+    struct sockaddr_in server_addr;   //服务器网络地址结构体    
+    memset(&server_addr,0,sizeof(server_addr)); //数据初始化--清零    
+    server_addr.sin_family = AF_INET; //设置为IP通信    
+    server_addr.sin_addr.s_addr = INADDR_ANY;//服务器IP地址--允许连接到所有本地地址上    
+    server_addr.sin_port = htons(8001); //服务器端口号    
+  
+    //创建服务端套接字  
+    server_socketfd = socket(PF_INET,SOCK_STREAM,0);  
+    if (server_socketfd < 0) {  
+        puts("socket error");  
+        return 0;  
+    }  
+ 
+    evutil_make_listen_socket_reuseable(server_socketfd); //设置端口重用
+    evutil_make_socket_nonblocking(server_socketfd); //设置无阻赛
+  
+    //绑定IP  
+    if (bind(server_socketfd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))<0) {  
+        puts("bind error");  
+        return 0;  
+    }  
+ 
+    //监听,监听队列长度 5  
+    listen(server_socketfd, 10);  
+    
+    //创建event_base 事件的集合，多线程的话 每个线程都要初始化一个event_base
+    struct event_base *base_ev;
+    base_ev = event_base_new(); 
+    const char *x =  event_base_get_method(base_ev); //获取IO多路复用的模型，linux一般为epoll
+    printf("METHOD:%s\n", x);
+ 
+    //创建一个事件，类型为持久性EV_PERSIST，回调函数为do_accept（主要用于监听连接进来的客户端）
+    //将base_ev传递到do_accept中的arg参数
+    struct event *ev;
+    ev = event_new(base_ev, server_socketfd, EV_TIMEOUT|EV_READ|EV_PERSIST, do_accept, base_ev);
+ 
+    //注册事件，使事件处于 pending的等待状态
+    event_add(ev, NULL);
+ 
+    //事件循环
+    event_base_dispatch(base_ev);
+ 
+    //销毁event_base
+	event_base_free(base_ev);  
+	return 1;
+}
+```
+
+说明：
+1. 必须设置socket为非阻塞模式，否则就会阻塞在那边，影响整个程序运行
+
+```cpp
+evutil_make_listen_socket_reuseable(server_socketfd); //设置端口重用
+evutil_make_socket_nonblocking(server_socketfd); //设置无阻赛
+```
+
+2. 我们首选建立的事件主要用于监听客户端的连入。当客户端有socket连接到服务器端的时候，回调函数do_accept就会去执行；当空闲的时候，这个事件就会是一个pending等待状态，等待有新的连接进来，新的连接进来了之后又会继续执行。
+
+```cpp
+struct event *ev;
+ev = event_new(base_ev, server_socketfd, EV_TIMEOUT|EV_READ|EV_PERSIST, do_accept, base_ev);
+```
+
+3. 在do_accept事件中我们创建了一个新的事件，这个事件的回调函数是do_read。主要用来循环监听客户端上传的数据。do_read这个方法会一直循环执行，接收到客户端数据就会进行处理。
+
+```cpp
+//创建一个事件，这个事件主要用于监听和读取客户端传递过来的数据
+//持久类型，并且将base_ev传递到do_read回调函数中去
+struct event *ev;
+ev = event_new(base_ev, client_socketfd, EV_TIMEOUT|EV_READ|EV_PERSIST, do_read, base_ev);
+event_add(ev, NULL);
+```
+
+# 5 Bufferevent
+
+上面的socket例子估计经过测试估计大家就会有很多疑问：
+
+1. do_read方法作为一个事件会一直被循环
+
+2. 当客户端连接断开的时候，do_read方法还是在循环，根本不知道客户端已经断开socket的连接。
+
+3. 需要解决各种粘包和拆包（相关粘包拆包文章）问题
+
+如果要解决这个问题，我们可能要做大量的工作来维护这些socket的连接状态，读取状态。而Libevent的Bufferevent帮我们解决了这些问题。
+
+Bufferevent主要是用来管理和调度IO事件；而Evbuffer（下面一节会讲到）主要用来缓冲网络IO数据。
+
+Bufferevent目前支持TCP协议，而不知道UDP协议。我们这边也只讲TCP协议下的Bufferevent的使用。
+
+我们先看下下面的接口（然后结合下面改进socket的例子，自己动手去实验一下）：
+
+## 5.1 创建Bufferevent API
+
+```cpp
+//创建一个Bufferevent
+struct bufferevent *bufferevent_socket_new(struct event_base *base, evutil_socket_t fd, enum bufferevent_options options);
+```
+
+参数：
+
+base：即event_base
+
+fd：文件描述符。如果是socket的方法，则socket需要设置为非阻塞的模式。
+
+options：行为选项，下面是行为选项内容
+
+1. BEV_OPT_CLOSE_ON_FREE ：当 bufferevent 被释放同时关闭底层（socket 被关闭等） 一般用这个选项
+
+2. BEV_OPT_THREADSAFE ：为 bufferevent 自动分配锁，这样能够在多线程环境中安全使用
+
+3. BEV_OPT_DEFER_CALLBACKS ： 当设置了此标志，bufferevent 会延迟它的所有回调（参考前面说的延时回调）
+
+4. BEV_OPT_UNLOCK_CALLBACKS ： 如果 bufferevent 被设置为线程安全的，用户提供的回调被调用时 bufferevent 的锁会被持有。如果设置了此选项，Libevent 将在调用你的回调时释放 bufferevent 的锁
+
 
 
 
