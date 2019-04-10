@@ -9,7 +9,9 @@
 	* [2.2 查看IO模型](#22-查看io模型)
 	* [2.3 销毁event\_base](#23-销毁event_base)
 	* [2.4 事件循环 event loop](#24-事件循环-event-loop)
-* [参考](#参考)
+	* [2.5 event\_base的例子](#25-event_base的例子)
+* [3 event事件](#3-event事件)
+	* [3.1 创建一个事件event](#31-创建一个事件event)
 
 <!-- /code_chunk_output -->
 
@@ -120,6 +122,79 @@ int event_base_loopexit(struct event_base *base,const struct timeval *tv);
 int event_base_loopbreak(struct event_base *base);
 ```
 
+两个方法区别：
+
+1. event_base_loopexit(base, NULL) 如果当前正在为多个活跃事件调用回调函数，那么不会立即退出，而是等到所有的活跃事件的回调函数都执行完成后才退出事件循环
+
+2. event_base_loopbreak(base) 如果当前正在为多个活跃事件调用回调函数，那么当前正在调用的回调函数会被执行，然后马上退出事件循环，而并不处理其他的活跃事件了
+
+## 2.5 event\_base的例子
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>    
+#include <sys/socket.h>    
+#include <netinet/in.h>    
+#include <arpa/inet.h>   
+#include <string.h>
+#include <fcntl.h> 
+ 
+#include <event2/event.h>
+#include <event2/bufferevent.h>
+ 
+int main() {
+	puts("init a event_base!");
+	struct event_base *base; //定义一个event_base
+	base = event_base_new(); //初始化一个event_base
+	const char *x =  event_base_get_method(base); //查看用了哪个IO多路复用模型，linux一下用epoll
+	printf("METHOD:%s\n", x);
+	int y = event_base_dispatch(base); //事件循环。因为我们这边没有注册事件，所以会直接退出
+	event_base_free(base);  //销毁libevent
+	return 1;
+}
+```
+
+# 3 event事件
+
+event_base是事件的集合，负责事件的循环，以及集合的销毁。而event就是event_base中的基本单元：事件。
+
+我们举一个简单的例子来理解事件。例如我们的socket来进行网络开发的时候，都会使用accept这个方法来阻塞监听是否有客户端socket连接上来，如果客户端连接上来，则会创建一个线程用于服务端与客户端进行数据的交互操作，而服务端会继续阻塞等待下一个客户端socket连接上来。客户端连接到服务端实际就是一种事件。
+
+## 3.1 创建一个事件event
+
+```c
+struct event *event_new(struct event_base *base, evutil_socket_t fd,short what, event_callback_fn cb,void *arg);
+```
+
+参数：
+
+1. base：即event_base
+
+2. fd：文件描述符。
+
+3. what：event关心的各种条件。
+
+4. cb：回调函数。
+
+5. arg：用户自定义的数据，可以传递到回调函数中去。
+
+libevent是基于事件的，也就是说只有在事件到来的这种条件下才会触发当前的事件。例如：
+
+1. fd文件描述符已准备好可写或者可读
+
+2. fd马上就准备好可写和可读。
+
+3. 超时的情况 timeout
+
+4. 信号中断
+
+5. 用户触发的事件
+
+what参数 event各种条件：
+
+```c
 
 
 # 参考
