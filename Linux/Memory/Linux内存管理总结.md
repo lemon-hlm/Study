@@ -1,248 +1,254 @@
-[TOC]
 
-- 1 学习路线
-- 2 3种系统架构与2种存储器共享方式
-    - 2.1 SMP
-    - 2.2 NUMA
-    - 2.3 MPP
-- 3 内存空间分层
-- 4 Linux物理内存组织形式
-    - 4.1 Node
-        - 4.1.1 结点的内存管理域
-        - 4.1.2 结点的内存页面
-        - 4.1.3 交换守护进程
-        - 4.1.4 节点状态
-        - 4.1.5 查找内存节点
-    - 4.2 zone
-        - 4.2.1 高速缓存行
-        - 4.2.2 水位watermark[NR_WMARK]与kswapd内核线程
-        - 4.2.3 内存域统计信息vm_stat
-        - 4.2.4 zone等待队列表(zone wait queue table)
-        - 4.2.5 冷热页与Per-CPU上的页面高速缓存
-        - 4.2.6 zonelist内存域存储层次
-            - 4.2.6.1 内存域之间的层级结构
-            - 4.2.6.2 备用节点内存域zonelist结构
-            - 4.2.6.3 内存域的排列方式
-            - 4.2.6.4 build_all_zonelists初始化内存节点
-    - 4.3 Page
-        - 4.3.1 mapping & index
-        - 4.3.2 lru链表头
-        - 4.3.3 内存页标识pageflags
-        - 4.3.4 全局页面数组mem_map
-- 5 Linux分页机制
-    - 5.1 Linux中的分页层次
-    - 5.2 Linux中分页相关数据结构
-        - 5.2.1 PAGE宏--页表(Page Table)
-        - 5.2.2 PMD-Page Middle Directory (页目录)
-        - 5.2.3 PUD_SHIFT-页上级目录(Page Upper Directory)
-        - 5.2.4 PGDIR_SHIFT-页全局目录(Page Global Directory)
-    - 5.3 页表处理函数
-        - 5.3.1 简化页表项的创建和撤消
-    - 5.4 线性地址转换
-    - 5.5 Linux中通过4级页表访问物理内存
-    - 5.6 swapper_pg_dir
-- 6 内存布局探测
-- 5 内存管理的三个阶段
-- 6 系统初始化过程中的内存管理
-- 7 特定于体系结构的内存初始化工作
-    - 7.1 建立内存图
-    - 7.2 页表缓冲区申请
-    - 7.3 memblock算法
-        - 7.3.1 struct memblock结构
-        - 7.3.2 内存块类型struct memblock_type
-        - 7.3.3 内存区域struct memblock_region
-        - 7.3.4 内存区域标识
-        - 7.3.5 结构总体布局
-        - 7.3.6 memblock初始化
-            - 7.3.6.1 初始化memblock静态变量
-            - 7.3.6.2 宏__initdata_memblock指定了存储位置
-            - 7.3.6.3 x86架构下的memblock初始化
-        - 7.3.7 memblock操作总结
-    - 7.4 建立内核页表
-        - 7.4.1 临时页表的初始化
-        - 7.4.2 内存映射机制的完整建立初始化
-            - 7.4.2.1 相关变量与宏的定义
-            - 7.4.2.3 低端内存页表和高端内存固定映射区页表的建立init_mem_mapping()
-    - 7.5 内存管理node节点设置initmem_init()
-        - 7.5.1 将numa信息保存到numa_meminfo
-        - 7.5.2 将numa_meminfo映射到memblock结构
-        - 7.5.3 观察memblock的变化
-    - 7.6 管理区和页面管理的构建x86_init.paging.pagetable_init()
-        - 7.6.1 paging_init()
-            - 7.6.1.1 free_area_init_nodes()
-- 8 build_all_zonelists初始化每个node的备用管理区链表zonelists
-    - 8.1 设置结点初始化顺序set_zonelist_order()
-    - 8.2 system_state系统状态标识
-    - 8.3 build_all_zonelists_init函数
-        - 8.3.1 build_zonelists初始化每个内存结点的zonelists
-        - 8.3.2 setup_pageset初始化per_cpu缓存
-            - 8.3.2.1 pageset_init()初始化struct per_cpu_pages结构
-            - 8.3.2.2 pageset_set_batch设置struct per_cpu_pages结构
-- 9 Buddy伙伴算法
-    - 9.1 伙伴初始化mem_init()
-        - 9.1.1 pci_iommu_alloc()初始化iommu table表项
-        - 9.1.2 register_page_bootmem_info()
-        - 9.1.3 free_all_bootmem()
-    - 9.2 Buddy算法
-        - 9.2.1 伙伴系统的结构
-            - 9.2.1.1 数据结构
-            - 9.2.1.2 最大阶MAX_ORDER与FORCE_MAX_ZONEORDER配置选项
-            - 9.2.1.3 内存区是如何连接的
-            - 9.2.1.4 传统伙伴系统算法
-        - 9.2.2 伙伴算法释放过程
-        - 9.2.3 伙伴算法申请过程
-        - 9.2.4 碎片化问题
-            - 9.2.4.1 依据可移动性组织页(页面迁移)
-                - 9.2.4.1.1 反碎片的工作原理
-                - 9.2.4.1.2 迁移类型
-                - 9.2.4.1.3 可移动性组织页的buddy组织
-                - 9.2.4.1.4 迁移备用列表fallbacks
-                - 9.2.4.1.5 全局pageblock_order变量
-                - 9.2.4.1.6 gfpflags_to_migratetype转换分配标识到迁移类型
-                - 9.2.4.1.7 内存域zone提供跟踪内存区的属性
-                - 9.2.4.1.8 /proc/pagetypeinfo获取页面分配状态
-                - 9.2.4.1.9 可移动性的分组的初始化
-            - 9.2.4.2 虚拟可移动内存域
-                - 9.2.4.2.1 数据结构
-                - 9.2.4.2.2 实现与应用
-    - 9.3 分配掩码(gfp_mask标志)
-        - 9.3.1 掩码分类
-        - 9.3.2 内核中掩码的定义
-            - 9.3.2.1 内核中的定义方式
-            - 9.3.2.2 定义掩码位
-            - 9.3.2.3 定义掩码位
-    - 9.3 alloc_pages分配内存空间
-        - 9.3.1 页面选择
-            - 9.3.1.1 内存水位标志
-            - 9.3.1.2 zone_watermark_ok函数检查标志
-            - 9.3.1.3 get_page_from_freelist实际分配
-        - 9.3.2 伙伴系统核心__alloc_pages_nodemask实质性的内存分配
-    - 9.4 释放内存空间
-        - 9.4.1 free_hot_cold_page()释放至per-cpu缓存(冷热页)
-            - 9.4.1.1 free_pcppages_bulk()释放至伙伴管理算法
-                - 9.4.1.1.1 __free_one_page()释放页面
-        - 9.4.2 __free_pages_ok释放至伙伴管理算法
-- 10 连续内存分配器(CMA)
-- 11 内存溢出保护机制(OOM)
-    - 11.1 __alloc_pages_may_oom()触发OOM killer机制
-        - 11.1.1 out_of_memory()
-            - 11.1.1.1 select_bad_process()选择进程
-            - 11.1.1.2 oom_kill_process()进行kill操作
-- 12 slab slob slub分配器
-    - 12.1 操作接口
-    - 12.2 内核中的内存管理
-- 13 slab原理
-    - 13.1 slab分配的原理
-    - 13.2 缓存的结构
-    - 13.3 slab的结构
-    - 13.4 数据结构
-        - 13.4.1 per-cpu数据(第0~1部分)
-        - 13.4.2 基本数据变量
-        - 13.4.3 slab小结
-    - 13.5 slab系统初始化
-        - 13.5.1 slab分配器的初始化过程
-        - 13.5.2 kmem_cache_init函数初始化slab分配器
-    - 13.6 创建缓存kmem_cache_create
-    - 13.7 分配对象kmem_cache_alloc
-    - 13.8 释放对象kmem_cache_free
-    - 13.9 销毁缓存kmem_cache_destroy
-- 14 slub原理
-    - 14.1 slub数据结构
-    - 14.2 slub初始化
-    - 14.3 创建缓存kmem_cache_create()
-        - 14.3.1 __kmem_cache_alias()检查是否与已创建的slab匹配
-        - 14.3.2 do_kmem_cache_create()
-            - 14.3.2.1 __kmem_cache_create()初始化slub结构(即kmem_cache)
-                - 14.3.2.1.1 kmem_cache_open()
-    - 14.4 kmem_cache_alloc()申请slab对象
-        - 14.4.1 __slab_alloc()实现
-    - 14.5 kmem_cache_free()对象释放
-        - 14.5.1 cache_from_obj()获取回收对象的缓存结构kmem_cache
-        - 14.5.2 slab_free()将对象回收
-            - 14.5.2.1 __slab_free()
-    - 14.6 kmem_cache_destroy()缓存区的销毁
-- 15 kmalloc和kfree实现
-    - 15.1 基础原理
-    - 15.2 kmalloc的实现
-    - 15.3 kfree()的实现
-- 16 内存破坏检测kmemcheck分析
-    - 16.1 分配内存
-    - 16.2 访问内存
-    - 16.3 释放内存
-    - 16.4 错误处理
-- 17 内存泄漏检测kmemleak分析
-- 18 vmalloc不连续内存管理
-    - 18.1 kmalloc, vmalloc和malloc之间的区别和实现上的差异
-    - 18.2 vmalloc原理
-    - 18.3 vmalloc初始化
-    - 18.4 内存申请vmalloc()
-        - 18.4.1 __get_vm_area_node()请求虚拟地址空间
-            - 18.4.1.1 申请不连续物理内存页面alloc_vmap_area()
-        - 18.4.2 __vmalloc_area_node()
-- 19 VMA
-    - 19.1 数据结构
-    - 19.2 查找VMA
-    - 19.3 插入VMA
-    - 19.4 合并VMA
-    - 19.5 小结
-- 20 malloc
-- 21 mmap
-    - 21.1 概述
-        - 21.1.1 私有匿名映射
-        - 21.1.2 共享匿名映射
-        - 21.1.3 私有文件映射
-        - 21.1.4 共享文件映射
-    - 21.2 小结
-- 22 缺页异常处理
-    - 22.1 缺页异常初始化
-    - 22.2 do_page_fault()
-    - 22.4 用户空间异常处理
-    - 22.x 小结
-- 23 Page引用计数
-    - 23.1 struct page数据结构
-    - 23.2 _count和_mapcount的区别
-        - 23.2.1 _count
-        - 23.2.2 _mapcount
-- 24 反向映射RMAP
-    - 24.1 父进程分配匿名页面
-    - 24.2 父进程创建子进程
-    - 24.3 子进程发生COW
-    - 24.4 RMAP应用
-    - 24.5 小结
-- 25 回收页面
-    - 25.1 LRU链表
-        - 25.1.1 LRU链表
-        - 25.1.2 第二次机会法
-        - 25.1.6 例子
-    - 25.2 kswapd内核线程
-    - 25.3 balance_pgdat()函数
-    - 25.9 小结
-- 26 匿名页面生命周期
-    - 26.1 匿名页面的产生
-    - 26.2 匿名页面的使用
-    - 26.3 匿名页面的换出
-    - 26.4 匿名页面的换入
-    - 26.5 匿名页面的销毁
-- 27 页面迁移
-- 28 内存规整(memory compaction)
-    - 28.1 内存规整实现
-    - 28.2 小结
-- 29 KSM
-    - 29.1 KSM实现
-    - 29.2 匿名页面和KSM页面的区别
-    - 29.3 小结
-- 30 Linux Cache 机制
-    - 30.1 内存管理基础
-    - 30.2 Linux Cache的体系
-    - 30.3 Linux Cache的结构
-- 31 Dirty COW内存漏洞
-- 32 总结内存管理数据结构和API
-    - 32.1 内存管理数据结构的关系图
-    - 32.2 内存管理中常用API
-        - 32.2.1 页表相关
-        - 32.2.2 内存分配
-        - 32.2.3 VMA操作相关
-        - 32.2.4 页面相关
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 学习路线](#1-学习路线)
+* [2 3种系统架构与2种存储器共享方式](#2-3种系统架构与2种存储器共享方式)
+	* [2.1 SMP](#21-smp)
+	* [2.2 NUMA](#22-numa)
+	* [2.3 MPP](#23-mpp)
+* [3 内存空间分层](#3-内存空间分层)
+* [4 Linux物理内存组织形式](#4-linux物理内存组织形式)
+	* [4.1 Node](#41-node)
+		* [4.1.1 结点的内存管理域](#411-结点的内存管理域)
+		* [4.1.2 结点的内存页面](#412-结点的内存页面)
+		* [4.1.3 交换守护进程](#413-交换守护进程)
+		* [4.1.4 节点状态](#414-节点状态)
+		* [4.1.5 查找内存节点](#415-查找内存节点)
+	* [4.2 zone](#42-zone)
+		* [4.2.1 高速缓存行](#421-高速缓存行)
+		* [4.2.2 水位watermark[NR\_WMARK]与kswapd内核线程](#422-水位watermarknr_wmark与kswapd内核线程)
+		* [4.2.3 内存域统计信息vm\_stat](#423-内存域统计信息vm_stat)
+		* [4.2.4 zone等待队列表(zone wait queue table)](#424-zone等待队列表zone-wait-queue-table)
+		* [4.2.5 冷热页与Per\-CPU上的页面高速缓存](#425-冷热页与per-cpu上的页面高速缓存)
+		* [4.2.6 zonelist内存域存储层次](#426-zonelist内存域存储层次)
+			* [4.2.6.1 内存域之间的层级结构](#4261-内存域之间的层级结构)
+			* [4.2.6.2 备用节点内存域zonelist结构](#4262-备用节点内存域zonelist结构)
+			* [4.2.6.3 内存域的排列方式](#4263-内存域的排列方式)
+			* [4.2.6.4 build\_all\_zonelists初始化内存节点](#4264-build_all_zonelists初始化内存节点)
+	* [4.3 Page](#43-page)
+		* [4.3.1 mapping & index](#431-mapping-index)
+		* [4.3.2 lru链表头](#432-lru链表头)
+		* [4.3.3 内存页标识pageflags](#433-内存页标识pageflags)
+		* [4.3.4 全局页面数组mem\_map](#434-全局页面数组mem_map)
+* [5 Linux分页机制](#5-linux分页机制)
+	* [5.1 Linux中的分页层次](#51-linux中的分页层次)
+	* [5.2 Linux中分页相关数据结构](#52-linux中分页相关数据结构)
+		* [5.2.1 PAGE宏--页表(Page Table)](#521-page宏-页表page-table)
+		* [5.2.2 PMD\-Page Middle Directory (页目录)](#522-pmd-page-middle-directory-页目录)
+		* [5.2.3 PUD\_SHIFT-页上级目录(Page Upper Directory)](#523-pud_shift-页上级目录page-upper-directory)
+		* [5.2.4 PGDIR\_SHIFT\-页全局目录(Page Global Directory)](#524-pgdir_shift-页全局目录page-global-directory)
+	* [5.3 页表处理函数](#53-页表处理函数)
+		* [5.3.1 简化页表项的创建和撤消](#531-简化页表项的创建和撤消)
+	* [5.4 线性地址转换](#54-线性地址转换)
+	* [5.5 Linux中通过4级页表访问物理内存](#55-linux中通过4级页表访问物理内存)
+	* [5.6 swapper_pg_dir](#56-swapper_pg_dir)
+* [6 内存布局探测](#6-内存布局探测)
+* [5 内存管理的三个阶段](#5-内存管理的三个阶段)
+* [6 系统初始化过程中的内存管理](#6-系统初始化过程中的内存管理)
+* [7 特定于体系结构的内存初始化工作](#7-特定于体系结构的内存初始化工作)
+	* [7.1 建立内存图](#71-建立内存图)
+	* [7.2 页表缓冲区申请](#72-页表缓冲区申请)
+	* [7.3 memblock算法](#73-memblock算法)
+		* [7.3.1 struct memblock结构](#731-struct-memblock结构)
+		* [7.3.2 内存块类型struct memblock\_type](#732-内存块类型struct-memblock_type)
+		* [7.3.3 内存区域struct memblock\_region](#733-内存区域struct-memblock_region)
+		* [7.3.4 内存区域标识](#734-内存区域标识)
+		* [7.3.5 结构总体布局](#735-结构总体布局)
+		* [7.3.6 memblock初始化](#736-memblock初始化)
+			* [7.3.6.1 初始化memblock静态变量](#7361-初始化memblock静态变量)
+			* [7.3.6.2 宏\_\_initdata\_memblock指定了存储位置](#7362-宏__initdata_memblock指定了存储位置)
+			* [7.3.6.3 x86架构下的memblock初始化](#7363-x86架构下的memblock初始化)
+		* [7.3.7 memblock操作总结](#737-memblock操作总结)
+	* [7.4 建立内核页表](#74-建立内核页表)
+		* [7.4.1 临时页表的初始化](#741-临时页表的初始化)
+		* [7.4.2 内存映射机制的完整建立初始化](#742-内存映射机制的完整建立初始化)
+			* [7.4.2.1 相关变量与宏的定义](#7421-相关变量与宏的定义)
+			* [7.4.2.3 低端内存页表和高端内存固定映射区页表的建立init\_mem\_mapping()](#7423-低端内存页表和高端内存固定映射区页表的建立init_mem_mapping)
+	* [7.5 内存管理node节点设置initmem\_init()](#75-内存管理node节点设置initmem_init)
+		* [7.5.1 将numa信息保存到numa\_meminfo](#751-将numa信息保存到numa_meminfo)
+		* [7.5.2 将numa\_meminfo映射到memblock结构](#752-将numa_meminfo映射到memblock结构)
+		* [7.5.3 观察memblock的变化](#753-观察memblock的变化)
+	* [7.6 管理区和页面管理的构建x86\_init.paging.pagetable\_init()](#76-管理区和页面管理的构建x86_initpagingpagetable_init)
+		* [7.6.1 paging\_init()](#761-paging_init)
+			* [7.6.1.1 free\_area\_init\_nodes()](#7611-free_area_init_nodes)
+* [8 build\_all\_zonelists初始化每个node的备用管理区链表zonelists](#8-build_all_zonelists初始化每个node的备用管理区链表zonelists)
+	* [8.1 设置结点初始化顺序set\_zonelist\_order()](#81-设置结点初始化顺序set_zonelist_order)
+	* [8.2 system\_state系统状态标识](#82-system_state系统状态标识)
+	* [8.3 build\_all\_zonelists\_init函数](#83-build_all_zonelists_init函数)
+		* [8.3.1 build\_zonelists初始化每个内存结点的zonelists](#831-build_zonelists初始化每个内存结点的zonelists)
+		* [8.3.2 setup\_pageset初始化per\_cpu缓存](#832-setup_pageset初始化per_cpu缓存)
+			* [8.3.2.1 pageset\_init()初始化struct per\_cpu\_pages结构](#8321-pageset_init初始化struct-per_cpu_pages结构)
+			* [8.3.2.2 pageset\_set\_batch设置struct per\_cpu\_pages结构](#8322-pageset_set_batch设置struct-per_cpu_pages结构)
+* [9 Buddy伙伴算法](#9-buddy伙伴算法)
+	* [9.1 伙伴初始化mem_init()](#91-伙伴初始化mem_init)
+		* [9.1.1 pci\_iommu\_alloc()初始化iommu table表项](#911-pci_iommu_alloc初始化iommu-table表项)
+		* [9.1.2 register\_page\_bootmem\_info()](#912-register_page_bootmem_info)
+		* [9.1.3 free\_all\_bootmem()](#913-free_all_bootmem)
+	* [9.2 Buddy算法](#92-buddy算法)
+		* [9.2.1 伙伴系统的结构](#921-伙伴系统的结构)
+			* [9.2.1.1 数据结构](#9211-数据结构)
+			* [9.2.1.2 最大阶MAX\_ORDER与FORCE\_MAX\_ZONEORDER配置选项](#9212-最大阶max_order与force_max_zoneorder配置选项)
+			* [9.2.1.3 内存区是如何连接的](#9213-内存区是如何连接的)
+			* [9.2.1.4 传统伙伴系统算法](#9214-传统伙伴系统算法)
+		* [9.2.2 伙伴算法释放过程](#922-伙伴算法释放过程)
+		* [9.2.3 伙伴算法申请过程](#923-伙伴算法申请过程)
+		* [9.2.4 碎片化问题](#924-碎片化问题)
+			* [9.2.4.1 依据可移动性组织页(页面迁移)](#9241-依据可移动性组织页页面迁移)
+				* [9.2.4.1.1 反碎片的工作原理](#92411-反碎片的工作原理)
+				* [9.2.4.1.2 迁移类型](#92412-迁移类型)
+				* [9.2.4.1.3 可移动性组织页的buddy组织](#92413-可移动性组织页的buddy组织)
+				* [9.2.4.1.4 迁移备用列表fallbacks](#92414-迁移备用列表fallbacks)
+				* [9.2.4.1.5 全局pageblock\_order变量](#92415-全局pageblock_order变量)
+				* [9.2.4.1.6 gfpflags\_to\_migratetype转换分配标识到迁移类型](#92416-gfpflags_to_migratetype转换分配标识到迁移类型)
+				* [9.2.4.1.7 内存域zone提供跟踪内存区的属性](#92417-内存域zone提供跟踪内存区的属性)
+				* [9.2.4.1.8 /proc/pagetypeinfo获取页面分配状态](#92418-procpagetypeinfo获取页面分配状态)
+				* [9.2.4.1.9 可移动性的分组的初始化](#92419-可移动性的分组的初始化)
+			* [9.2.4.2 虚拟可移动内存域](#9242-虚拟可移动内存域)
+				* [9.2.4.2.1 数据结构](#92421-数据结构)
+				* [9.2.4.2.2 实现与应用](#92422-实现与应用)
+	* [9.3 分配掩码(gfp\_mask标志)](#93-分配掩码gfp_mask标志)
+		* [9.3.1 掩码分类](#931-掩码分类)
+		* [9.3.2 内核中掩码的定义](#932-内核中掩码的定义)
+			* [9.3.2.1 内核中的定义方式](#9321-内核中的定义方式)
+			* [9.3.2.2 定义掩码位](#9322-定义掩码位)
+			* [9.3.2.3 定义掩码位](#9323-定义掩码位)
+	* [9.3 alloc\_pages分配内存空间](#93-alloc_pages分配内存空间)
+		* [9.3.1 页面选择](#931-页面选择)
+			* [9.3.1.1 内存水位标志](#9311-内存水位标志)
+			* [9.3.1.2 zone\_watermark\_ok函数检查标志](#9312-zone_watermark_ok函数检查标志)
+			* [9.3.1.3 get\_page\_from\_freelist实际分配](#9313-get_page_from_freelist实际分配)
+		* [9.3.2 伙伴系统核心\_\_alloc\_pages\_nodemask实质性的内存分配](#932-伙伴系统核心__alloc_pages_nodemask实质性的内存分配)
+	* [9.4 释放内存空间](#94-释放内存空间)
+		* [9.4.1 free\_hot\_cold\_page()释放至per\-cpu缓存(冷热页)](#941-free_hot_cold_page释放至per-cpu缓存冷热页)
+			* [9.4.1.1 free\_pcppages\_bulk()释放至伙伴管理算法](#9411-free_pcppages_bulk释放至伙伴管理算法)
+				* [9.4.1.1.1 \_\_free\_one\_page()释放页面](#94111-__free_one_page释放页面)
+		* [9.4.2 \_\_free\_pages\_ok释放至伙伴管理算法](#942-__free_pages_ok释放至伙伴管理算法)
+* [10 连续内存分配器(CMA)](#10-连续内存分配器cma)
+* [11 内存溢出保护机制(OOM)](#11-内存溢出保护机制oom)
+	* [11.1 \_\_alloc\_pages\_may\_oom()触发OOM killer机制](#111-__alloc_pages_may_oom触发oom-killer机制)
+		* [11.1.1 out\_of\_memory()](#1111-out_of_memory)
+			* [11.1.1.1 select\_bad\_process()选择进程](#11111-select_bad_process选择进程)
+			* [11.1.1.2 oom\_kill\_process()进行kill操作](#11112-oom_kill_process进行kill操作)
+* [12 slab slob slub分配器](#12-slab-slob-slub分配器)
+	* [12.1 操作接口](#121-操作接口)
+	* [12.2 内核中的内存管理](#122-内核中的内存管理)
+* [13 slab原理](#13-slab原理)
+	* [13.1 slab分配的原理](#131-slab分配的原理)
+	* [13.2 缓存的结构](#132-缓存的结构)
+	* [13.3 slab的结构](#133-slab的结构)
+	* [13.4 数据结构](#134-数据结构)
+		* [13.4.1 per\-cpu数据(第0\~1部分)](#1341-per-cpu数据第0~1部分)
+		* [13.4.2 基本数据变量](#1342-基本数据变量)
+		* [13.4.3 slab小结](#1343-slab小结)
+	* [13.5 slab系统初始化](#135-slab系统初始化)
+		* [13.5.1 slab分配器的初始化过程](#1351-slab分配器的初始化过程)
+		* [13.5.2 kmem\_cache\_init函数初始化slab分配器](#1352-kmem_cache_init函数初始化slab分配器)
+	* [13.6 创建缓存kmem\_cache\_create](#136-创建缓存kmem_cache_create)
+	* [13.7 分配对象kmem\_cache\_alloc](#137-分配对象kmem_cache_alloc)
+	* [13.8 释放对象kmem\_cache\_free](#138-释放对象kmem_cache_free)
+	* [13.9 销毁缓存kmem\_cache\_destroy](#139-销毁缓存kmem_cache_destroy)
+* [14 slub原理](#14-slub原理)
+	* [14.1 slub数据结构](#141-slub数据结构)
+	* [14.2 slub初始化](#142-slub初始化)
+	* [14.3 创建缓存kmem\_cache\_create()](#143-创建缓存kmem_cache_create)
+		* [14.3.1 \_\_kmem\_cache\_alias()检查是否与已创建的slab匹配](#1431-__kmem_cache_alias检查是否与已创建的slab匹配)
+		* [14.3.2 do\_kmem\_cache\_create()](#1432-do_kmem_cache_create)
+			* [14.3.2.1 \_\_kmem\_cache\_create()初始化slub结构(即kmem\_cache)](#14321-__kmem_cache_create初始化slub结构即kmem_cache)
+				* [14.3.2.1.1 kmem\_cache\_open()](#143211-kmem_cache_open)
+	* [14.4 kmem\_cache\_alloc()申请slab对象](#144-kmem_cache_alloc申请slab对象)
+		* [14.4.1 \_\_slab\_alloc()实现](#1441-__slab_alloc实现)
+	* [14.5 kmem\_cache\_free()对象释放](#145-kmem_cache_free对象释放)
+		* [14.5.1 cache\_from\_obj()获取回收对象的缓存结构kmem\_cache](#1451-cache_from_obj获取回收对象的缓存结构kmem_cache)
+		* [14.5.2 slab\_free()将对象回收](#1452-slab_free将对象回收)
+			* [14.5.2.1 \_\_slab\_free()](#14521-__slab_free)
+	* [14.6 kmem\_cache\_destroy()缓存区的销毁](#146-kmem_cache_destroy缓存区的销毁)
+* [15 kmalloc和kfree实现](#15-kmalloc和kfree实现)
+	* [15.1 基础原理](#151-基础原理)
+	* [15.2 kmalloc的实现](#152-kmalloc的实现)
+	* [15.3 kfree()的实现](#153-kfree的实现)
+* [16 内存破坏检测kmemcheck分析](#16-内存破坏检测kmemcheck分析)
+	* [16.1 分配内存](#161-分配内存)
+	* [16.2 访问内存](#162-访问内存)
+	* [16.3 释放内存](#163-释放内存)
+	* [16.4 错误处理](#164-错误处理)
+* [17 内存泄漏检测kmemleak分析](#17-内存泄漏检测kmemleak分析)
+* [18 vmalloc不连续内存管理](#18-vmalloc不连续内存管理)
+	* [18.1 kmalloc, vmalloc和malloc之间的区别和实现上的差异](#181-kmalloc-vmalloc和malloc之间的区别和实现上的差异)
+	* [18.2 vmalloc原理](#182-vmalloc原理)
+	* [18.3 vmalloc初始化](#183-vmalloc初始化)
+	* [18.4 内存申请vmalloc()](#184-内存申请vmalloc)
+		* [18.4.1 \_\_get\_vm\_area\_node()请求虚拟地址空间](#1841-__get_vm_area_node请求虚拟地址空间)
+			* [18.4.1.1 申请不连续物理内存页面alloc\_vmap\_area()](#18411-申请不连续物理内存页面alloc_vmap_area)
+		* [18.4.2 \_\_vmalloc\_area\_node()](#1842-__vmalloc_area_node)
+* [19 VMA](#19-vma)
+	* [19.1 数据结构](#191-数据结构)
+	* [19.2 查找VMA](#192-查找vma)
+	* [19.3 插入VMA](#193-插入vma)
+	* [19.4 合并VMA](#194-合并vma)
+	* [19.5 小结](#195-小结)
+* [20 malloc](#20-malloc)
+* [21 mmap](#21-mmap)
+	* [21.1 概述](#211-概述)
+		* [21.1.1 私有匿名映射](#2111-私有匿名映射)
+		* [21.1.2 共享匿名映射](#2112-共享匿名映射)
+		* [21.1.3 私有文件映射](#2113-私有文件映射)
+		* [21.1.4 共享文件映射](#2114-共享文件映射)
+	* [21.2 小结](#212-小结)
+* [22 缺页异常处理](#22-缺页异常处理)
+	* [22.1 缺页异常初始化](#221-缺页异常初始化)
+	* [22.2 do\_page\_fault()](#222-do_page_fault)
+	* [22.3 内核空间异常处理](#223-内核空间异常处理)
+	* [22.4 用户空间异常处理](#224-用户空间异常处理)
+	* [22.x 小结](#22x-小结)
+* [23 Page引用计数](#23-page引用计数)
+	* [23.1 struct page数据结构](#231-struct-page数据结构)
+	* [23.2 \_count和\_mapcount的区别](#232-_count和_mapcount的区别)
+		* [23.2.1 \_count](#2321-_count)
+		* [23.2.2 \_mapcount](#2322-_mapcount)
+* [24 反向映射RMAP](#24-反向映射rmap)
+	* [24.1 父进程分配匿名页面](#241-父进程分配匿名页面)
+	* [24.2 父进程创建子进程](#242-父进程创建子进程)
+	* [24.3 子进程发生COW](#243-子进程发生cow)
+	* [24.4 RMAP应用](#244-rmap应用)
+	* [24.5 小结](#245-小结)
+* [25 回收页面](#25-回收页面)
+	* [25.1 LRU链表](#251-lru链表)
+		* [25.1.1 LRU链表](#2511-lru链表)
+		* [25.1.2 第二次机会法](#2512-第二次机会法)
+		* [25.1.6 例子](#2516-例子)
+	* [25.2 kswapd内核线程](#252-kswapd内核线程)
+	* [25.3 balance\_pgdat()函数](#253-balance_pgdat函数)
+	* [25.9 小结](#259-小结)
+* [26 匿名页面生命周期](#26-匿名页面生命周期)
+	* [26.1 匿名页面的产生](#261-匿名页面的产生)
+	* [26.2 匿名页面的使用](#262-匿名页面的使用)
+	* [26.3 匿名页面的换出](#263-匿名页面的换出)
+	* [26.4 匿名页面的换入](#264-匿名页面的换入)
+	* [26.5 匿名页面的销毁](#265-匿名页面的销毁)
+* [27 页面迁移](#27-页面迁移)
+* [28 内存规整(memory compaction)](#28-内存规整memory-compaction)
+	* [28.1 内存规整实现](#281-内存规整实现)
+	* [28.2 小结](#282-小结)
+* [29 KSM](#29-ksm)
+	* [29.1 KSM实现](#291-ksm实现)
+	* [29.2 匿名页面和KSM页面的区别](#292-匿名页面和ksm页面的区别)
+	* [29.3 小结](#293-小结)
+* [30 Linux Cache 机制](#30-linux-cache-机制)
+	* [30.1 内存管理基础](#301-内存管理基础)
+	* [30.2 Linux Cache的体系](#302-linux-cache的体系)
+	* [30.3 Linux Cache的结构](#303-linux-cache的结构)
+* [31 Dirty COW内存漏洞](#31-dirty-cow内存漏洞)
+* [32 总结内存管理数据结构和API](#32-总结内存管理数据结构和api)
+	* [32.1 内存管理数据结构的关系图](#321-内存管理数据结构的关系图)
+	* [32.2 内存管理中常用API](#322-内存管理中常用api)
+		* [32.2.1 页表相关](#3221-页表相关)
+		* [32.2.2 内存分配](#3222-内存分配)
+		* [32.2.3 VMA操作相关](#3223-vma操作相关)
+		* [32.2.4 页面相关](#3224-页面相关)
+
+<!-- /code_chunk_output -->
 
 # 1 学习路线
 
