@@ -84,13 +84,13 @@ void event_base_free(struct event_base *base);
 
 上面说到 event\_base是一组event的集合，我们也可以将event事件注册到这个集合中。当需要事件监听的时候，我们就需要对这个event\_base进行循环。
 
-下面这个函数非常重要，会在内部不断的循环监听注册上来的事件。
+下面这个函数非常重要，会在**内部不断的循环监听注册上来的事件**。
 
 ```c
 int event_base_dispatch(struct event_base *base);
 ```
 
-返回值：0 表示成功退出  -1 表示存在错误信息。
+返回值：0 表示成功退出  \-1 表示存在错误信息。
 
 还可以用这个方法：
 
@@ -102,21 +102,21 @@ int event_base_dispatch(struct event_base *base);
 int event_base_loop(struct event_base *base, int flags);
 ```
 
-event_base_loop这个方法会比event_base_dispatch这个方法更加灵活一些。
+event\_base\_loop这个方法会比event\_base\_dispatch这个方法更加灵活一些。
 
 - EVLOOP\_ONCE: 阻塞直到有一个活跃的event，然后执行完活跃事件的回调就退出。
 
 - EVLOOP\_NONBLOCK: 不阻塞，检查哪个事件准备好，调用优先级最高的那一个，然后退出。
 
-0：如果参数填了0，则只有事件进来的时候才会调用一次事件的回调函数，比较常用
+0：如果参数填了0，则**只有事件进来的时候**才会**调用一次事件的回调函数**，比较常用
 
 事件循环停止的情况：
 
-1. event_base中没有事件event
+1. event\_base中没有事件event
 
-2. 调用event_base_loopbreak()，那么事件循环将停止
+2. 调用event\_base\_loopbreak()，那么事件循环将停止
 
-3. 调用event_base_loopexit()，那么事件循环将停止
+3. 调用event\_base\_loopexit()，那么事件循环将停止
 
 4. 程序错误，异常退出
 
