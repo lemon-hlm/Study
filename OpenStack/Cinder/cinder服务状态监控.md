@@ -132,6 +132,8 @@ class Service(service.Service):
                 LOG.exception(_LE('DBError encountered: '))
 ```
 
+report_state 方法会更新 db 中serive 的各个属性，其中 updated_at 的值就是所在节点上执行一次该方法的时刻。
+
 再来看看循环的类FixedIntervalLoopingCall,上面的代码可以看到，FixedIntervalLoopingCall初始化的时候传入了self.report_state， 然后执行了start方法
 
 ```
