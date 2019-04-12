@@ -1,5 +1,11 @@
 openstack集群已经对接后端ceph了, 但是使用的是以太网IP, 想要切换到IB IP. 
 
+```
+# vim /etc/hosts
+10.121.2.125 compute1
+10.5.138.125 compute1
+```
+
 这中间涉及到:
 
 - ceph集群更改ip并重启
