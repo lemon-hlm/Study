@@ -10,4 +10,4 @@
 
 - 总结性质(很好的): https://blog.csdn.net/firas/article/category/1187381
 
-- Intel 64和IA 32架构软件开发者手册: 
+- Intel® 64 和 IA-32 架构软件开发人员手册: <https://software.intel.com/en-us/articles/intel-sdm>
