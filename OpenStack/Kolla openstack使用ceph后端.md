@@ -1,3 +1,4 @@
+
 OpenStack 里有三个地方可以和 Ceph 块设备结合：
 
 - Images： OpenStack 的 Glance 管理着 VM 的 image 。Image 相对恒定， OpenStack 把它们当作二进制文件、并以此格式下载。

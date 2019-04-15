@@ -58,7 +58,7 @@ auth_client_required = cephx
 修改/etc/kolla/config/需要执行
 
 ```
-# kolla-ansible -i ../../multinode reconfigure 
+# ./kolla-ansible -i ../../multinode reconfigure 
 ```
 
 reconfigure用来reconfigure OpenStack service.
