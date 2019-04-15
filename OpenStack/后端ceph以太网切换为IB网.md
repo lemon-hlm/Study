@@ -66,8 +66,8 @@ reconfigure用来reconfigure OpenStack service.
 修改/etc/kolla/global.yml
 
 ```
-# kolla-ansible -i ../../multinode upgrade
-# kolla-ansible -i ../../multinode post-deploy
+# ./kolla-ansible -i ../../multinode upgrade
+# ./kolla-ansible -i ../../multinode post-deploy
 ```
 
 upgrade用来upgrade现有openstack环境
