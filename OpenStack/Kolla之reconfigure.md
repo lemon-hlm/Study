@@ -1,6 +1,16 @@
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
+<!-- code_chunk_output -->
+
+* [1 概述](#1-概述)
+* [2 reconfigure使用](#2-reconfigure使用)
+* [3 reconfigure 代码流程](#3-reconfigure-代码流程)
+	* [3.1 ansible role是什么？](#31-ansible-role是什么)
+* [参考](#参考)
+
+<!-- /code_chunk_output -->
+
 # 1 概述
 
 kolla的配置管理主要是管理openstack service config文件；
