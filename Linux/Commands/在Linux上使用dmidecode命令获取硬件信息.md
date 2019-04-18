@@ -89,6 +89,30 @@ recoded values：记录值可以是多行的，比如上例显示了主板的制
 
 ## 2.1 支持的type
 
+可以在man dmidecode里面看到：
+文本参数支持：
+bios, system, baseboard, chassis, processor, memory, cache, connector, slot
+数字参数支持很多：（见附录）
+4.通过关键字查看信息：
+比如只想查看序列号，可以使用:
+
+```
+# dmidecode -s system-serial-number
+```
+
+-s (–string keyword)支持的keyword包括：
+
+
+bios-vendor,bios-version, bios-release-date,
+
+system-manufacturer, system-product-name, system-version, system-serial-number,
+
+baseboard-manu-facturer,baseboard-product-name, baseboard-version, baseboard-serial-number, baseboard-asset-tag,
+
+chassis-manufacturer, chas-sis-version, chassis-serial-number, chassis-asset-tag,
+
+processor-manufacturer, processor-version.
+
 
 
 下面是基本输出信息
