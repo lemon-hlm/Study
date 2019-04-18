@@ -268,4 +268,585 @@ Physical Memory Array
 
 我们还必须查清这里的256G到底是4\*64GB, 2\*128GB还是其他？也就是查看已使用的插槽数是否已经插满, 如果已经插满, 那就无法扩展了.
 
+```
+[root@compute1 ~]# dmidecode -t 17
+# dmidecode 3.0
+Getting SMBIOS data from sysfs.
+SMBIOS 3.0 present.
 
+Handle 0x0068, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0066
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P1_DIMMA1
+	Bank Locator: P1_Node0_Channel0_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A2D3
+	Asset Tag: P1_DIMMA1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x006A, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0066
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x006B, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0066
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x006C, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0066
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P1_DIMMB1
+	Bank Locator: P1_Node0_Channel1_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A1D2
+	Asset Tag: P1_DIMMB1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x006E, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0066
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x006F, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0066
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0072, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0070
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P1_DIMMC1
+	Bank Locator: P1_Node0_Channel2_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A3E3
+	Asset Tag: P1_DIMMC1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0074, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0070
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0075, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0070
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0076, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0070
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P1_DIMMD1
+	Bank Locator: P1_Node0_Channel3_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A1FC
+	Asset Tag: P1_DIMMD1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0078, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0070
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0079, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0070
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x007C, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x007A
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P2_DIMME1
+	Bank Locator: P2_Node1_Channel0_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A3EB
+	Asset Tag: P2_DIMME1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x007E, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x007A
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x007F, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x007A
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0080, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x007A
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P2_DIMMF1
+	Bank Locator: P2_Node1_Channel1_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A3F8
+	Asset Tag: P2_DIMMF1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0082, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x007A
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0083, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x007A
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0086, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0084
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P2_DIMMG1
+	Bank Locator: P2_Node1_Channel2_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A14E
+	Asset Tag: P2_DIMMG1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0088, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0084
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x0089, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0084
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x008A, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0084
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 72 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: P2_DIMMH1
+	Bank Locator: P2_Node1_Channel3_Dimm1
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2667 MHz
+	Manufacturer: Hynix Semiconductor
+	Serial Number: 2CA4A381
+	Asset Tag: P2_DIMMH1_AssetTag (Date:18/26)
+	Part Number: HMA84GR7AFR4N-VK
+	Rank: 2
+	Configured Clock Speed: 2400 MHz
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x008C, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0084
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+
+Handle 0x008D, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0084
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: NO DIMM
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: Unknown
+```

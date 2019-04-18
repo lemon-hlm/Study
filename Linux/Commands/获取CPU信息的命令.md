@@ -10,9 +10,9 @@
 * [5 Inxi工具 \- 显示Linux系统信息](#5-inxi工具-显示linux系统信息)
 * [6 lshw工具 \- 列出硬件配置](#6-lshw工具-列出硬件配置)
 * [7 hardinfo \- 在GTK \+窗口中显示硬件信息](#7-hardinfo-在gtk-窗口中显示硬件信息)
-* [7 hwinfo \- 显示当前硬件信息](#7-hwinfo-显示当前硬件信息)
-* [8 nproc \- 打印处理单元数](#8-nproc-打印处理单元数)
-* [9 其它资料](#9-其它资料)
+* [8 hwinfo \- 显示当前硬件信息](#8-hwinfo-显示当前硬件信息)
+* [9 nproc \- 打印处理单元数](#9-nproc-打印处理单元数)
+* [10 其它资料](#10-其它资料)
 
 <!-- /code_chunk_output -->
 
@@ -228,7 +228,7 @@ Linux系统信息:
 
 ![](./images/2019-04-18-15-56-29.png)
 
-# 7 hwinfo \- 显示当前硬件信息
+# 8 hwinfo \- 显示当前硬件信息
 
 hwinfo用于提取有关Linux系统中存在的硬件的信息。 要显示有关CPU的信息，请使用\-\-cpu
 
@@ -236,7 +236,7 @@ hwinfo用于提取有关Linux系统中存在的硬件的信息。 要显示有�
 [root@localhost ~]# hwinfo --cpu
 ```
 
-# 8 nproc \- 打印处理单元数
+# 9 nproc \- 打印处理单元数
 
 nproc命令用于显示计算机上存在的处理单元数量：
 
@@ -245,7 +245,7 @@ nproc命令用于显示计算机上存在的处理单元数量：
 12
 ```
 
-# 9 其它资料
+# 10 其它资料
 
 - [Cpustat - 通过在Linux中运行进程监视CPU利用率](https://www.howtoing.com/cpustat-monitors-cpu-utilization-by-processes-in-linux/)
 - [CoreFreq - 用于Linux系统的强大的CPU监控工具](https://www.howtoing.com/corefreq-linux-cpu-monitoring-tool/)
