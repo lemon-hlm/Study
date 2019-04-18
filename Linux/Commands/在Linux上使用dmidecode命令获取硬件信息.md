@@ -7,7 +7,12 @@ dmidecode命令适用于RHEL / CentOS的 / Fedora的 / Ubuntu Linux操作系统�
 
 dmidecode允许你在Linux系统下获取有关硬件方面的信息。dmidecode遵循SMBIOS/DMI标准，其输出的信息包括BIOS、系统、主板、处理器、内存、缓存等等。
 
-DMI（Desktop Management Interface,DMI）就是帮助收集电脑系统信息的管理系统，DMI信息的收集必须在严格遵照SMBIOS规范的前提下进行。SMBIOS（System Management BIOS）是主板或系统制造者以标准格式显示产品管理信息所需遵循的统一规范。SMBIOS和DMI是由行业指导机构Desktop Management Task Force(DMTF)起草的开放性的技术标准，其中DMI设计适用于任何的平台和操作系统。
+DMI是英文单词Desktop Management Interface的缩写，也就是桌面管理界面，它含有关于系统硬件的配置信息。计算机**每次启动**时都对**DMI数据进行校验**，如果该数据出错或硬件有所变动，就会对机器进行检测，并把测试的数据写入BIOS芯片保存。所以如果我们在BIOS设置中禁止了BIOS芯片的刷新功能或者在主板使用跳线禁止了 BIOS芯片的刷新功能，那这台机器的DMI数据将不能被更新。如果你更换了硬件配置，那么在进行WINDOWS系统时，机器仍旧按老系统的配置进行工作。这样就不能充分发挥新添加硬件的性能，有时还会出现这样或那样的故障。
+
+- DMI（Desktop Management Interface,DMI）就是帮助收集电脑系统信息的管理系统，DMI信息的收集必须在严格遵照SMBIOS规范的前提下进行。
+- SMBIOS（System Management BIOS）是主板或系统制造者以标准格式显示产品管理信息所需遵循的统一规范。
+
+SMBIOS和DMI是由行业指导机构Desktop Management Task Force(DMTF)起草的开放性的技术标准，其中DMI设计适用于任何的平台和操作系统。
 
 DMI充当了管理工具和系统层之间接口的角色。它建立了标准的可管理系统更加方便了电脑厂商和用户对系统的了解。DMI的主要组成部分是Management Information Format(MIF)数据库。这个数据库包括了所有有关电脑系统和配件的信息。通过DMI，用户可以获取序列号、电脑厂商、串口信息以及其它系统配件信息。
 
@@ -95,11 +100,23 @@ recoded values：记录值可以是多行的，比如上例显示了主板的制
 
 bios, system, baseboard, chassis, processor, memory, cache, connector, slot
 
+bios |  bios的各项信息
+-----|-----------
+ system |  系统信息，在我的笔记本上可以看到版本、型号、序号等信息。
+ baseboard |  主板信息
+ chassis |  “底板”，不太理解其含意，期待大家补充
+ processor |  CPU的详细信息
+ memory |  内存信息，包括目前插的内存条数及大小，支持的单条最大内存和总内存大小等等。
+ cache |  缓存信息，似乎是CPU的缓存信息
+ connector |  在我的电脑是PCI设备的信息
+ slot |  插槽信息
+
+
 数字参数支持很多：
 
+```
 The SMBIOS specification defines the following DMI types:
 
-```
        Type   Information
        ────────────────────────────────────────────
           0   BIOS
@@ -173,4 +190,66 @@ processor-manufacturer, processor-version.
 
 查看当前内存和支持的最大内存
 
+Linux下，可以使用free或者查看meminfo来获得当前的物理内存：
 
+```
+[root@compute1 ~]# free
+              total        used        free      shared  buff/cache   available
+Mem:      263923064     3228100   257267132       18036     3427832   259021016
+Swap:       4194300           0     4194300
+[root@compute1 ~]# free -h
+              total        used        free      shared  buff/cache   available
+Mem:           251G        3.1G        245G         17M        3.3G        247G
+Swap:          4.0G          0B        4.0G
+```
+
+显示当前服务器物理内存是251G
+
+服务器到底能扩展到多大的内存?
+
+```
+[root@compute1 ~]# dmidecode -t 16
+# dmidecode 3.0
+Getting SMBIOS data from sysfs.
+SMBIOS 3.0 present.
+
+Handle 0x0066, DMI type 16, 23 bytes
+Physical Memory Array
+	Location: System Board Or Motherboard
+	Use: System Memory
+	Error Correction Type: Multi-bit ECC
+	Maximum Capacity: 384 GB
+	Error Information Handle: Not Provided
+	Number Of Devices: 6
+
+Handle 0x0070, DMI type 16, 23 bytes
+Physical Memory Array
+	Location: System Board Or Motherboard
+	Use: System Memory
+	Error Correction Type: Multi-bit ECC
+	Maximum Capacity: 384 GB
+	Error Information Handle: Not Provided
+	Number Of Devices: 6
+
+Handle 0x007A, DMI type 16, 23 bytes
+Physical Memory Array
+	Location: System Board Or Motherboard
+	Use: System Memory
+	Error Correction Type: Multi-bit ECC
+	Maximum Capacity: 384 GB
+	Error Information Handle: Not Provided
+	Number Of Devices: 6
+
+Handle 0x0084, DMI type 16, 23 bytes
+Physical Memory Array
+	Location: System Board Or Motherboard
+	Use: System Memory
+	Error Correction Type: Multi-bit ECC
+	Maximum Capacity: 384 GB
+	Error Information Handle: Not Provided
+	Number Of Devices: 6
+```
+
+从上面信息可以看到:
+
+- 内存插槽数: 
