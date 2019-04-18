@@ -1,4 +1,17 @@
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [CPU ID](#cpu-id)
+	* [Type（类型）](#type类型)
+	* [Family（系列）](#family系列)
+	* [Mode（型号）](#mode型号)
+	* [Stepping（步进编号）](#stepping步进编号)
+	* [Brand ID（品种标识）](#brand-id品种标识)
+
+<!-- /code_chunk_output -->
+
 ![config](./images/26.png)
 
 /proc/cpuinfo文件的内容包括有：
