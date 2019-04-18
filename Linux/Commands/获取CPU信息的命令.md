@@ -1,4 +1,21 @@
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 cat命令 \- 获取CPU信息](#1-cat命令-获取cpu信息)
+* [2 lscpu命令 \- 显示CPU架构信息](#2-lscpu命令-显示cpu架构信息)
+* [3 cpuid命令 \- 显示x86 CPU](#3-cpuid命令-显示x86-cpu)
+* [4 dmidecode命令 \- 显示Linux硬件信息](#4-dmidecode命令-显示linux硬件信息)
+* [5 Inxi工具 \- 显示Linux系统信息](#5-inxi工具-显示linux系统信息)
+* [6 lshw工具 \- 列出硬件配置](#6-lshw工具-列出硬件配置)
+* [7 hardinfo \- 在GTK \+窗口中显示硬件信息](#7-hardinfo-在gtk-窗口中显示硬件信息)
+* [7 hwinfo \- 显示当前硬件信息](#7-hwinfo-显示当前硬件信息)
+* [8 nproc \- 打印处理单元数](#8-nproc-打印处理单元数)
+* [9 其它资料](#9-其它资料)
+
+<!-- /code_chunk_output -->
+
 # 1 cat命令 \- 获取CPU信息
 
 ```
@@ -215,3 +232,22 @@ Linux系统信息:
 
 hwinfo用于提取有关Linux系统中存在的硬件的信息。 要显示有关CPU的信息，请使用\-\-cpu
 
+```
+[root@localhost ~]# hwinfo --cpu
+```
+
+# 8 nproc \- 打印处理单元数
+
+nproc命令用于显示计算机上存在的处理单元数量：
+
+```
+[root@localhost ~]# nproc
+12
+```
+
+# 9 其它资料
+
+- [Cpustat - 通过在Linux中运行进程监视CPU利用率](https://www.howtoing.com/cpustat-monitors-cpu-utilization-by-processes-in-linux/)
+- [CoreFreq - 用于Linux系统的强大的CPU监控工具](https://www.howtoing.com/corefreq-linux-cpu-monitoring-tool/)
+- [通过Linux中最高内存和CPU使用情况查找最高运行进程](https://www.howtoing.com/find-linux-processes-memory-ram-cpu-usage/)
+- [如何使用“压力”工具在Linux上强加高CPU负载和压力测试](https://www.howtoing.com/linux-cpu-load-stress-test-with-stress-ng-tool/)
