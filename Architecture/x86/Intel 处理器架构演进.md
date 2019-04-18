@@ -6,7 +6,7 @@
 * [1 微处理器发展模式](#1-微处理器发展模式)
 	* [1.1 Tick\-Tock模式](#11-tick-tock模式)
 	* [1.2 Process\-Architecture\-Optimization模式](#12-process-architecture-optimization模式)
-* [2 路线图](#2-路线图)
+* [2 产品发布路线图](#2-产品发布路线图)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -34,9 +34,17 @@ Intel指出，
 
 在此模式下, 三代处理器都将是同一个制程流程下生产, 三代中第三代专注于优化(Optimization).
 
-举例, Process是Broadwell(代表14nm第一代), Architecture是Skylake(代表这个微架构的第一代, 但是制程还是14nm), 第一代优化(Optimization)是Kaby Lake(2016年8月30). 第二代优化是Coffee Lake(2017年10月5日), 在14nm上共生产了4代. 这些名称称为code name.
+举例, Process是Broadwell(代表14nm第一代), Architecture是Skylake(代表这个微架构的第一代, 但是制程还是14nm), 第一代优化(Optimization)是Kaby Lake. 第二代优化是Coffee Lake, 在14nm上共生产了4代. 这些名称称为code name.
 
-# 2 路线图
+当前的环节为：Process, Architecture, Optimization，即制程、架构、优化
+
+- 制程：在架构不变的情况下，缩小晶体管体积，以减少功耗及成本
+- 架构：在制程不变的情况下，更新处理器架构，以提高性能
+- 优化：在制程及架构不变的情况下，进行修复及优化，将BUG减到最低，并提升处理器时脉
+
+# 2 产品发布路线图
+
+![config](./images/55.png)
 
 
 
