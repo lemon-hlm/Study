@@ -290,15 +290,11 @@ NUMA 节点0 CPU：    0-63
 Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb cat_l3 cdp_l3 intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm rdt_a rdseed adx smap xsaveopt cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm arat pln pts
 ```
 
-一个CPU后面可以接两个Memory Riser, 而每个Memory Riser上面两个SMB, 每个SMB后面可以接两个channel, 每个channel后面可以插3根DIMM(即插槽), 即每个SMB有6个插槽, 每个CPU有4个SMB, 12个DIMM(即12个插槽). 
-
-而CPU其实是和SMB直接连接的, 也就是说一个SMB对应到这里的一个"Physical Memory Array".
-
 关于服务器内存的组织形式见其他文章, 
 
 从上面信息可以看到:
 
-- 4个SMB
+- 
 - 现在整体物理内存: 256GB
 
 每个:
