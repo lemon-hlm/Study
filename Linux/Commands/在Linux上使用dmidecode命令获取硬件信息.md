@@ -89,11 +89,67 @@ recoded values：记录值可以是多行的，比如上例显示了主板的制
 
 ## 2.1 支持的type
 
-可以在man dmidecode里面看到：
+可以在man dmidecode里面看到
+
 文本参数支持：
+
 bios, system, baseboard, chassis, processor, memory, cache, connector, slot
-数字参数支持很多：（见附录）
+
+数字参数支持很多：
+
+The SMBIOS specification defines the following DMI types:
+
+```
+       Type   Information
+       ────────────────────────────────────────────
+          0   BIOS
+          1   System
+          2   Baseboard
+          3   Chassis
+          4   Processor
+          5   Memory Controller
+          6   Memory Module
+          7   Cache
+          8   Port Connector
+          9   System Slots
+         10   On Board Devices
+         11   OEM Strings
+         12   System Configuration Options
+         13   BIOS Language
+
+         14   Group Associations
+         15   System Event Log
+         16   Physical Memory Array
+         17   Memory Device
+         18   32-bit Memory Error
+         19   Memory Array Mapped Address
+         20   Memory Device Mapped Address
+         21   Built-in Pointing Device
+         22   Portable Battery
+         23   System Reset
+         24   Hardware Security
+         25   System Power Controls
+         26   Voltage Probe
+         27   Cooling Device
+         28   Temperature Probe
+         29   Electrical Current Probe
+         30   Out-of-band Remote Access
+         31   Boot Integrity Services
+         32   System Boot
+         33   64-bit Memory Error
+         34   Management Device
+         35   Management Device Component
+         36   Management Device Threshold Data
+         37   Memory Channel
+         38   IPMI Device
+         39   Power Supply
+         40   Additional Information
+         41   Onboard Devices Extended Information
+         42   Management Controller Host Interface
+```
+
 4.通过关键字查看信息：
+
 比如只想查看序列号，可以使用:
 
 ```
@@ -113,51 +169,8 @@ chassis-manufacturer, chas-sis-version, chassis-serial-number, chassis-asset-tag
 
 processor-manufacturer, processor-version.
 
+# 3 获取内存信息
+
+查看当前内存和支持的最大内存
 
 
-下面是基本输出信息
-
-```
-[root@localhost ~]# dmidecode
-# dmidecode 3.1
-Getting SMBIOS data from sysfs.
-SMBIOS 3.0.0 present.
-Table at 0x9AE83000.
-
-Handle 0x0000, DMI type 0, 24 bytes
-BIOS Information
-	Vendor: American Megatrends Inc.
-	Version: 1002
-	Release Date: 07/02/2018
-	Address: 0xF0000
-	Runtime Size: 64 kB
-	ROM Size: 16 MB
-	Characteristics:
-		PCI is supported
-		APM is supported
-		BIOS is upgradeable
-		BIOS shadowing is allowed
-		Boot from CD is supported
-		Selectable boot is supported
-		BIOS ROM is socketed
-		EDD is supported
-		5.25"/1.2 MB floppy services are supported (int 13h)
-		3.5"/720 kB floppy services are supported (int 13h)
-		3.5"/2.88 MB floppy services are supported (int 13h)
-		Print screen service is supported (int 5h)
-		8042 keyboard services are supported (int 9h)
-		Serial services are supported (int 14h)
-		Printer services are supported (int 17h)
-		ACPI is supported
-		USB legacy is supported
-		BIOS boot specification is supported
-		Targeted content distribution is supported
-		UEFI is supported
-	BIOS Revision: 5.12
-```
-
-# 2 如何获取DMI类型
-
-DMI标识给我们系统的特定的硬件信息。 的dmidecode与选项'-t'或' 型 '和'ID'将为我们提供确切的infromation。 
-
-ID 6会给我们内存模块的信息。
