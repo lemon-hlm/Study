@@ -134,3 +134,84 @@ Processor Information
 
 Inxi是一款功能强大的命令行系统信息脚本，用于控制台和IRC（Internet Relay Chat）。 您可以使用它来即时检索硬件信息。
 
+安装
+
+```
+$ sudo apt install inxi 	#Debian/Ubuntu systems
+$ sudo yum install inxi		#RHEL/CentOS systems 
+$ sudo dnf install inxi		#Fedora 22+ 
+```
+
+要显示完整的CPU信息，包括每个CPU时钟速度和CPU最大速度（如果有的话），请使用\-C标志，如下所示：
+
+```
+[root@localhost ~]# inxi -C
+CPU:       Topology: 6-Core model: Intel Core i7-8700 bits: 64 type: MT MCP L2 cache: 12.0 MiB
+           Speed: 3731 MHz min/max: 800/4200 MHz Core speeds (MHz): 1: 898 2: 870 3: 876 4: 2007 5: 3795 6: 3798 7: 3591
+           8: 876 9: 3794 10: 3718 11: 3718 12: 3770
+```
+
+关于inxi命令可以查看命令详细
+
+# 6 lshw工具 \- 列出硬件配置
+
+lshw是收集有关计算机硬件配置的深入信息的最小工具。 
+
+在这种情况下，可以使用-C选项来选择硬件类，CPU
+
+```
+[root@localhost ~]# lshw -C CPU
+  *-cpu
+       description: CPU
+       product: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+       vendor: Intel Corp.
+       vendor_id: GenuineIntel
+       physical id: 4c
+       bus info: cpu@0
+       version: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+       serial: To Be Filled By O.E.M.
+       slot: LGA1151
+       size: 3899MHz
+       capacity: 4200MHz
+       width: 64 bits
+       clock: 100MHz
+       capabilities: lm fpu fpu_exception wp vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp x86-64 constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb intel_pt ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp spec_ctrl intel_stibp flush_l1d cpufreq
+       configuration: cores=6 enabledcores=6 threads=12
+```
+
+# 7 hardinfo \- 在GTK \+窗口中显示硬件信息
+
+hardinfo在GTK +窗口中显示硬件信息
+
+安装
+
+```
+$ sudo apt install hardinfo 	#Debian/Ubuntu systems
+$ sudo yum install hardinfo	#RHEL/CentOS systems 
+$ sudo dnf install hardinfo	#Fedora 22+ 
+```
+
+输入
+
+```
+# hardinfo
+```
+
+Linux系统信息:
+
+![](./images/2019-04-18-15-55-31.png)
+
+它还使您能够通过单击“ 生成报告 ”按钮生成系统硬件信息报告。 从下面的界面，点击“ 生成 ”继续。 请注意，您可以选择要生成的硬件信息类别。
+
+生成系统信息报告:
+
+![](./images/2019-04-18-15-55-53.png)
+
+一旦您以html格式生成报告，您可以从网络浏览器查看，如下所示。
+
+![](./images/2019-04-18-15-56-29.png)
+
+# 7 hwinfo \- 显示当前硬件信息
+
+hwinfo用于提取有关Linux系统中存在的硬件的信息。 要显示有关CPU的信息，请使用\-\-cpu
+
