@@ -259,7 +259,7 @@ Physical Memory Array
 	Number Of Devices: 6
 ```
 
-一个CPU后面可以接两个Memory Riser, 而每个Memory Riser上面两个SMB, 每个SMB后面可以接两个channel, 每个channel后面可以插3根DIMM(即插槽), 即每个SMB有6个插槽. 而CPU其实是和SMB直接连接的, 也就是说一个SMB对应到这里的一个"Physical Memory Array"
+一个CPU后面可以接两个Memory Riser, 而每个Memory Riser上面两个SMB, 每个SMB后面可以接两个channel, 每个channel后面可以插3根DIMM(即插槽), 即每个SMB有6个插槽, 每个CPU有12个DIMM(即12个插槽). 而CPU其实是和SMB直接连接的, 也就是说一个SMB对应到这里的一个"Physical Memory Array"
 
 关于服务器内存的组织形式见其他文章, 
 
