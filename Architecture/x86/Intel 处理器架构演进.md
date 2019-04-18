@@ -33,7 +33,7 @@ Intel指出，
 
 在此模式下, 三代处理器都将是同一个制程流程下生产,   
 
-举例, Process是Broadwell(2015年), Skylake微架构(2015年8月5日)的第一代优化是Kaby Lake(2016年8月30). Intel随后宣布了第二代优化, Coffee Lake(2017年10月5日), 在14nm上共生产了4代(之前的Broadewell微架构<2015年1月>也是14nm).
+举例, Process是Broadwell(代表14nm第一代), Architecture是Skylake(代表这个微架构的第一代, 但是制程还是14nm), 第一代优化(Optimization)是Kaby Lake(2016年8月30). 第二代优化是Coffee Lake(2017年10月5日), 在14nm上共生产了4代().
 
 
 
