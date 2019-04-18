@@ -46,6 +46,13 @@ Intel指出，
 
 ![config](./images/55.png)
 
+![config](./images/56.png)
+
+Intel的微处理器架构路线图, 从NetBurst以及P6到Tiger Lake
+
+![](./images/2019-04-18-13-52-28.png)
+
+![](./images/2019-04-18-13-52-50.png)
 
 
 
