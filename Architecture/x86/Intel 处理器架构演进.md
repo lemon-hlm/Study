@@ -61,6 +61,8 @@ Intel的微处理器架构路线图, 从NetBurst以及P6到Tiger Lake
 
 ![](./images/2019-04-18-13-52-50.png)
 
+
+
 # 3 P6
 
 [P6](https://www.wikiwand.com/en/P6_(microarchitecture)) 是 Intel 在1995年推出的**第六代微架构**，它的后继者是2000年的 NetBurst微架构，但是最后在Pentium M之间又出现P6的踪影。而Pentium M的P6的后继者则是Intel Core微架构。
