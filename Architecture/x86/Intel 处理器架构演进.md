@@ -4,11 +4,15 @@
 <!-- code_chunk_output -->
 
 * [1 微处理器发展模式](#1-微处理器发展模式)
+	* [1.1 Tick\-Tock模式](#11-tick-tock模式)
+	* [1.2 Process\-Architecture\-Optimization模式](#12-process-architecture-optimization模式)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
 
 # 1 微处理器发展模式
+
+## 1.1 Tick\-Tock模式
 
 Tick-Tock是Intel公司发展微处理器芯片设计制造业务的一种发展战略模式，在2007年正式提出。
 
@@ -23,7 +27,12 @@ Intel指出，
 
 此策略常被许多计算机玩家戏称“挤牙膏策略”，因为每一代新处理器性能和前一代处理器性能的差距很短，就好像Haswell的4790K和Skylake的6700K那样
 
-2016年3月22日，Intel在 [Form 10-K](https://www.wikiwand.com/en/Form_10-K) 报告中宣布, 弃用"Tick\-Tock"模式, 采用三步"Process\-Architecture\-Optimization", 即"过程、架构、优化". 具体来讲, Tick Tock将放缓至三年一循环，即增加优化环节，进一步减缓实际更新的速度。
+## 1.2 Process\-Architecture\-Optimization模式
+
+2016年3月22日，Intel在 [Form 10-K](https://www.wikiwand.com/en/Form_10-K) 报告中宣布, 弃用"Tick\-Tock"模式, 采用三步"Process\-Architecture\-Optimization"模式, 即"过程、架构、优化". 具体来讲, 将Tick Tock放缓至三年一循环，即增加优化环节，进一步减缓实际更新的速度。
+
+在此模式下, 三代处理器都将是同一个制程流程下生产,   Skylake架构的第一代优化是Kaby Lake(2016年8月30). Intel随后宣布了第二代优化, Coffee Lake(), 在14nm上共生产了4代.
+
 
 
 
