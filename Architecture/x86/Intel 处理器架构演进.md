@@ -65,24 +65,14 @@ Intel的微处理器架构路线图, 从NetBurst以及P6到Tiger Lake
 
 处理器与微架构对照表: https://blog.csdn.net/qq_43401808/article/details/85553914 (更新至2019/01/01)
 
-
-
-Column A | Column B | Column C
----------|----------|---------
- A1 | B1 | C1
- A2 | B2 | C2
- A3 | B3 | C3
-
 Microprocessor name | Microarchitecture code name
 ------- | -------
 Intel Pentium | P5 
 Intel Pentium MMX  | P5 
 Intel Pentium Pro & II & III | P6 
 Intel Pentium 4 (NetBurst)  | Netburst 
-Intel Pentium 4 with EM64T,
-Pentium D, etc. | Netburst, Prescott 
-Intel Pentium M, Core Solo,
-Core Duo | Dothan, Yonah 
+Intel Pentium 4 with EM64T, Pentium D, etc. | Netburst, Prescott 
+Intel Pentium M, Core Solo, Core Duo | Dothan, Yonah 
 Intel Core 2  | Merom, Wolfdale 
 Intel Core i7  | Nehalem, Westmere
 Intel 2nd generation Core  | Sandy Bridge 

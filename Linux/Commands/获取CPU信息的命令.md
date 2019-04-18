@@ -56,3 +56,81 @@ $ sudo dnf install cpuid	#Fedora 22+
 # cpuid
 ```
 
+# 4 dmidecode命令 \- 显示Linux硬件信息
+
+dmidecode是用于检索任何Linux系统的硬件信息的工具。 它以人性化的格式转储计算机的DMI（又称SMBIOS）表格，便于检索。
+
+```
+[root@localhost ~]# dmidecode --type processor
+# dmidecode 3.1
+Getting SMBIOS data from sysfs.
+SMBIOS 3.0.0 present.
+
+Handle 0x004C, DMI type 4, 48 bytes
+Processor Information
+	Socket Designation: LGA1151
+	Type: Central Processor
+	Family: Core i7
+	Manufacturer: Intel(R) Corporation
+	ID: EA 06 09 00 FF FB EB BF
+	Signature: Type 0, Family 6, Model 158, Stepping 10
+	Flags:
+		FPU (Floating-point unit on-chip)
+		VME (Virtual mode extension)
+		DE (Debugging extension)
+		PSE (Page size extension)
+		TSC (Time stamp counter)
+		MSR (Model specific registers)
+		PAE (Physical address extension)
+		MCE (Machine check exception)
+		CX8 (CMPXCHG8 instruction supported)
+		APIC (On-chip APIC hardware supported)
+		SEP (Fast system call)
+		MTRR (Memory type range registers)
+		PGE (Page global enable)
+		MCA (Machine check architecture)
+		CMOV (Conditional move instruction supported)
+		PAT (Page attribute table)
+		PSE-36 (36-bit page size extension)
+		CLFSH (CLFLUSH instruction supported)
+		DS (Debug store)
+		ACPI (ACPI supported)
+		MMX (MMX technology supported)
+		FXSR (FXSAVE and FXSTOR instructions supported)
+		SSE (Streaming SIMD extensions)
+		SSE2 (Streaming SIMD extensions 2)
+		SS (Self-snoop)
+		HTT (Multi-threading)
+		TM (Thermal monitor supported)
+		PBE (Pending break enabled)
+	Version: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+	Voltage: 1.0 V
+	External Clock: 100 MHz
+	Max Speed: 8300 MHz
+	Current Speed: 3200 MHz
+	Status: Populated, Enabled
+	Upgrade: Socket LGA1151
+	L1 Cache Handle: 0x0049
+	L2 Cache Handle: 0x004A
+	L3 Cache Handle: 0x004B
+	Serial Number: To Be Filled By O.E.M.
+	Asset Tag: To Be Filled By O.E.M.
+	Part Number: To Be Filled By O.E.M.
+	Core Count: 6
+	Core Enabled: 6
+	Thread Count: 12
+	Characteristics:
+		64-bit capable
+		Multi-Core
+		Hardware Thread
+		Execute Protection
+		Enhanced Virtualization
+		Power/Performance Control
+```
+
+关于dmidecode可查看dmidocode命令详细信息
+
+# 5 Inxi工具 \- 显示Linux系统信息
+
+Inxi是一款功能强大的命令行系统信息脚本，用于控制台和IRC（Internet Relay Chat）。 您可以使用它来即时检索硬件信息。
+
