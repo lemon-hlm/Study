@@ -209,6 +209,8 @@ Swap:          4.0G          0B        4.0G
 
 显示当前服务器物理内存是256G
 
+但是通过这种方式，你只能看到内存的总量和使用量。而无法知道内存的类型（DDR1、DDR2、DDR3、DDR4、SDRAM、DRAM）、频率等信息。
+
 ## 3.2 硬件支持的信息
 
 服务器到底能扩展到多大的内存?
@@ -269,6 +271,7 @@ Physical Memory Array
 我们还必须查清这里的256G到底是4\*64GB, 2\*128GB还是其他？也就是查看已使用的插槽数是否已经插满, 如果已经插满, 那就无法扩展了.
 
 ```
+# 内存设备信息
 [root@compute1 ~]# dmidecode -t 17
 # dmidecode 3.0
 Getting SMBIOS data from sysfs.
