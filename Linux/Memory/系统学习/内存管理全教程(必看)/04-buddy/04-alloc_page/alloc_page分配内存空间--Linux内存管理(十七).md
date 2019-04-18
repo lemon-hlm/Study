@@ -1,11 +1,18 @@
-- 1 伙伴系统的心脏\_\_alloc\_pages\_nodemask
-- 2 选择页
-    - 2.1 内存水印标志
-    - 2.2 zone\_watermark\_ok函数检查标志
-    - 2.3 get\_page\_from\_freelist函数
-- 3 分配控制
-    - 3.1 函数源代码注释
-- 4 链接
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 伙伴系统的心脏\_\_alloc\_pages\_nodemask](#1-伙伴系统的心脏__alloc_pages_nodemask)
+* [2 选择页](#2-选择页)
+	* [2.1 内存水印标志](#21-内存水印标志)
+	* [2.2 zone\_watermark\_ok函数检查标志](#22-zone_watermark_ok函数检查标志)
+	* [2.3 get\_page\_from\_freelist函数](#23-get_page_from_freelist函数)
+* [3 分配控制](#3-分配控制)
+	* [3.1 函数源代码注释](#31-函数源代码注释)
+* [4 链接](#4-链接)
+
+<!-- /code_chunk_output -->
 
 # 1 伙伴系统的心脏\_\_alloc\_pages\_nodemask
 
