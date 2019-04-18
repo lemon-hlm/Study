@@ -12,6 +12,8 @@
 * [5 Nehalem](#5-nehalem)
 * [6 Sandy Bridge](#6-sandy-bridge)
 * [7 Haswell](#7-haswell)
+* [8 Skylake](#8-skylake)
+* [9 What’s new!](#9-whats-new)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -190,11 +192,54 @@ Tick 到 22nm 的下一代架构叫 Ivy Bridge，三代 Core i 系列和二代 X
 
 相对上一代的性能：
 
-8% 的向量运算能力提升
-5% 的单线程性能和 6% 的多线程性能
+- 8% 的向量运算能力提升
+- 5% 的单线程性能和 6% 的多线程性能
+
 好像提的不是很多，Intel 开始挤牙膏了
 
 14nm 的 Tick 到了 Broadwell，五代 Core i 系列和四代 Xeon E 系列。各种指令集升级、支持了很多新功能特性。
+
+# 8 Skylake
+
+14nm 的 Tock 到了 Skylake，进入 XXlake 时代，六代 Core i 系列。
+
+一系列指令集升级、新功能特性等等。上一代加入的 FIVR 这里又拿掉了，其他包括雷电 3.0 等等好多升级什么的。
+
+>从比较粗粒度的架构图来看，Skylake 的架构基本上跟前面那张 Haswell 的没什么差别，大概就是寄存器什么的数字上往上涨了一些，所以图这里就不贴了。
+>（当然细节上肯定还是有挺多升级的）
+>挤牙膏啊挤牙膏，疯狂挤牙膏
+
+这个阶段的微架构除了升级指令、加上更多扩展功能以外，不像 Nehalem 和 Sandy Bridge 那时候能有更多革新的设计了，而且由于制程已经达到了很小的程度，再往下可能很快就要碰到工艺极限了，所以摩尔定律开始放缓，性能很难有特别大的提升了。
+
+所以 Intel 开始从 Tick-Tock 两步升级战略转变到 Process-Architecture-Optimization 的三步升级战略，分别是提升工艺制程，升级微架构，然后再在微架构基础上进行优化。
+
+其实这个三步战略从上面 Haswell 时代就已经开始了，Broadwell 前面还有个 refresh 的 Haswell 升级版，i3/i5/i7 4x20 系列。
+
+Skylake 优化版的下一代是 Kaby Lake，即七代 Core i 系列。相比 Skylake 提升了主频，频率切换更快，提升了显示核心等等。
+
+Kaby Lake 继续优化到了 Coffee Lake，八代 Core i 系列。这个系列的 i3 提到了 4 核，i5、i7 都从 6 核开始起步，然后继续提升主频，各种优化等等。
+
+# 9 What’s new!
+
+话说 Kaby Lake 和 Coffee Lake 这个时代，Intel 又推出了新的 Core i 系列，命名为 Core i9，第一代的桌面版 Core i9 是 Skylake 架构（Skylake-X），第一代笔记本版 i9 是 Coffee Lake 架构。
+
+那么本该在这个时候推出的第五代 Xeon，也就是 E3/E5/E7 的 xxxx v5 版呢？
+
+Skylake 的第五代 Xeon 摆脱了原本的系列名，而是重新改成了 Bronze、Silver、Gold、Platinum 4 个系列（一股浓浓的网络游戏装备风，说不定再下次改名就可能改名叫稀有、史诗、传说什么的，→_→）。青铜和白银系列支持双路（原本的 E5-24xx、E7-28xx 系列），黄金系列支持四路（原本的 E5-46xx、E7-48xx 系列），白金系列支持八路（原本的 E7-88xx 系列）。
+
+这里还有个重要变动，Intel 沿用了很多年的 Ring Bus 片内总线从 Skylake-X 开始改掉了！前面说 Sandy Bridge 开始，微架构设计上已经全面采用了 Ring Bus，其实最早到 Nehalem 时代的 Xeon 系列就已经开始用上 Ring Bus了，主要用于解决多核（非常非常多的核）之间的共享、扩展等等的问题。
+
+然而随着 CPU 的发展，核越来越多，所以一个 CPU 片内还可能有多个 Ring Bus，就像下面这样。这会有什么问题呢？
+
+以前我们考虑多路服务器里面的 CPU 亲和性的时候，只考虑过 socket 之间的 NUMA 关系，两片 CPU 核之间会有亲和性问题。。。。。。谁想过在下面这种结构的单片 CPU 里面其实也已经是个 NUMA 结构了！！！
+
+![](./images/2019-04-18-14-20-20.png)
+
+但是当核的数量持续增长，Ring Bus 的延迟也会越来越高，终究不是个办法，Intel 在 KNL 上已经试过 2D Mesh 的总线结构了，大概是效果比较好，于是从 Skylake-X 开始，之后的系列开始全面改用 Mesh 结构。
+
+![](./images/2019-04-18-14-20-37.png)
+
+[破茧化蝶，从Ring Bus到Mesh网络，CPU片内总线的进化之路](https://zhuanlan.zhihu.com/p/32216294)
 
 # 参考
 
@@ -203,5 +248,7 @@ Tick 到 22nm 的下一代架构叫 Ivy Bridge，三代 Core i 系列和二代 X
 - Tick-Tock维基百科: https://www.wikiwand.com/en/Tick%E2%80%93tock_model
 - 中文Tick-Tock维基: https://zh.wikipedia.org/wiki/Intel_Tick-Tock
 - Intel微处理器列表: https://zh.wikipedia.org/wiki/%E8%8B%B1%E7%89%B9%E5%B0%94%E5%BE%AE%E5%A4%84%E7%90%86%E5%99%A8%E5%88%97%E8%A1%A8
+- WikiChip: https://en.wikichip.org/wiki/WikiChip
+- MOEPC: http://www.moepc.net/
 
 
