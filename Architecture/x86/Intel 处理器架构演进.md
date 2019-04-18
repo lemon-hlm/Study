@@ -31,7 +31,7 @@ Intel指出，
 
 2016年3月22日，Intel在 [Form 10-K](https://www.wikiwand.com/en/Form_10-K) 报告中宣布, 弃用"Tick\-Tock"模式, 采用三步"Process\-Architecture\-Optimization"模式, 即"过程、架构、优化". 具体来讲, 将Tick Tock放缓至三年一循环，即增加优化环节，进一步减缓实际更新的速度。
 
-在此模式下, 三代处理器都将是同一个制程流程下生产,   Skylake架构的第一代优化是Kaby Lake(2016年8月30). Intel随后宣布了第二代优化, Coffee Lake(), 在14nm上共生产了4代.
+在此模式下, 三代处理器都将是同一个制程流程下生产,   Skylake微架构(2015年8月5日)的第一代优化是Kaby Lake(2016年8月30). Intel随后宣布了第二代优化, Coffee Lake(2017年10月5日), 在14nm上共生产了4代(之前的Broadewell微架构<2014年1月>也是14nm).
 
 
 
