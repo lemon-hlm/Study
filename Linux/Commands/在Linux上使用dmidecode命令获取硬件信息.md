@@ -66,11 +66,11 @@ Base Board Information
 
 其中记录头（recode header）包括了：
 
-recode id(Handle)：DMI表中的记录标识符，这是唯一的，比如上例中的Handle 0x0002.
+recode id(Handle)：**DMI表**中的**记录标识符**，这是唯一的，比如上例中的Handle 0x0002.
 
-DMI type id：记录的类型，譬如说：BIOS，Memory，上例是type 2，即“Base Board Information”.
+DMI type id：**记录的类型**，譬如说：BIOS，Memory，上例是type 2，即“Base Board Information”.
 
-recode size：DMI表中对应记录的大小，上例为95 bytes。（不包括文本信息，所有实际输出的内容比这个size要更大）。记录头之后就是记录的值。
+recode size：DMI表中对应**记录的大小**，上例为95 bytes。（不包括文本信息，所有实际输出的内容比这个size要更大）。记录头之后就是记录的值。
 
 recoded values：记录值可以是多行的，比如上例显示了主板的制造商（Manufacturer）、Product Name、Version以及Serial Number。
 
@@ -82,7 +82,15 @@ recoded values：记录值可以是多行的，比如上例显示了主板的制
 6042
 ```
 
-2.显示指定类型的信息：
+2. 更精简的信息显示
+
+```
+# dmidecode -q
+```
+
+-q(–quite) 只显示必要的信息
+
+3. 显示指定类型的信息：
 
 通常我只想查看某类型，比如CPU，内存或者磁盘的信息而不是全部的。这可以使用\-t(\–type TYPE)来指定信息类型
 
@@ -165,30 +173,26 @@ The SMBIOS specification defines the following DMI types:
          42   Management Controller Host Interface
 ```
 
-4.通过关键字查看信息：
+4. 通过关键字查看信息：
 
-比如只想查看序列号，可以使用:
+比如只想查看系统序列号，可以使用:
 
 ```
 # dmidecode -s system-serial-number
+218480676
 ```
 
 -s (–string keyword)支持的keyword包括：
 
-
 bios-vendor,bios-version, bios-release-date,
 
-system-manufacturer, system-product-name, system-version, system-serial-number,
+system-manufacturer, system-product-name, system-version, system-serial-number, baseboard-manu-facturer,baseboard-product-name, baseboard-version, baseboard-serial-number, baseboard-asset-tag, chassis-manufacturer, chas-sis-version, chassis-serial-number, chassis-asset-tag, processor-manufacturer, processor-version.
 
-baseboard-manu-facturer,baseboard-product-name, baseboard-version, baseboard-serial-number, baseboard-asset-tag,
-
-chassis-manufacturer, chas-sis-version, chassis-serial-number, chassis-asset-tag,
-
-processor-manufacturer, processor-version.
-
-# 3 获取内存信息
+# 3 查看内存信息和支持的最大内存
 
 查看当前内存和支持的最大内存
+
+## 3.1 查看当前物理内存
 
 Linux下，可以使用free或者查看meminfo来获得当前的物理内存：
 
@@ -203,11 +207,14 @@ Mem:           251G        3.1G        245G         17M        3.3G        247G
 Swap:          4.0G          0B        4.0G
 ```
 
-显示当前服务器物理内存是251G
+显示当前服务器物理内存是256G
+
+## 3.2 硬件支持的信息
 
 服务器到底能扩展到多大的内存?
 
 ```
+# 16代表物理内存数组
 [root@compute1 ~]# dmidecode -t 16
 # dmidecode 3.0
 Getting SMBIOS data from sysfs.
@@ -218,7 +225,7 @@ Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
 	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB
+	Maximum Capacity: 384 GB (可扩展到384GB)
 	Error Information Handle: Not Provided
 	Number Of Devices: 6
 
@@ -227,7 +234,7 @@ Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
 	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB
+	Maximum Capacity: 384 GB (可扩展到384GB)
 	Error Information Handle: Not Provided
 	Number Of Devices: 6
 
@@ -236,7 +243,7 @@ Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
 	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB
+	Maximum Capacity: 384 GB (可扩展到384GB)
 	Error Information Handle: Not Provided
 	Number Of Devices: 6
 
@@ -245,10 +252,12 @@ Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
 	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB
+	Maximum Capacity: 384 GB (可扩展到384GB)
 	Error Information Handle: Not Provided
 	Number Of Devices: 6
 ```
+
+但是，事实不一定如此，因为插槽可能已经插满了。也就是我们还必须查清这里的256G到底是4\*2GB, 2\*4GB还是其他？
 
 从上面信息可以看到:
 
