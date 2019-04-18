@@ -21,7 +21,7 @@ Intel指出，每一次处理器**微架构(microarchitecture**)的更新和每�
 Intel指出，
 
 - 每一次“**Tick**”代表着一代微架构的**处理器芯片制程**的更新，意在处理器性能几近相同的情况下，缩小芯片面积、减小能耗和发热量, 有时候也会引入新的指令, 比如2014年末的Broadwell；
-- 而每一次“**Tock**”代表着在上一次“Tick”的芯片制程的基础上，更新**微处理器架构**，提升性能, 原来是每次tock定义一个新的微体系架构。但2014年时候, Intel以微架构的较小更新的形式创建了tock的新概念"tock refresh", 不将其认为是新一代架构.
+- 而每一次“**Tock**”代表着在上一次“Tick”的芯片制程的基础上，更新**微处理器架构**，提升性能, 原来是每次tock定义一个新的微体系架构。但在进入 14nm 时明显碰壁, 2014年时候, 在Intel以微架构的较小更新的形式创建了tock(当时是Haswell)的新概念"tock refresh(当时是Haswell Refresh"), 其以改进Haswell为主, 不将其认为是新一代架构. 
 
 一般一次“Tick-Tock”的周期为两年，“Tick”占一年，“Tock”占一年。
 
@@ -29,7 +29,7 @@ Intel指出，
 
 ## 1.2 Process\-Architecture\-Optimization模式
 
-2016年3月22日，Intel在 [Form 10-K](https://www.wikiwand.com/en/Form_10-K) 报告中宣布, 弃用"Tick\-Tock"模式, 采用三步"Process\-Architecture\-Optimization"模式, 即"制程、架构、优化". 具体来讲, 将Tick Tock放缓至三年一循环，并且再额外增加优化环节(一共4年)，进一步减缓实际更新的速度。
+2016年3月22日，Intel在 [Form 10-K](https://www.wikiwand.com/en/Form_10-K) 报告中宣布, 弃用"Tick\-Tock"模式, 采用三步"Process\-Architecture\-Optimization"模式, 即"制程、架构、优化". 具体来讲, 将Tick Tock放缓至三年一循环，即增加优化环节(一共4年)，进一步减缓实际更新的速度。
 
 在此模式下, 三代处理器都将是同一个制程流程下生产,   Skylake微架构(2015年8月5日)的第一代优化是Kaby Lake(2016年8月30). Intel随后宣布了第二代优化, Coffee Lake(2017年10月5日), 在14nm上共生产了4代(之前的Broadewell微架构<2014年1月>也是14nm).
 
