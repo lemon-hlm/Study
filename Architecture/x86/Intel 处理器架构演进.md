@@ -63,6 +63,37 @@ Intel的微处理器架构路线图, 从NetBurst以及P6到Tiger Lake
 
 ![](./images/2019-04-18-14-54-02.png)
 
+处理器与微架构对照表: https://blog.csdn.net/qq_43401808/article/details/85553914 (更新至2019/01/01)
+
+
+
+Column A | Column B | Column C
+---------|----------|---------
+ A1 | B1 | C1
+ A2 | B2 | C2
+ A3 | B3 | C3
+
+Microprocessor name | Microarchitecture code name
+------- | -------
+Intel Pentium | P5 
+Intel Pentium MMX  | P5 
+Intel Pentium Pro & II & III | P6 
+Intel Pentium 4 (NetBurst)  | Netburst 
+Intel Pentium 4 with EM64T,
+Pentium D, etc. | Netburst, Prescott 
+Intel Pentium M, Core Solo,
+Core Duo | Dothan, Yonah 
+Intel Core 2  | Merom, Wolfdale 
+Intel Core i7  | Nehalem, Westmere
+Intel 2nd generation Core  | Sandy Bridge 
+Intel 3rd generation Core  | Ivy Bridge 
+Intel 4th generation Core  | Haswell 
+Intel 5th generation Core  | Broadwell 
+Intel 6th generation Core  | Skylake 
+Intel 7th generation Core  | Kabylake
+Intel 8th generation Core  | Coffee Lake
+Intel 9th generation Core  | Coffee Lake Refresh
+
 # 3 P6
 
 [P6](https://www.wikiwand.com/en/P6_(microarchitecture)) 是 Intel 在1995年推出的**第六代微架构**，它的后继者是2000年的 NetBurst微架构，但是最后在Pentium M之间又出现P6的踪影。而Pentium M的P6的后继者则是Intel Core微架构。
