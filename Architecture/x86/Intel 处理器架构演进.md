@@ -3,22 +3,31 @@
 
 <!-- code_chunk_output -->
 
-* [Tick\-Tock](#tick-tock)
+* [Tick\-Tock模式](#tick-tock模式)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
 
-# Tick\-Tock
+# Tick\-Tock模式
 
-Tick-Tock是Intel公司发展微处理器芯片设计制造业务的一种发展战略模式，在2007年正式提出。Intel指出，每一次处理器微架构的更新和每一次芯片制程的更新，它们的时机应该错开，使他们的微处理器芯片设计制造业务更有效率地发展。“Tick-Tock”的名称源于时钟秒针行走时所发出的声响。Intel指，每一次“Tick”代表着一代微架构的处理器芯片制程的更新，意在处理器性能几近相同的情况下，缩小芯片面积、减小能耗和发热量；而每一次“Tock”代表着在上一次“Tick”的芯片制程的基础上，更新微处理器架构，提升性能。一般一次“Tick-Tock”的周期为两年，“Tick”占一年，“Tock”占一年。
+Tick-Tock是Intel公司发展微处理器芯片设计制造业务的一种发展战略模式，在2007年正式提出。
+
+Intel指出，每一次处理器微架构的更新和每一次芯片制程的更新，它们的时机应该错开，使他们的微处理器芯片设计制造业务更有效率地发展。“Tick-Tock”的名称源于时钟秒针行走时所发出的声响。Intel指，
+
+- 每一次“Tick”代表着一代微架构的处理器芯片制程的更新，意在处理器性能几近相同的情况下，缩小芯片面积、减小能耗和发热量, 有时候也会引入新的指令, 比如2014年末的Broadwell；
+- 而每一次“Tock”代表着在上一次“Tick”的芯片制程的基础上，更新微处理器架构，提升性能, 原来是。
+
+一般一次“Tick-Tock”的周期为两年，“Tick”占一年，“Tock”占一年。
 
 此策略常被许多计算机玩家戏称“挤牙膏策略”，因为每一代新处理器性能和前一代处理器性能的差距很短，就好像Haswell的4790K和Skylake的6700K那样
-2016年3月22日，Intel在财务报告中宣布，Tick Tock将放缓至三年一循环，即增加优化环节，进一步减缓实际更新的速度。
+
+2016年3月22日，Intel在财务报告中宣布新的模式, 叫法是"Process、Architecture、Optimization", 即"过程、架构、优化". 具体来讲, Tick Tock将放缓至三年一循环，即增加优化环节，进一步减缓实际更新的速度。
 
 
 
 # 参考
 
+- Intel官方Tick\-Tock模式主页: https://www.intel.com/content/www/us/en/silicon-innovations/intel-tick-tock-model-general.html
 - Intel 处理器架构演进: http://jcf94.com/2018/02/13/2018-02-13-intel/
 - Tick-Tock维基百科: https://www.wikiwand.com/en/Tick%E2%80%93tock_model
 - 中文Tick-Tock维基: https://zh.wikipedia.org/wiki/Intel_Tick-Tock
