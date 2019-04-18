@@ -194,7 +194,7 @@ kolla网络相关参数
 - api_interface: 用于management network,即openstack内部服务间通信，以及服务于数据库通信的网络。这是系统的风险点，所以，这个网络推荐使用内网，不能够接出到外网，默认值为：network_interface
 - kolla_external_vip_interface: 这是一个公网网段，当你想要HAProxy Public endpoint暴漏在不同的网络中的时候，需要用到。当kolla_enables_tls_external设置为yes的时候，是个必选项。默认值为：network\_interface
 - storage\_interface: 虚拟机与Ceph通信接口，这个接口负载较重，推荐放在10Gig网口上。默认值为：network\_interface
-- cluster\_interface: 这是Ceph用到的另外一个接口，用于数据的replication，这个接口同样负载很重，当其成为bottleneck的时候，会影响数据的一致性和整个集群的性能。默认：network_interface
+- cluster\_interface: 这是Ceph用到的另外一个接口，用于数据的replication，这个接口同样负载很重，当其成为bottleneck的时候，会影响数据的一致性和整个集群的性能, 只有当前节点是ceph节点时候才有效。默认：network_interface
 - tunnel_interface: 这个接口用于虚拟机与虚拟机之间的通信，通过 tunneled网路进行，比如：Vxlan，GRE等，默认为：network_interface
 - neutron_external_interface: 这是Neutron提供VM对外网络的接口，Neutron会将其绑定在br-ex上，既可以是flat网络，也可以是tagged vlan网络，必须单独设置
 
