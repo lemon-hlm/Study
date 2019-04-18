@@ -61,7 +61,7 @@ Intel的微处理器架构路线图, 从NetBurst以及P6到Tiger Lake
 
 ![](./images/2019-04-18-13-52-50.png)
 
-
+![](./images/2019-04-18-14-54-02.png)
 
 # 3 P6
 
@@ -252,3 +252,6 @@ Skylake 的第五代 Xeon 摆脱了原本的系列名，而是重新改成了 Br
 - Intel微处理器列表: https://zh.wikipedia.org/wiki/%E8%8B%B1%E7%89%B9%E5%B0%94%E5%BE%AE%E5%A4%84%E7%90%86%E5%99%A8%E5%88%97%E8%A1%A8
 - WikiChip: https://en.wikichip.org/wiki/WikiChip
 - MOEPC: http://www.moepc.net/
+- 科普：intel CPU 微架构的发展史: https://blog.csdn.net/baidu_35679960/article/details/77884485
+
+
