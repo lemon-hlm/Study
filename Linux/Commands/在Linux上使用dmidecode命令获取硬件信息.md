@@ -306,7 +306,7 @@ Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca 
 - 最大扩展内存: 384 GB
 - 单根内存条最大: 384GB/6 = 64
 
-我们还必须查清这里的256G到底是4\*64GB, 2\*128GB还是其他？也就是查看已使用的插槽数是否已经插满, 如果已经插满, 那就无法扩展了.
+我们还必须查清这里的256G到底是4\*64GB, 2\*128GB还是其他？也就是查看已使用的插槽数是否已经插满, 如果已经插满, 那就无法扩展了, 只能更换某些内存条.
 
 ```
 # 内存设备信息
@@ -321,7 +321,7 @@ Memory Device
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
 	Data Width: 72 bits
-	Size: 32 GB
+	Size: 32 GB 【插槽1有1条32GB的内存条】
 	Form Factor: DIMM
 	Set: None
 	Locator: P1_DIMMA1
@@ -393,7 +393,7 @@ Memory Device
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
 	Data Width: 72 bits
-	Size: 32 GB
+	Size: 32 GB 【插槽4有1条32GB的内存条】
 	Form Factor: DIMM
 	Set: None
 	Locator: P1_DIMMB1
@@ -902,26 +902,26 @@ Memory Device
 
 - Data Width: 64 bits  #数据宽度： 64位 
 
-- Size: 1024 MB  #大小
+- Size: 1024 MB  #这个插槽有条1024MB大小的内存
 
 - Form Factor: <OUT OF SPEC>
 
 - Set: 1
 
-Locator: DIMM1 
- 
-Bank Locator: Not Specified
- 
-Type: <OUT OF SPEC>
- 
-Type Detail: Synchronous  #输入详细信息：同步 
- 
-Speed: 667 MHz (1.5 ns)  #速度： 667兆赫（ 1.5纳秒）
- 
-Manufacturer: 80AD7FB380AD  #制造商
- 
-Serial Number: 42600700   #序号
- 
-Asset Tag: 010910
- 
-Part Number: HYMP112F72CP8D3-Y5
+- Locator: DIMM1 
+
+- Bank Locator: Not Specified
+
+- Type: <OUT OF SPEC>
+
+- Type Detail: Synchronous  #输入详细信息：同步 
+
+- Speed: 667 MHz (1.5 ns)  #速度： 667兆赫（ 1.5纳秒）
+
+- Manufacturer: 80AD7FB380AD  #制造商
+
+- Serial Number: 42600700   #序号
+
+- Asset Tag: 010910
+
+- Part Number: HYMP112F72CP8D3-Y5
