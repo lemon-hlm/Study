@@ -94,4 +94,8 @@ upgrade用来upgrade现有openstack环境
   when: inventory_hostname in groups['compute']
 ```
 
-在中间涉及到mariadb的错误, 
+在中间涉及到mariadb的错误, 需要恢复mariadb, 执行
+
+```
+./kolla-ansible -i ../../multinode mariadb_recovery
+```
