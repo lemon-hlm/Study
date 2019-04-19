@@ -892,4 +892,36 @@ Memory Device
 	Configured Voltage: Unknown
 ```
 
+其中:
 
+- Array Handle: 0x1000  #阵列处理
+
+- Error Information Handle: Not Provided #错误信息的处理：不提供 
+
+- Total Width: 72 bits  #总宽度： 72位
+
+- Data Width: 64 bits  #数据宽度： 64位 
+
+- Size: 1024 MB  #大小
+
+- Form Factor: <OUT OF SPEC>
+
+- Set: 1
+
+Locator: DIMM1 
+ 
+Bank Locator: Not Specified
+ 
+Type: <OUT OF SPEC>
+ 
+Type Detail: Synchronous  #输入详细信息：同步 
+ 
+Speed: 667 MHz (1.5 ns)  #速度： 667兆赫（ 1.5纳秒）
+ 
+Manufacturer: 80AD7FB380AD  #制造商
+ 
+Serial Number: 42600700   #序号
+ 
+Asset Tag: 010910
+ 
+Part Number: HYMP112F72CP8D3-Y5
