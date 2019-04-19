@@ -296,7 +296,7 @@ Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca 
 
 从上面信息可以看到:
 
-- \-t是16是总体内存信息, 一个代表
+- \-t是16是总体内存信息, 一个代表一个
 - 现在整体物理内存: 256GB
 
 每个:
@@ -890,3 +890,5 @@ Memory Device
 	Maximum Voltage: Unknown
 	Configured Voltage: Unknown
 ```
+
+
