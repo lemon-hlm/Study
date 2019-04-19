@@ -71,3 +71,26 @@ reconfigure用来reconfigure OpenStack service.
 ```
 
 upgrade用来upgrade现有openstack环境
+
+创建虚拟机失败
+
+2017年社区有人提过这个bug, 链接 https://bugs.launchpad.net/kolla-ansible/+bug/1678013 , 但是后面60天过期了, 就没有然后了.....
+
+重启nova-compute的container就好了
+
+定位:
+
+可以很明显看到, neutron没有发送'network-vif-plugged'事件给nova\-api
+
+但是我们重启nova\-compute的container就正常了
+
+目前规避办法:
+
+修改kolla-ansible/ansible/roles/nova/tasks/upgrade.yml文件, 在最下面添加
+
+```
+- name: Restart nova-compute container
+  command: docker restart nova_compute
+  when: inventory_hostname in groups['compute']
+```
+
