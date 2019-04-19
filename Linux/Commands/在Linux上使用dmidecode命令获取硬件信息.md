@@ -257,6 +257,8 @@ Physical Memory Array
 	Number Of Devices: 4
 ```
 
+\-t是16是总体内存信息, 一个代表一个物理内存组(物理上呢???) 注意, 每个组有一个唯一标识
+
 查看CPU
 
 ```
@@ -294,16 +296,20 @@ Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca 
 从上面信息可以看到:
 
 - 2个物理CPU, 2个NUMA节点
-- \-t是16是总体内存信息, 一个代表一个物理内存组(物理上呢???) 注意, 每个组有一个唯一标识
-- 从上面知道, 现在整体物理内存: 128GB
+- 4个物理内存组
+- 从上节知道, 现在整体物理内存: 128GB
 
 每个物理内存组:
 
 - 内存插槽数: 4
-- 最大扩展内存: 384 GB
-- 单根内存条最大: 384GB/6 = 64
+- 最大扩展内存: 1280 GB
+- 单根内存条最大: 1280GB/4 = 320GB
 
-我们还必须查清这里的256G到底是4\*64GB, 2\*128GB还是其他？也就是查看已使用的插槽数是否已经插满, 如果已经插满, 那就无法扩展了, 只能更换某些内存条.
+也就是一共16根插槽, 即16根内存条
+
+这个支持, 额, 目前一根内存条最多128GB(除非是傲腾)
+
+我们还必须查清这里的128G到底是16\*8GB, 8\*16GB还是其他？也就是查看已使用的插槽数是否已经插满, 如果已经插满, 那就无法扩展了, 只能更换某些内存条.
 
 ```
 # 内存设备信息
@@ -314,7 +320,7 @@ SMBIOS 2.8 present.
 
 Handle 0x0015, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0013
+	Array Handle: 0x0013 【注意这个标识】
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
 	Data Width: 64 bits
@@ -363,26 +369,7 @@ Memory Device
 Handle 0x0018, DMI type 17, 40 bytes
 Memory Device
 	Array Handle: 0x0013
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: P1-DIMMB1
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: 1.2 V
-	Maximum Voltage: 1.2 V
-	Configured Voltage: 1.2 V
+	[剩下同上]
 
 Handle 0x0019, DMI type 17, 40 bytes
 Memory Device
