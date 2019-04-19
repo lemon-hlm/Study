@@ -366,26 +366,6 @@ Memory Device
 Handle 0x006B, DMI type 17, 40 bytes
 Memory Device
 	Array Handle: 0x0066
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
 
 Handle 0x006C, DMI type 17, 40 bytes
 Memory Device
@@ -414,26 +394,6 @@ Memory Device
 Handle 0x006E, DMI type 17, 40 bytes
 Memory Device
 	Array Handle: 0x0066
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
 
 Handle 0x006F, DMI type 17, 40 bytes
 Memory Device
@@ -902,7 +862,7 @@ Memory Device
 
 - Data Width: 64 bits  #数据宽度： 64位 
 
-- Size: 1024 MB  #这个插槽有条1024MB大小的内存
+- Size: 1024 MB  #已有内存条的大小
 
 - Form Factor: <OUT OF SPEC>
 
@@ -916,7 +876,7 @@ Memory Device
 
 - Type Detail: Synchronous  #输入详细信息：同步 
 
-- Speed: 667 MHz (1.5 ns)  #速度： 667兆赫（ 1.5纳秒）
+- Speed: 667 MHz (1.5 ns)  #内存条频率
 
 - Manufacturer: 80AD7FB380AD  #制造商
 
