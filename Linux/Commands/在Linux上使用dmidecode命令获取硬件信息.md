@@ -9,7 +9,7 @@ dmidecode允许你在Linux系统下获取有关硬件方面的信息。dmidecode
 
 DMI是英文单词Desktop Management Interface的缩写，也就是桌面管理界面，它含有关于系统硬件的配置信息。计算机**每次启动**时都对**DMI数据进行校验**，如果该数据出错或硬件有所变动，就会**对机器进行检测**，并把测试的数据写入**BIOS芯片保存**。所以如果我们在**BIOS设置**中**禁止了BIOS芯片的刷新功能**或者在**主板使用跳线禁止了 BIOS芯片的刷新功能**，那这台机器的**DMI数据**将**不能被更新**。如果你更换了硬件配置，那么在进行WINDOWS系统时，机器仍旧按老系统的配置进行工作。这样就不能充分发挥新添加硬件的性能，有时还会出现这样或那样的故障。
 
-- DMI（Desktop Management Interface,DMI）就是帮助收集电脑**系统信息**的**管理系统**，DMI信息的收集必须在严格遵照SMBIOS规范的前提下进行。
+- DMI（Desktop Management Interface,DMI）就是帮助收集电脑**系统信息**的**管理系统**，DMI信息的收集必须在严格遵照**SMBIOS规范**的前提下进行。
 - SMBIOS（System Management BIOS）是主板或系统制造者以标准格式显示产品管理信息所需遵循的统一规范。
 
 SMBIOS和DMI是由行业指导机构Desktop Management Task Force(DMTF)起草的开放性的技术标准，其中DMI设计适用于任何的平台和操作系统。
