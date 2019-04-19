@@ -321,23 +321,23 @@ SMBIOS 2.8 present.
 Handle 0x0015, DMI type 17, 40 bytes
 Memory Device
 	Array Handle: 0x0013 【注意这个标识, 对应第一个Physical Memory Array】
-	Error Information Handle: Not Provided
+	Error Information Handle: Not Provided 【错误信息处理: 不提供】
 	Total Width: 72 bits 【总位宽: 72位】
 	Data Width: 64 bits 【数据宽度: 64位】
 	Size: 32 GB 【这个插槽已经有32GB大小的内存条】
 	Form Factor: DIMM 【构成: DIMM】
 	Set: None
-	Locator: P1-DIMMA1 【位置: 第一个处理器的第一根DIMM插槽】
+	Locator: P1-DIMMA1 【位置: 第1个处理器的第1根DIMM插槽】
 	Bank Locator: P0_Node0_Channel0_Dimm0 【Bank定位: 处理器0, Node0, Channel0, DIMM1】
 	Type: DDR4 【类型: DDR4】
 	Type Detail: Synchronous
-	Speed: 2666 MHz 【】
-	Manufacturer: Samsung
-	Serial Number: 410F6943
+	Speed: 2666 MHz 【速度频率: 2666 MHz】
+	Manufacturer: Samsung 【制造商: 三星】
+	Serial Number: 410F6943 【序列号: 410F6943】
 	Asset Tag: P1-DIMMA1_AssetTag (Date:18/42)
-	Part Number: M393A4K40CB2-CTD
-	Rank: 2
-	Configured Clock Speed: 2666 MHz
+	Part Number: M393A4K40CB2-CTD 【内存型号】
+	Rank: 2 【级别: 2】
+	Configured Clock Speed: 2666 MHz 【配置的时钟频率: 2666 MHz】
 	Minimum Voltage: 1.2 V
 	Maximum Voltage: 1.2 V
 	Configured Voltage: 1.2 V
@@ -351,7 +351,7 @@ Memory Device
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: P1-DIMMA2
+	Locator: P1-DIMMA2 【位置: 第1个处理器的第2根DIMM插槽】
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
