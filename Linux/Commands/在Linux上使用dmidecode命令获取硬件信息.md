@@ -199,17 +199,13 @@ system-manufacturer, system-product-name, system-version, system-serial-number, 
 Linux下，可以使用free或者查看meminfo来获得当前的物理内存：
 
 ```
-[root@compute1 ~]# free
+# free -h
               total        used        free      shared  buff/cache   available
-Mem:      263923064     3228100   257267132       18036     3427832   259021016
-Swap:       4194300           0     4194300
-[root@compute1 ~]# free -h
-              total        used        free      shared  buff/cache   available
-Mem:           251G        3.1G        245G         17M        3.3G        247G
-Swap:          4.0G          0B        4.0G
+Mem:           125G         18G         87G        2.1G         19G        103G
+Swap:           39G        733M         39G
 ```
 
-显示当前服务器物理内存是256G
+显示当前服务器物理内存是125G
 
 但是通过这种方式，你只能看到内存的总量和使用量。而无法知道内存的类型（DDR1、DDR2、DDR3、DDR4、SDRAM、DRAM）、频率等信息。
 
@@ -222,43 +218,43 @@ Swap:          4.0G          0B        4.0G
 [root@compute1 ~]# dmidecode -t 16
 # dmidecode 3.0
 Getting SMBIOS data from sysfs.
-SMBIOS 3.0 present.
+SMBIOS 2.8 present.
 
-Handle 0x0066, DMI type 16, 23 bytes
+Handle 0x0013, DMI type 16, 23 bytes
 Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
-	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB (可扩展到384GB)
+	Error Correction Type: Single-bit ECC
+	Maximum Capacity: 1280 GB
 	Error Information Handle: Not Provided
-	Number Of Devices: 6
+	Number Of Devices: 4
 
-Handle 0x0070, DMI type 16, 23 bytes
+Handle 0x001A, DMI type 16, 23 bytes
 Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
-	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB (可扩展到384GB)
+	Error Correction Type: Single-bit ECC
+	Maximum Capacity: 1280 GB
 	Error Information Handle: Not Provided
-	Number Of Devices: 6
+	Number Of Devices: 4
 
-Handle 0x007A, DMI type 16, 23 bytes
+Handle 0x0021, DMI type 16, 23 bytes
 Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
-	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB (可扩展到384GB)
+	Error Correction Type: Single-bit ECC
+	Maximum Capacity: 1280 GB
 	Error Information Handle: Not Provided
-	Number Of Devices: 6
+	Number Of Devices: 4
 
-Handle 0x0084, DMI type 16, 23 bytes
+Handle 0x0028, DMI type 16, 23 bytes
 Physical Memory Array
 	Location: System Board Or Motherboard
 	Use: System Memory
-	Error Correction Type: Multi-bit ECC
-	Maximum Capacity: 384 GB (可扩展到384GB)
+	Error Correction Type: Single-bit ECC
+	Maximum Capacity: 1280 GB
 	Error Information Handle: Not Provided
-	Number Of Devices: 6
+	Number Of Devices: 4
 ```
 
 查看CPU
@@ -273,36 +269,37 @@ On-line CPU(s) list:   0-63
 Thread(s) per core:    2
 Core(s) per socket:    16
 座：                 2
-NUMA 节点：         1
+NUMA 节点：         2
 厂商 ID：           GenuineIntel
 CPU 系列：          6
-型号：              79
-型号名称：        Intel(R) Xeon(R) CPU E5-2682 v4 @ 2.50GHz
-步进：              1
-CPU MHz：             2500.488
-CPU max MHz:           3000.0000
-CPU min MHz:           1200.0000
-BogoMIPS：            4999.97
+型号：              85
+型号名称：        Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+步进：              4
+CPU MHz：             1800.000
+CPU max MHz:           2101.0000
+CPU min MHz:           1000.0000
+BogoMIPS：            4200.00
 虚拟化：           VT-x
 L1d 缓存：          32K
 L1i 缓存：          32K
-L2 缓存：           256K
-L3 缓存：           40960K
-NUMA 节点0 CPU：    0-63
-Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb cat_l3 cdp_l3 intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm rdt_a rdseed adx smap xsaveopt cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm arat pln pts
+L2 缓存：           1024K
+L3 缓存：           22528K
+NUMA 节点0 CPU：    0-15,32-47
+NUMA 节点1 CPU：    16-31,48-63
+Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb cat_l3 cdp_l3 intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts
 ```
 
 这是Xeon E5, 不同芯片组的组织架构不同, 关于服务器内存的组织形式见其他文章.
 
 从上面信息可以看到:
 
-- 2个物理CPU
-- \-t是16是总体内存信息, 一个代表一个物理内存组(物理上)
-- 现在整体物理内存: 256GB
+- 2个物理CPU, 2个NUMA节点
+- \-t是16是总体内存信息, 一个代表一个物理内存组(物理上呢???) 注意, 每个组有一个唯一标识
+- 从上面知道, 现在整体物理内存: 128GB
 
 每个物理内存组:
 
-- 内存插槽数: 6
+- 内存插槽数: 4
 - 最大扩展内存: 384 GB
 - 单根内存条最大: 384GB/6 = 64
 
@@ -313,146 +310,42 @@ Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca 
 [root@compute1 ~]# dmidecode -t 17
 # dmidecode 3.0
 Getting SMBIOS data from sysfs.
-SMBIOS 3.0 present.
+SMBIOS 2.8 present.
 
-Handle 0x0068, DMI type 17, 40 bytes
+Handle 0x0015, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0066
+	Array Handle: 0x0013
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
-	Data Width: 72 bits
-	Size: 32 GB 【插槽1有1条32GB的内存条】
-	Form Factor: DIMM
-	Set: None
-	Locator: P1_DIMMA1
-	Bank Locator: P1_Node0_Channel0_Dimm1
-	Type: DDR4
-	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A2D3
-	Asset Tag: P1_DIMMA1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
-	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x006A, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0066
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x006B, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0066
-
-Handle 0x006C, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0066
-	Error Information Handle: Not Provided
-	Total Width: 72 bits
-	Data Width: 72 bits
-	Size: 32 GB 【插槽4有1条32GB的内存条】
-	Form Factor: DIMM
-	Set: None
-	Locator: P1_DIMMB1
-	Bank Locator: P1_Node0_Channel1_Dimm1
-	Type: DDR4
-	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A1D2
-	Asset Tag: P1_DIMMB1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
-	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x006E, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0066
-
-Handle 0x006F, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0066
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x0072, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0070
-	Error Information Handle: Not Provided
-	Total Width: 72 bits
-	Data Width: 72 bits
+	Data Width: 64 bits
 	Size: 32 GB
 	Form Factor: DIMM
 	Set: None
-	Locator: P1_DIMMC1
-	Bank Locator: P1_Node0_Channel2_Dimm1
+	Locator: P1-DIMMA1
+	Bank Locator: P0_Node0_Channel0_Dimm0
 	Type: DDR4
 	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A3E3
-	Asset Tag: P1_DIMMC1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
+	Speed: 2666 MHz
+	Manufacturer: Samsung
+	Serial Number: 410F6943
+	Asset Tag: P1-DIMMA1_AssetTag (Date:18/42)
+	Part Number: M393A4K40CB2-CTD
 	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Configured Clock Speed: 2666 MHz
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0074, DMI type 17, 40 bytes
+Handle 0x0017, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0070
+	Array Handle: 0x0013
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P1-DIMMA2
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -463,20 +356,20 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0075, DMI type 17, 40 bytes
+Handle 0x0018, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0070
+	Array Handle: 0x0013
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P1-DIMMB1
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -487,44 +380,68 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0076, DMI type 17, 40 bytes
+Handle 0x0019, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0070
+	Array Handle: 0x0013
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: P1-DIMMC1
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
+
+Handle 0x001C, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x001A
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
-	Data Width: 72 bits
+	Data Width: 64 bits
 	Size: 32 GB
 	Form Factor: DIMM
 	Set: None
-	Locator: P1_DIMMD1
-	Bank Locator: P1_Node0_Channel3_Dimm1
+	Locator: P1-DIMMD1
+	Bank Locator: P0_Node1_Channel0_Dimm0
 	Type: DDR4
 	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A1FC
-	Asset Tag: P1_DIMMD1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
+	Speed: 2666 MHz
+	Manufacturer: Samsung
+	Serial Number: 410F6723
+	Asset Tag: P1-DIMMD1_AssetTag (Date:18/42)
+	Part Number: M393A4K40CB2-CTD
 	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Configured Clock Speed: 2666 MHz
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0078, DMI type 17, 40 bytes
+Handle 0x001E, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0070
+	Array Handle: 0x001A
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P1-DIMMD2
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -535,20 +452,20 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0079, DMI type 17, 40 bytes
+Handle 0x001F, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0070
+	Array Handle: 0x001A
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P1-DIMME1
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -559,44 +476,68 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x007C, DMI type 17, 40 bytes
+Handle 0x0020, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x007A
+	Array Handle: 0x001A
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: P1-DIMMF1
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
+
+Handle 0x0023, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0021
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
-	Data Width: 72 bits
+	Data Width: 64 bits
 	Size: 32 GB
 	Form Factor: DIMM
 	Set: None
-	Locator: P2_DIMME1
-	Bank Locator: P2_Node1_Channel0_Dimm1
+	Locator: P2-DIMMA1
+	Bank Locator: P1_Node0_Channel0_Dimm0
 	Type: DDR4
 	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A3EB
-	Asset Tag: P2_DIMME1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
+	Speed: 2666 MHz
+	Manufacturer: Samsung
+	Serial Number: 410F66CA
+	Asset Tag: P2-DIMMA1_AssetTag (Date:18/42)
+	Part Number: M393A4K40CB2-CTD
 	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Configured Clock Speed: 2666 MHz
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x007E, DMI type 17, 40 bytes
+Handle 0x0025, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x007A
+	Array Handle: 0x0021
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P2-DIMMA2
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -607,20 +548,20 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x007F, DMI type 17, 40 bytes
+Handle 0x0026, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x007A
+	Array Handle: 0x0021
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P2-DIMMB1
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -631,44 +572,68 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0080, DMI type 17, 40 bytes
+Handle 0x0027, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x007A
+	Array Handle: 0x0021
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: P2-DIMMC1
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
+
+Handle 0x002A, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0028
 	Error Information Handle: Not Provided
 	Total Width: 72 bits
-	Data Width: 72 bits
+	Data Width: 64 bits
 	Size: 32 GB
 	Form Factor: DIMM
 	Set: None
-	Locator: P2_DIMMF1
-	Bank Locator: P2_Node1_Channel1_Dimm1
+	Locator: P2-DIMMD1
+	Bank Locator: P1_Node1_Channel0_Dimm0
 	Type: DDR4
 	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A3F8
-	Asset Tag: P2_DIMMF1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
+	Speed: 2666 MHz
+	Manufacturer: Samsung
+	Serial Number: 410F6908
+	Asset Tag: P2-DIMMD1_AssetTag (Date:18/42)
+	Part Number: M393A4K40CB2-CTD
 	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Configured Clock Speed: 2666 MHz
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0082, DMI type 17, 40 bytes
+Handle 0x002C, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x007A
+	Array Handle: 0x0028
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P2-DIMMD2
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -679,20 +644,20 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0083, DMI type 17, 40 bytes
+Handle 0x002D, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x007A
+	Array Handle: 0x0028
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P2-DIMME1
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -703,44 +668,20 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
-Handle 0x0086, DMI type 17, 40 bytes
+Handle 0x002E, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0084
-	Error Information Handle: Not Provided
-	Total Width: 72 bits
-	Data Width: 72 bits
-	Size: 32 GB
-	Form Factor: DIMM
-	Set: None
-	Locator: P2_DIMMG1
-	Bank Locator: P2_Node1_Channel2_Dimm1
-	Type: DDR4
-	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A14E
-	Asset Tag: P2_DIMMG1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
-	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x0088, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0084
+	Array Handle: 0x0028
 	Error Information Handle: Not Provided
 	Total Width: Unknown
 	Data Width: Unknown
 	Size: No Module Installed
 	Form Factor: Unknown
 	Set: None
-	Locator: NO DIMM
+	Locator: P2-DIMMF1
 	Bank Locator: NO DIMM
 	Type: Unknown
 	Type Detail: Unknown
@@ -751,105 +692,9 @@ Memory Device
 	Part Number: NO DIMM
 	Rank: Unknown
 	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x0089, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0084
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x008A, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0084
-	Error Information Handle: Not Provided
-	Total Width: 72 bits
-	Data Width: 72 bits
-	Size: 32 GB
-	Form Factor: DIMM
-	Set: None
-	Locator: P2_DIMMH1
-	Bank Locator: P2_Node1_Channel3_Dimm1
-	Type: DDR4
-	Type Detail: Synchronous
-	Speed: 2667 MHz
-	Manufacturer: Hynix Semiconductor
-	Serial Number: 2CA4A381
-	Asset Tag: P2_DIMMH1_AssetTag (Date:18/26)
-	Part Number: HMA84GR7AFR4N-VK
-	Rank: 2
-	Configured Clock Speed: 2400 MHz
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x008C, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0084
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
-
-Handle 0x008D, DMI type 17, 40 bytes
-Memory Device
-	Array Handle: 0x0084
-	Error Information Handle: Not Provided
-	Total Width: Unknown
-	Data Width: Unknown
-	Size: No Module Installed
-	Form Factor: Unknown
-	Set: None
-	Locator: NO DIMM
-	Bank Locator: NO DIMM
-	Type: Unknown
-	Type Detail: Unknown
-	Speed: Unknown
-	Manufacturer: NO DIMM
-	Serial Number: NO DIMM
-	Asset Tag: NO DIMM
-	Part Number: NO DIMM
-	Rank: Unknown
-	Configured Clock Speed: Unknown
-	Minimum Voltage: Unknown
-	Maximum Voltage: Unknown
-	Configured Voltage: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 ```
 
 其中:
