@@ -291,7 +291,7 @@ NUMA 节点1 CPU：    16-31,48-63
 Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb cat_l3 cdp_l3 intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts
 ```
 
-这是Xeon E5, 不同芯片组的组织架构不同, 关于服务器内存的组织形式见其他文章.
+不同芯片组的组织架构不同, 关于服务器内存的组织形式见其他文章.
 
 从上面信息可以看到:
 
@@ -703,36 +703,29 @@ Memory Device
 	Configured Voltage: 1.2 V
 ```
 
-其中:
+这里面每一个代表一个物理内存设备, 即一个插槽(不一定有设备)
 
-- Array Handle: 0x1000  #阵列处理
+# 4 获取BIOS信息
 
-- Error Information Handle: Not Provided #错误信息的处理：不提供 
 
-- Total Width: 72 bits  #总宽度： 72位
 
-- Data Width: 64 bits  #数据宽度： 64位 
+# 脚本
 
-- Size: 1024 MB  #已有内存条的大小
+查看基本硬件信息的shell脚本
 
-- Form Factor: <OUT OF SPEC>
-
-- Set: 1
-
-- Locator: DIMM1 
-
-- Bank Locator: Not Specified
-
-- Type: <OUT OF SPEC>
-
-- Type Detail: Synchronous  #输入详细信息：同步 
-
-- Speed: 667 MHz (1.5 ns)  #内存条频率
-
-- Manufacturer: 80AD7FB380AD  #制造商
-
-- Serial Number: 42600700   #序号
-
-- Asset Tag: 010910
-
-- Part Number: HYMP112F72CP8D3-Y5
+```sh
+#!/bin/bash  
+echo "IP:"  
+ifconfig |grep "inet addr"|grep -v 127.0.0.1|awk '{print $2}'|awk -F ':' '{print $2}'  
+echo "Product Name:"  
+dmidecode |grep Name  
+echo "CPU Info:"  
+dmidecode |grep -i cpu|grep -i version|awk -F ':' '{print $2}'  
+echo "Disk Info:"  
+parted -l|grep 'Disk /dev/sd'|awk -F ',' '{print "   ",$1}'  
+echo "Network Info:"  
+lspci |grep Ethernet  
+echo "Memory Info:"  
+dmidecode|grep -A5 "Memory Device"|grep Size|grep -v No  
+echo "Memory number:"`dmidecode|grep -A5 "Memory Device"|grep Size|grep -v No|wc -l`
+```
