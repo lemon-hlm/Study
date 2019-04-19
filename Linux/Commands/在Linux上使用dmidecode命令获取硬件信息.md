@@ -320,9 +320,9 @@ SMBIOS 2.8 present.
 
 Handle 0x0015, DMI type 17, 40 bytes
 Memory Device
-	Array Handle: 0x0013 【注意这个标识】
+	Array Handle: 0x0013 【注意这个标识, 对应第一个Physical Memory Array】
 	Error Information Handle: Not Provided
-	Total Width: 72 bits
+	Total Width: 72 bits 
 	Data Width: 64 bits
 	Size: 32 GB
 	Form Factor: DIMM
@@ -369,7 +369,26 @@ Memory Device
 Handle 0x0018, DMI type 17, 40 bytes
 Memory Device
 	Array Handle: 0x0013
-	[剩下同上]
+	Error Information Handle: Not Provided
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: Unknown
+	Set: None
+	Locator: P1-DIMMB1
+	Bank Locator: NO DIMM
+	Type: Unknown
+	Type Detail: Unknown
+	Speed: Unknown
+	Manufacturer: NO DIMM
+	Serial Number: NO DIMM
+	Asset Tag: NO DIMM
+	Part Number: NO DIMM
+	Rank: Unknown
+	Configured Clock Speed: Unknown
+	Minimum Voltage: 1.2 V
+	Maximum Voltage: 1.2 V
+	Configured Voltage: 1.2 V
 
 Handle 0x0019, DMI type 17, 40 bytes
 Memory Device
