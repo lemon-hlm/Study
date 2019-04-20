@@ -5,6 +5,7 @@
 
 * [1 查看系统信息](#1-查看系统信息)
 * [2 查看Linux系统硬件信息](#2-查看linux系统硬件信息)
+* [3 查看Linux CPU信息](#3-查看linux-cpu信息)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -119,13 +120,17 @@ H/W path          Device          Class          Description
 ......
 ```
 
-如果想生成一个HTML文件输出，可以使用该选项-html。
+如果想生成**一个HTML文件输出**，可以使用该选项-html。
 
 ```
 [root@SH-IDC1-10-5-8-97 ~]# lshw -html > /root/lshw.html
 ```
 
+![](./images/2019-04-20-22-48-19.png)
 
+# 3 查看Linux CPU信息
+
+要查看你的CPU信息，请使用lscpu命令，因为它显示你的CPU体系结构的信息，如从sysfs中和的/ proc内/ cpuinfo CPU的数量，内核，CPU系列型号，CPU高速缓存，线程等。
 
 
 # 参考
