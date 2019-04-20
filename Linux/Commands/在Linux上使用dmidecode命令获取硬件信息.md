@@ -750,6 +750,92 @@ BIOS Language Information
 	Currently Installed Language: en|US|iso8859-1
 ```
 
+# 5 获取制造商，型号和序列号
+
+```
+# dmidecode -t system
+# dmidecode 3.0
+Getting SMBIOS data from sysfs.
+SMBIOS 2.8 present.
+
+Handle 0x0001, DMI type 1, 27 bytes
+System Information
+	Manufacturer: Supermicro
+	Product Name: SYS-6029P-TRT
+	Version: 123456789
+	Serial Number: A263370X8A19255
+	UUID: 00000000-0000-0000-0000-AC1F6B4DA2D0
+	Wake-up Type: Power Switch
+	SKU Number: 091715D9
+	Family: SMC X11
+
+Handle 0x000B, DMI type 32, 20 bytes
+System Boot Information
+	Status: No errors detected
+
+Handle 0x0012, DMI type 15, 73 bytes
+System Event Log
+	Area Length: 65535 bytes
+	Header Start Offset: 0x0000
+	Header Length: 16 bytes
+	Data Start Offset: 0x0010
+	Access Method: Memory-mapped physical 32-bit address
+	Access Address: 0xFF110000
+	Status: Valid, Not Full
+	Change Token: 0x00000001
+	Header Format: Type 1
+	Supported Log Type Descriptors: 25
+	Descriptor 1: Single-bit ECC memory error
+	Data Format 1: Multiple-event handle
+	Descriptor 2: Multi-bit ECC memory error
+	Data Format 2: Multiple-event handle
+	Descriptor 3: Parity memory error
+	Data Format 3: None
+	Descriptor 4: Bus timeout
+	Data Format 4: None
+	Descriptor 5: I/O channel block
+	Data Format 5: None
+	Descriptor 6: Software NMI
+	Data Format 6: None
+	Descriptor 7: POST memory resize
+	Data Format 7: None
+	Descriptor 8: POST error
+	Data Format 8: POST results bitmap
+	Descriptor 9: PCI parity error
+	Data Format 9: Multiple-event handle
+	Descriptor 10: PCI system error
+	Data Format 10: Multiple-event handle
+	Descriptor 11: CPU failure
+	Data Format 11: None
+	Descriptor 12: EISA failsafe timer timeout
+	Data Format 12: None
+	Descriptor 13: Correctable memory log disabled
+	Data Format 13: None
+	Descriptor 14: Logging disabled
+	Data Format 14: None
+	Descriptor 15: System limit exceeded
+	Data Format 15: None
+	Descriptor 16: Asynchronous hardware timer expired
+	Data Format 16: None
+	Descriptor 17: System configuration information
+	Data Format 17: None
+	Descriptor 18: Hard disk information
+	Data Format 18: None
+	Descriptor 19: System reconfigured
+	Data Format 19: None
+	Descriptor 20: Uncorrectable CPU-complex error
+	Data Format 20: None
+	Descriptor 21: Log area reset/cleared
+	Data Format 21: None
+	Descriptor 22: System boot
+	Data Format 22: None
+	Descriptor 23: End of log
+	Data Format 23: None
+	Descriptor 24: OEM-specific
+	Data Format 24: OEM-specific
+	Descriptor 25: OEM-specific
+	Data Format 25: OEM-specific
+```
 
 # 脚本
 

@@ -1,4 +1,6 @@
 #!/bin/bash  
+
+# 查看基本硬件信息的shell脚本
 echo "IP:"  
 ifconfig |grep "inet addr"|grep -v 127.0.0.1|awk '{print $2}'|awk -F ':' '{print $2}'  
 echo "Product Name:"  
