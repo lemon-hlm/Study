@@ -59,9 +59,46 @@ Linux SH-IDC1-10-5-8-97 3.10.0-693.el7.x86_64 #1 SMP Tue Aug 22 21:09:27 UTC 201
 
 在这里，您可以使用**lshw工具**来收集有关您的**硬件部件**，如CPU， 磁盘 ， 内存 ，USB控制器等大量信息 lshw是一个相对较小的工具，也有一些可以在提取信息，它使用几个选项。 
 
-通过lshw提供的信息聚集形成不同的/ proc文件。 
+通过**lshw提供的信息**聚集形成**不同的/proc文件**。 
 
 注 ：请注意，以超级用户（root）或sudo用户执行的lshw命令。 
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lshw | more
+sh-idc1-10-5-8-97
+    description: Computer
+    product: SYS-6029P-TRT (091715D9)
+    vendor: Supermicro
+    version: 123456789
+    serial: A263370X8A19255
+    width: 64 bits
+    capabilities: smbios-2.8 dmi-2.8 smp vsyscall32
+    configuration: boot=normal family=SMC X11 sku=091715D9 uuid=00000000-0000-0000-0000-AC1F6B4DA2D0
+  *-core
+       description: Motherboard
+       product: X11DPi-NT
+       vendor: Supermicro
+       physical id: 0
+       version: 1.21
+       serial: NM188S036398
+       slot: Default string
+     *-firmware
+          description: BIOS
+          vendor: American Megatrends Inc.
+          physical id: 0
+          version: 2.1
+          date: 06/29/2018
+          size: 64KiB
+          capacity: 32MiB
+          capabilities: pci upgrade shadowing cdboot bootselect socketedrom edd int13floppy1200 int13floppy720 int13floppy2880 int5printscreen int14serial int17printer acpi usb b
+iosbootspecification uefi
+     *-memory
+          description: System Memory
+......
+```
+
+可以通过使用\-short选择打印您的硬件信息的汇总。
+
 
 
 
