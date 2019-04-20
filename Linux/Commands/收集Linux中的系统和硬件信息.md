@@ -6,6 +6,8 @@
 * [1 查看系统信息](#1-查看系统信息)
 * [2 查看Linux系统硬件信息](#2-查看linux系统硬件信息)
 * [3 查看Linux CPU信息](#3-查看linux-cpu信息)
+* [4 收集Linux块设备信息](#4-收集linux块设备信息)
+* [5 打印USB控制器信息](#5-打印usb控制器信息)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -60,7 +62,7 @@ Linux SH-IDC1-10-5-8-97 3.10.0-693.el7.x86_64 #1 SMP Tue Aug 22 21:09:27 UTC 201
 
 在这里，您可以使用**lshw工具**来收集有关您的**硬件部件**，如CPU， 磁盘 ， 内存 ，USB控制器等大量信息 lshw是一个相对较小的工具，也有一些可以在提取信息，它使用几个选项。 
 
-通过**lshw提供的信息**聚集形成**不同的/proc文件**。 
+通过**lshw提供的信息**聚集**不同的/proc文件**。 
 
 注 ：请注意，以超级用户（root）或sudo用户执行的lshw命令。 
 
@@ -130,7 +132,68 @@ H/W path          Device          Class          Description
 
 # 3 查看Linux CPU信息
 
-要查看你的CPU信息，请使用lscpu命令，因为它显示你的CPU体系结构的信息，如从sysfs中和的/ proc内/ cpuinfo CPU的数量，内核，CPU系列型号，CPU高速缓存，线程等。
+要查看你的CPU信息，请使用lscpu命令，因为它显示你的CPU体系结构的信息，如从**sysfs**中和的/**proc/cpuinfo** CPU的数量，内核，CPU系列型号，CPU高速缓存，线程等。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lscpu
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                64
+On-line CPU(s) list:   0-63
+Thread(s) per core:    2
+Core(s) per socket:    16
+座：                 2
+NUMA 节点：         2
+厂商 ID：           GenuineIntel
+CPU 系列：          6
+型号：              85
+型号名称：        Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+步进：              4
+CPU MHz：             1100.000
+CPU max MHz:           2101.0000
+CPU min MHz:           1000.0000
+BogoMIPS：            4200.00
+虚拟化：           VT-x
+L1d 缓存：          32K
+L1i 缓存：          32K
+L2 缓存：           1024K
+L3 缓存：           22528K
+NUMA 节点0 CPU：    0-15,32-47
+NUMA 节点1 CPU：    16-31,48-63
+Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb cat_l3 cdp_l3 intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts
+```
+
+# 4 收集Linux块设备信息
+
+**块设备是存储设备**，诸如**硬盘，闪存驱动器**等lsblk命令用于报告关于**块设备的信息**如下。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   500G  0 disk
+├─sda1   8:1    0     1G  0 part /boot
+├─sda2   8:2    0   459G  0 part /
+└─sda3   8:3    0    40G  0 part [SWAP]
+sdb      8:16   0   1.3T  0 disk
+sdc      8:32   0 893.8G  0 disk
+```
+
+如果你想查看系统上**所有的块设备**则包括\-a选项。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lsblk -a
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   500G  0 disk
+├─sda1   8:1    0     1G  0 part /boot
+├─sda2   8:2    0   459G  0 part /
+└─sda3   8:3    0    40G  0 part [SWAP]
+sdb      8:16   0   1.3T  0 disk
+sdc      8:32   0 893.8G  0 disk
+```
+
+# 5 打印USB控制器信息
+
 
 
 # 参考
