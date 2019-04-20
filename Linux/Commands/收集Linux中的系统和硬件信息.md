@@ -9,6 +9,8 @@
 * [4 收集Linux块设备信息 \-\-\- lsblk](#4-收集linux块设备信息-lsblk)
 * [5 打印USB控制器信息 \-\-\- lsusb](#5-打印usb控制器信息-lsusb)
 * [6 打印PCI设备信息 \-\-\- lspci](#6-打印pci设备信息-lspci)
+* [7 打印SCSI设备信息 \-\-\- lsscsi](#7-打印scsi设备信息-lsscsi)
+* [8 打印有关SATA设备的信息 \-\-\- hdparm](#8-打印有关sata设备的信息-hdparm)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -222,295 +224,109 @@ Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 00:04.1 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
 00:04.2 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
 00:04.3 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-00:04.4 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-00:04.5 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-00:04.6 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-00:04.7 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-00:05.0 System peripheral: Intel Corporation Sky Lake-E MM/Vt-d Configuration Registers (rev 04)
-00:05.2 System peripheral: Intel Corporation Device 2025 (rev 04)
-00:05.4 PIC: Intel Corporation Device 2026 (rev 04)
-00:08.0 System peripheral: Intel Corporation Sky Lake-E Ubox Registers (rev 04)
-00:08.1 Performance counters: Intel Corporation Sky Lake-E Ubox Registers (rev 04)
-00:08.2 System peripheral: Intel Corporation Sky Lake-E Ubox Registers (rev 04)
-00:11.0 Unassigned class [ff00]: Intel Corporation Device a1ec (rev 09)
-00:11.1 Unassigned class [ff00]: Intel Corporation Device a1ed (rev 09)
-00:11.5 SATA controller: Intel Corporation Lewisburg SSATA Controller [AHCI mode] (rev 09)
-00:14.0 USB controller: Intel Corporation Lewisburg USB 3.0 xHCI Controller (rev 09)
-00:14.2 Signal processing controller: Intel Corporation Device a1b1 (rev 09)
-00:16.0 Communication controller: Intel Corporation Lewisburg CSME: HECI #1 (rev 09)
-00:16.1 Communication controller: Intel Corporation Lewisburg CSME: HECI #2 (rev 09)
-00:16.4 Communication controller: Intel Corporation Lewisburg CSME: HECI #3 (rev 09)
-00:17.0 SATA controller: Intel Corporation Lewisburg SATA Controller [AHCI mode] (rev 09)
-00:1c.0 PCI bridge: Intel Corporation Lewisburg PCI Express Root Port #1 (rev f9)
-00:1c.5 PCI bridge: Intel Corporation Lewisburg PCI Express Root Port #6 (rev f9)
-00:1f.0 ISA bridge: Intel Corporation Lewisburg LPC Controller (rev 09)
-00:1f.2 Memory controller: Intel Corporation Lewisburg PMC (rev 09)
-00:1f.4 SMBus: Intel Corporation Lewisburg SMBus (rev 09)
-00:1f.5 Serial bus controller [0c80]: Intel Corporation Lewisburg SPI Controller (rev 09)
-02:00.0 PCI bridge: ASPEED Technology, Inc. AST1150 PCI-to-PCI Bridge (rev 04)
-03:00.0 VGA compatible controller: ASPEED Technology, Inc. ASPEED Graphics Family (rev 41)
-17:05.0 System peripheral: Intel Corporation Device 2034 (rev 04)
-17:05.2 System peripheral: Intel Corporation Sky Lake-E RAS Configuration Registers (rev 04)
-17:05.4 PIC: Intel Corporation Device 2036 (rev 04)
-17:08.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:08.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:09.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0a.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0b.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0b.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0b.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0b.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0e.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:0f.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:10.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:11.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:11.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:11.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:11.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:1d.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:1d.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:1d.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:1d.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-17:1e.0 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-17:1e.1 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-17:1e.2 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-17:1e.3 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-17:1e.4 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-17:1e.5 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-17:1e.6 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-3a:00.0 PCI bridge: Intel Corporation Sky Lake-E PCI Express Root Port A (rev 04)
-3a:05.0 System peripheral: Intel Corporation Device 2034 (rev 04)
-3a:05.2 System peripheral: Intel Corporation Sky Lake-E RAS Configuration Registers (rev 04)
-3a:05.4 PIC: Intel Corporation Device 2036 (rev 04)
-3a:08.0 System peripheral: Intel Corporation Device 2066 (rev 04)
-3a:09.0 System peripheral: Intel Corporation Device 2066 (rev 04)
-3a:0a.0 System peripheral: Intel Corporation Device 2040 (rev 04)
-3a:0a.1 System peripheral: Intel Corporation Device 2041 (rev 04)
-3a:0a.2 System peripheral: Intel Corporation Device 2042 (rev 04)
-3a:0a.3 System peripheral: Intel Corporation Device 2043 (rev 04)
-3a:0a.4 System peripheral: Intel Corporation Device 2044 (rev 04)
-3a:0a.5 System peripheral: Intel Corporation Device 2045 (rev 04)
-3a:0a.6 System peripheral: Intel Corporation Device 2046 (rev 04)
-3a:0a.7 System peripheral: Intel Corporation Device 2047 (rev 04)
-3a:0b.0 System peripheral: Intel Corporation Device 2048 (rev 04)
-3a:0b.1 System peripheral: Intel Corporation Device 2049 (rev 04)
-3a:0b.2 System peripheral: Intel Corporation Device 204a (rev 04)
-3a:0b.3 System peripheral: Intel Corporation Device 204b (rev 04)
-3a:0c.0 System peripheral: Intel Corporation Device 2040 (rev 04)
-3a:0c.1 System peripheral: Intel Corporation Device 2041 (rev 04)
-3a:0c.2 System peripheral: Intel Corporation Device 2042 (rev 04)
-3a:0c.3 System peripheral: Intel Corporation Device 2043 (rev 04)
-3a:0c.4 System peripheral: Intel Corporation Device 2044 (rev 04)
-3a:0c.5 System peripheral: Intel Corporation Device 2045 (rev 04)
-3a:0c.6 System peripheral: Intel Corporation Device 2046 (rev 04)
-3a:0c.7 System peripheral: Intel Corporation Device 2047 (rev 04)
-3a:0d.0 System peripheral: Intel Corporation Device 2048 (rev 04)
-3a:0d.1 System peripheral: Intel Corporation Device 2049 (rev 04)
-3a:0d.2 System peripheral: Intel Corporation Device 204a (rev 04)
-3a:0d.3 System peripheral: Intel Corporation Device 204b (rev 04)
-3b:00.0 Ethernet controller: Intel Corporation Ethernet Controller 10-Gigabit X540-AT2 (rev 01)
-3b:00.1 Ethernet controller: Intel Corporation Ethernet Controller 10-Gigabit X540-AT2 (rev 01)
-5d:02.0 PCI bridge: Intel Corporation Sky Lake-E PCI Express Root Port C (rev 04)
-5d:05.0 System peripheral: Intel Corporation Device 2034 (rev 04)
-5d:05.2 System peripheral: Intel Corporation Sky Lake-E RAS Configuration Registers (rev 04)
-5d:05.4 PIC: Intel Corporation Device 2036 (rev 04)
-5d:0e.0 Performance counters: Intel Corporation Device 2058 (rev 04)
-5d:0e.1 System peripheral: Intel Corporation Device 2059 (rev 04)
-5d:0f.0 Performance counters: Intel Corporation Device 2058 (rev 04)
-5d:0f.1 System peripheral: Intel Corporation Device 2059 (rev 04)
-5d:10.0 Performance counters: Intel Corporation Device 2058 (rev 04)
-5d:10.1 System peripheral: Intel Corporation Device 2059 (rev 04)
-5d:12.0 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-5d:12.1 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-5d:12.2 System peripheral: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-5d:12.4 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-5d:12.5 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-5d:15.0 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-5d:16.0 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-5d:16.4 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-5d:17.0 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-5e:00.0 PCI bridge: Intel Corporation Device 37c0 (rev 09)
-5f:03.0 PCI bridge: Intel Corporation Device 37c5 (rev 09)
-60:00.0 Ethernet controller: Intel Corporation Ethernet Connection X722 for 10GBASE-T (rev 09)
-60:00.1 Ethernet controller: Intel Corporation Ethernet Connection X722 for 10GBASE-T (rev 09)
-80:04.0 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.1 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.2 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.3 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.4 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.5 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.6 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:04.7 System peripheral: Intel Corporation Sky Lake-E CBDMA Registers (rev 04)
-80:05.0 System peripheral: Intel Corporation Sky Lake-E MM/Vt-d Configuration Registers (rev 04)
-80:05.2 System peripheral: Intel Corporation Device 2025 (rev 04)
-80:05.4 PIC: Intel Corporation Device 2026 (rev 04)
-80:08.0 System peripheral: Intel Corporation Sky Lake-E Ubox Registers (rev 04)
-80:08.1 Performance counters: Intel Corporation Sky Lake-E Ubox Registers (rev 04)
-80:08.2 System peripheral: Intel Corporation Sky Lake-E Ubox Registers (rev 04)
-85:00.0 PCI bridge: Intel Corporation Sky Lake-E PCI Express Root Port A (rev 04)
-85:05.0 System peripheral: Intel Corporation Device 2034 (rev 04)
-85:05.2 System peripheral: Intel Corporation Sky Lake-E RAS Configuration Registers (rev 04)
-85:05.4 PIC: Intel Corporation Device 2036 (rev 04)
-85:08.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:08.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:09.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0a.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0b.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0b.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0b.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0b.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0e.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:0f.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.4 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.5 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.6 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:10.7 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:11.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:11.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:11.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:11.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:1d.0 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:1d.1 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:1d.2 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:1d.3 System peripheral: Intel Corporation Sky Lake-E CHA Registers (rev 04)
-85:1e.0 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-85:1e.1 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-85:1e.2 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-85:1e.3 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-85:1e.4 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-85:1e.5 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-85:1e.6 System peripheral: Intel Corporation Sky Lake-E PCU Registers (rev 04)
-86:00.0 RAID bus controller: LSI Logic / Symbios Logic MegaRAID SAS-3 3108 [Invader] (rev 02)
-ae:00.0 PCI bridge: Intel Corporation Sky Lake-E PCI Express Root Port A (rev 04)
-ae:05.0 System peripheral: Intel Corporation Device 2034 (rev 04)
-ae:05.2 System peripheral: Intel Corporation Sky Lake-E RAS Configuration Registers (rev 04)
-ae:05.4 PIC: Intel Corporation Device 2036 (rev 04)
-ae:08.0 System peripheral: Intel Corporation Device 2066 (rev 04)
-ae:09.0 System peripheral: Intel Corporation Device 2066 (rev 04)
-ae:0a.0 System peripheral: Intel Corporation Device 2040 (rev 04)
-ae:0a.1 System peripheral: Intel Corporation Device 2041 (rev 04)
-ae:0a.2 System peripheral: Intel Corporation Device 2042 (rev 04)
-ae:0a.3 System peripheral: Intel Corporation Device 2043 (rev 04)
-ae:0a.4 System peripheral: Intel Corporation Device 2044 (rev 04)
-ae:0a.5 System peripheral: Intel Corporation Device 2045 (rev 04)
-ae:0a.6 System peripheral: Intel Corporation Device 2046 (rev 04)
-ae:0a.7 System peripheral: Intel Corporation Device 2047 (rev 04)
-ae:0b.0 System peripheral: Intel Corporation Device 2048 (rev 04)
-ae:0b.1 System peripheral: Intel Corporation Device 2049 (rev 04)
-ae:0b.2 System peripheral: Intel Corporation Device 204a (rev 04)
-ae:0b.3 System peripheral: Intel Corporation Device 204b (rev 04)
-ae:0c.0 System peripheral: Intel Corporation Device 2040 (rev 04)
-ae:0c.1 System peripheral: Intel Corporation Device 2041 (rev 04)
-ae:0c.2 System peripheral: Intel Corporation Device 2042 (rev 04)
-ae:0c.3 System peripheral: Intel Corporation Device 2043 (rev 04)
-ae:0c.4 System peripheral: Intel Corporation Device 2044 (rev 04)
-ae:0c.5 System peripheral: Intel Corporation Device 2045 (rev 04)
-ae:0c.6 System peripheral: Intel Corporation Device 2046 (rev 04)
-ae:0c.7 System peripheral: Intel Corporation Device 2047 (rev 04)
-ae:0d.0 System peripheral: Intel Corporation Device 2048 (rev 04)
-ae:0d.1 System peripheral: Intel Corporation Device 2049 (rev 04)
-ae:0d.2 System peripheral: Intel Corporation Device 204a (rev 04)
-ae:0d.3 System peripheral: Intel Corporation Device 204b (rev 04)
-af:00.0 Infiniband controller: Mellanox Technologies MT28908 Family [ConnectX-6]
-d7:05.0 System peripheral: Intel Corporation Device 2034 (rev 04)
-d7:05.2 System peripheral: Intel Corporation Sky Lake-E RAS Configuration Registers (rev 04)
-d7:05.4 PIC: Intel Corporation Device 2036 (rev 04)
-d7:0e.0 Performance counters: Intel Corporation Device 2058 (rev 04)
-d7:0e.1 System peripheral: Intel Corporation Device 2059 (rev 04)
-d7:0f.0 Performance counters: Intel Corporation Device 2058 (rev 04)
-d7:0f.1 System peripheral: Intel Corporation Device 2059 (rev 04)
-d7:10.0 Performance counters: Intel Corporation Device 2058 (rev 04)
-d7:10.1 System peripheral: Intel Corporation Device 2059 (rev 04)
-d7:12.0 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-d7:12.1 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-d7:12.2 System peripheral: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-d7:12.4 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-d7:12.5 Performance counters: Intel Corporation Sky Lake-E M3KTI Registers (rev 04)
-d7:15.0 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-d7:16.0 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-d7:16.4 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
-d7:17.0 System peripheral: Intel Corporation Sky Lake-E M2PCI Registers (rev 04)
+......
 ```
 
+使用\-t选项以**树的形式**产生输出。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lspci -t
+-+-[0000:d7]-+-05.0
+ |           +-05.2
+ |           +-05.4
+ |           +-0e.0
+ |           +-0e.1
+ |           +-0f.0
+ |           +-0f.1
+ |           +-10.0
+ |           +-10.1
+ |           +-12.0
+ |           +-12.1
+ |           +-12.2
+ |           +-12.4
+ |           +-12.5
+ |           +-15.0
+ |           +-16.0
+ |           +-16.4
+ |           \-17.0
+ +-[0000:ae]-+-00.0-[af]----00.0
+ |           +-05.0
+ |           +-05.2
+ |           +-05.4
+ |           +-08.0
+ |           +-09.0
+ |           +-0a.0
+......
+```
+
+使用\-v选项，产生**每个连接的设备的详细信息**。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lspci -v | more
+00:00.0 Host bridge: Intel Corporation Device 2020 (rev 04)
+	Subsystem: Super Micro Computer Inc Device 0917
+	Flags: fast devsel, NUMA node 0
+	Capabilities: [90] Express Root Port (Slot-), MSI 00
+	Capabilities: [e0] Power Management version 3
+	Capabilities: [100] Vendor Specific Information: ID=0002 Rev=0 Len=00c <?>
+	Capabilities: [144] Vendor Specific Information: ID=0004 Rev=1 Len=03c <?>
+	Capabilities: [1d0] Vendor Specific Information: ID=0003 Rev=1 Len=00a <?>
+	Capabilities: [250] #19
+	Capabilities: [280] Vendor Specific Information: ID=0005 Rev=3 Len=018 <?>
+	Capabilities: [298] Vendor Specific Information: ID=0007 Rev=0 Len=024 <?>
+	Capabilities: [300] Vendor Specific Information: ID=0008 Rev=0 Len=038 <?>
+......
+```
+
+# 7 打印SCSI设备信息 \-\-\- lsscsi
+
+要查看所有的SCSI / SATA设备，使用如下命令使用lsscsi。 如果您没有安装使用lsscsi工具，运行以下命令来安装它。
+
+```
+$ sudo apt-get install lsscsi        [on Debian derivatives]
+# yum install lsscsi                 [On RedHat based systems]
+# dnf install lsscsi                 [On Fedora 21+ Onwards]
+```
+
+安装后，运行使用lsscsi命令，如下所示：
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lsscsi
+[0:2:0:0]    disk    AVAGO    MR9361-8i        4.68  /dev/sda
+[0:2:1:0]    disk    AVAGO    MR9361-8i        4.68  /dev/sdb
+[0:2:2:0]    disk    AVAGO    MR9361-8i        4.68  /dev/sdc
+```
+
+使用\-s选项，以**显示设备尺寸**。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lsscsi -s
+[0:2:0:0]    disk    AVAGO    MR9361-8i        4.68  /dev/sda    536GB
+[0:2:1:0]    disk    AVAGO    MR9361-8i        4.68  /dev/sdb   1.46TB
+[0:2:2:0]    disk    AVAGO    MR9361-8i        4.68  /dev/sdc    959GB
+```
+
+# 8 打印有关SATA设备的信息 \-\-\- hdparm
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# hdparm /dev/sda1
+
+/dev/sda1:
+SG_IO: bad/missing sense data, sb[]:  70 00 05 00 00 00 00 0d 00 00 00 00 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ multcount     =  0 (off)
+ readonly      =  0 (off)
+ readahead     = 256 (on)
+ geometry      = 65270/255/63, sectors = 2097152, start = 2048
+```
+
+打印有关设备的几何interms的**柱面，磁头，扇区，大小和起始的设备偏移信息**，使用\-g选项。 
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# hdparm -g /dev/sda1
+
+/dev/sda1:
+ geometry      = 65270/255/63, sectors = 2097152, start = 2048
+```
 
 
 
