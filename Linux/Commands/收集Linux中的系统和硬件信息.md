@@ -97,8 +97,33 @@ iosbootspecification uefi
 ......
 ```
 
-可以通过使用\-short选择打印您的硬件信息的汇总。
+可以通过使用\-short选择打印您的**硬件信息的汇总**。
 
+```
+[root@SH-IDC1-10-5-8-97 ~]# lshw -short
+H/W path          Device          Class          Description
+============================================================
+                                  system         SYS-6029P-TRT (091715D9)
+/0                                bus            X11DPi-NT
+/0/0                              memory         64KiB BIOS
+/0/13                             memory         128GiB System Memory
+/0/13/0                           memory         32GiB DIMM DDR4 Synchronous 2666 MHz (0.4 ns)
+/0/13/1                           memory         [empty]
+/0/13/2                           memory         [empty]
+/0/13/3                           memory         [empty]
+/0/13/4                           memory         32GiB DIMM DDR4 Synchronous 2666 MHz (0.4 ns)
+/0/13/5                           memory         [empty]
+/0/13/6                           memory         [empty]
+/0/13/7                           memory         [empty]
+/0/13/8                           memory         32GiB DIMM DDR4 Synchronous 2666 MHz (0.4 ns)
+......
+```
+
+如果想生成一个HTML文件输出，可以使用该选项-html。
+
+```
+[root@SH-IDC1-10-5-8-97 ~]# lshw -html > /root/lshw.html
+```
 
 
 
