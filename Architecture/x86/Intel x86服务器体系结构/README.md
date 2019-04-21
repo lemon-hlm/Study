@@ -1,1 +1,1 @@
-该系列来自知乎专栏: [INTEL x86服务器架构](https://zhuanlan.zhihu.com/c_1089831721599438848)
+该系列来自微信公众账号: [雪瀑牵裳的树屋](https://mp.weixin.qq.com/s/u8I-96uopLrkwlIXHbWLGA)
