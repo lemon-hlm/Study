@@ -18,4 +18,4 @@ Inxi是一个功能强大和卓越的命令行系统信息脚本，专为控制�
 # 参考
 
 - 本文来自文章: [点击此链接](https://www.howtoing.com/inxi-command-to-find-linux-system-information/)
-- 
+- 官方GitHub存储库: https://github.com/smxi/inxi
