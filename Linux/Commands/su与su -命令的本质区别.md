@@ -12,3 +12,7 @@
 ![su](images/su_.PNG "su -") 
 
 **Linux就是这样，有时候配置文件多了或者少了一个空格，服务就运行不了。细节问题一定要注意，这样才能少走弯路！**
+
+# 参考
+
+https://www.howtoing.com/su-vs-sudo-and-how-to-configure-sudo-in-linux/
