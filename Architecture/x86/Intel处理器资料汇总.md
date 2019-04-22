@@ -14,9 +14,11 @@
 
 链接: https://ark.intel.com/content/www/cn/zh/ark.html#@Processors
 
-链接: 
+处理器以及场景用途: https://www.intel.cn/content/www/cn/zh/products/processors.html
 
 ![](./images/2019-04-22-13-00-20.png)
+
+
 
 这是目前在售的全部8个产品系列
 
