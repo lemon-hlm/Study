@@ -6,7 +6,7 @@
 * [1 系列分类](#1-系列分类)
 * [2 系列的所有产品](#2-系列的所有产品)
 * [3 某个产品参数](#3-某个产品参数)
-* [4 关于处理器编号](#4-关于处理器编号)
+* [4 处理器编号的意义](#4-处理器编号的意义)
 
 <!-- /code_chunk_output -->
 
@@ -34,9 +34,11 @@
 
 从上面可以点入查看详细信息参数
 
-# 4 关于处理器编号
+# 4 处理器编号的意义
 
-链接: https://www.intel.cn/content/www/cn/zh/processors/processor-numbers.html
+笔记本电脑、台式机、移动设备的处理器编号: https://www.intel.cn/content/www/cn/zh/processors/processor-numbers.html
 
-![](./images/2019-04-22-13-30-14.png)
+微服务器、服务器和工作站的处理器编号: https://www.intel.cn/content/www/cn/zh/processors/processor-numbers-data-center.html
+
+
 
