@@ -53,7 +53,7 @@ Intel的服务器产品线是第一个受不了这种临时安排的。**至强C
 
 Intel Xeon E5 v4 Low Core Count(LCC)
 
-![](./images/2019-04-23-12-52-04.png)
+![](./images/2019-04-23-13-08-28.png)
 
 真是个绝妙的设计！然而，**摩尔定律**是无情的，计划能使用好久的设计往往很快就过时了，这点在计算机界几乎变成了普遍规律。
 
@@ -63,11 +63,11 @@ Ring Bus的缺点也很快随着内核的快速增加而暴露出来。由于**�
 
 ![](./images/2019-04-23-12-46-21.png)
 
-Intel Xeon E5-2600 V4 **High Core Count** Die
+Intel Xeon E5-2600 V4 **High Core Count** Die(HCC)
 
 在**至强HCC(High Core Count, 核很多版**)版本中，又加入了一个ring bus。
 
-**两个ring bus**各接**12个Core**，将**延迟**控制在可控的范围内。**俩个Ring Bus**直接用两个**双向Pipe Line连接**，保证通讯顺畅。于此同时由于Ring 0中的模块访问Ring 1中的模块延迟明显高于本Ring，亲缘度不同，所以**两个Ring分属于不同的NUMA！！！**（Non\-Uniform Memory Access Architecture）node。这点在**BIOS设计**中要特别注意。
+**两个ring bus**各接**12个Core**，将**延迟**控制在可控的范围内。**俩个Ring Bus**直接用两个**双向Pipe Line连接**，保证通讯顺畅。于此同时由于Ring 0中的模块访问Ring 1中的模块延迟明显高于本Ring，亲缘度不同，所以**两个Ring分属于不同的NUMA！！！**（Non\-Uniform Memory Access Architecture）node。这点在 **BIOS设计！！！** 中要特别注意。
 
 聪明的同学可能要问了，如果Core比12个多，比24个少些呢？是不是凑合塞到第一个ring里拉倒呢？其实还有个1.5 ring的奇葩设计：
 
@@ -83,7 +83,11 @@ Intel在**Skylake**和**Knight Landing**中引入了新的**片内总线**：Mes
 
 它是一种2D的Mesh网络：
 
+Intel Skylake SP Mesh Architecture Conceptual Diagram:
 
+![](./images/2019-04-23-13-00-25.png)
+
+![](./images/2019-04-23-13-07-23.png)
 
 # 参考
 
