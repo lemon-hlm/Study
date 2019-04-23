@@ -1,3 +1,16 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 什么是cpuid指令](#1-什么是cpuid指令)
+* [2 cpuid指令的使用](#2-cpuid指令的使用)
+* [3 获得CPU的制造商信息(Vender ID String)](#3-获得cpu的制造商信息vender-id-string)
+* [4 获得CPU商标信息(Brand String)](#4-获得cpu商标信息brand-string)
+* [5. 检测CPU特性(CPU feature)](#5-检测cpu特性cpu-feature)
+
+<!-- /code_chunk_output -->
+
 https://baike.baidu.com/item/CPUID/5559847
 
 CPU ID 指用户计算机当今的信息**处理器的信息**。 信息包括型号，信息处理器家庭，高速缓存尺寸，钟速度和制造厂codename 等。 通过查询可以知道一些信息：晶体管数，针脚类型，尺寸等。

@@ -6,7 +6,9 @@
 * [1 南桥的江湖地位问题](#1-南桥的江湖地位问题)
 * [2 为什么不是SOC](#2-为什么不是soc)
 * [3 什么是HSIO？](#3-什么是hsio)
-* [参考](#参考)
+* [4 DMI的带宽问题](#4-dmi的带宽问题)
+* [5 结论](#5-结论)
+* [6 参考](#6-参考)
 
 <!-- /code_chunk_output -->
 
@@ -76,8 +78,31 @@ Denverton microserver SOC:
 
 另外需要澄清的是DMI并不在HSIO中。
 
-# 
+# 4 DMI的带宽问题
 
-# 参考
+DMI 3.0 4 × 8Gbps怎么带动这么多的高速IO?我们上图中有30个HSIO，每个支持8Gbps，如果他们都接上设备，会不会在DMI上造成拥堵？
 
-- https://zhuanlan.zhihu.com/p/47479121
+当然会，不过在普通的台式机上这个问题不是很严重，而在高端台式机和服务器上是通过高端PCH提供的uplink直连CPU来解决的。你看的没错，PCH也有很多种，高端PCH甚至HSIO都会多一些。借用一句《动物庄园》里的话：
+
+所有PCH生来平等，但贵的PCH更平等一些。
+
+# 5 结论
+
+引脚的稀缺性很多人都没有意识到。于此同理，HSIO资源也是稀缺的，每升级一代，PCH就会提供更多的HSIO，来提供更多的USB port，因为现在越来越多的人选择M.2 NvME SSD，PCIe root port也捉襟见肘起来。更多的HSIO，可以让主板厂商有更多的腾挪和发挥空间。
+
+最后给大家两个思考题，Coffeelake CPU引脚图如下：
+
+![](./images/2019-04-23-09-03-17.png)
+
+Kabylake CPU:
+
+![](./images/2019-04-23-09-03-33.png)
+
+1. 说引脚不够用，为什么电源和地占据了几乎一半引脚？
+2. 同样1151 socket，从Kabylake到Coffeelake什么变了，为什么？
+
+
+# 6 参考
+
+- 本文章来自于: https://zhuanlan.zhihu.com/p/47479121
+- 问题1答案在: [CPU底部的小块是干什么用的？为什么CPU这么多电源引脚？](https://zhuanlan.zhihu.com/p/48593932)
