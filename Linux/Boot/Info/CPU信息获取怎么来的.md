@@ -1,0 +1,1 @@
+CPU型号等信息是BIOS提供的. BIOS通过SMBIOS表
