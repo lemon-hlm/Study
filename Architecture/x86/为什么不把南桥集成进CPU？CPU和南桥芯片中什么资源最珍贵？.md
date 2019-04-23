@@ -76,6 +76,8 @@ Denverton microserver SOC:
 
 另外需要澄清的是DMI并不在HSIO中。
 
+# 
+
 # 参考
 
 - https://zhuanlan.zhihu.com/p/47479121
