@@ -8,6 +8,7 @@
 * [3 reconfigure 代码流程](#3-reconfigure-代码流程)
 	* [3.1 ansible role是什么？](#31-ansible-role是什么)
 	* [3.2 reconfigure具体代码](#32-reconfigure具体代码)
+		* [3.2.1 config.yml](#321-configyml)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -122,7 +123,7 @@ ansible会针对role（x）进行以下处理：
 Reconfigure OpenStack service : ansible-playbook -i /usr/share/kolla-ansible/ansible/inventory/all-in-one -e @/etc/kolla/globals.yml -e @/etc/kolla/passwords.yml -e CONFIG_DIR=/etc/kolla  -e action=reconfigure -e serial=0 /usr/share/kolla-ansible/ansible/site.yml
 ```
 
-以 glance tasks main.yaml为例
+以 glance tasks main.yml为例
 
 ```
 [root@control01 tasks]# cat /root/kolla-ansible/ansible/roles/glance/tasks/main.yml
@@ -172,9 +173,9 @@ Reconfigure OpenStack service : ansible-playbook -i /usr/share/kolla-ansible/ans
 
 这里我们主要是看config.yml和flush_handlers这个2个的实现
 
-config.yml
+### 3.2.1 config.yml
 
-config.yml 是用来生成openstack sevice config文件
+config.yml 是用来**生成openstack sevice config文件**
 
 ```
 [root@control01 tasks]# cat config.yml
