@@ -84,9 +84,9 @@ Intel Xeon E5 V4 MCC(最多12 \~ 14个core)
 
 # 5 Mesh网路
 
-Intel在**Skylake**和**Knight Landing**中引入了新的**片内总线**：Mesh。
+Intel在**Skylake**和**Knight Landing**中引入了新的**片内总线**：**Mesh**。
 
-它是一种2D的Mesh网络：
+它是一种**2D**的Mesh网络：
 
 Intel Skylake SP Mesh Architecture Conceptual Diagram:
 
