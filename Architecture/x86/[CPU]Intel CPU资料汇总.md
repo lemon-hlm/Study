@@ -7,7 +7,8 @@
 * [2 系列的所有产品](#2-系列的所有产品)
 * [3 某个产品参数](#3-某个产品参数)
 * [4 处理器编号的意义](#4-处理器编号的意义)
-* [5](#5)
+* [5 桌面CPU性能配置天梯图](#5-桌面cpu性能配置天梯图)
+* [6 笔记本CPU性能配置天梯图](#6-笔记本cpu性能配置天梯图)
 
 <!-- /code_chunk_output -->
 
@@ -41,5 +42,11 @@
 
 微服务器、服务器和工作站的处理器编号: https://www.intel.cn/content/www/cn/zh/processors/processor-numbers-data-center.html
 
-# 5 
+# 5 桌面CPU性能配置天梯图
+
+Intel和AMD的: http://www.mydrivers.com/zhuanti/tianti/cpu/index.html
+
+点击分别会进入Intel和AMD的详细信息, 包括CPU型号、架构、工艺、核心/线程、核心频率等.
+
+# 6 笔记本CPU性能配置天梯图
 
