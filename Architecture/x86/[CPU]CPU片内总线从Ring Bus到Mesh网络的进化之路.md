@@ -8,7 +8,8 @@
 * [3 星型连接](#3-星型连接)
 * [4 环形总线(Ring Bus)](#4-环形总线ring-bus)
 * [5 Mesh网路](#5-mesh网路)
-* [参考](#参考)
+* [6 结论](#6-结论)
+* [7 参考](#7-参考)
 
 <!-- /code_chunk_output -->
 
@@ -91,10 +92,39 @@ Intel Skylake SP Mesh Architecture Conceptual Diagram:
 
 ![](./images/2019-04-23-13-07-23.png)
 
+Mesh网络近几年越来越火热，它的灵活性吸引越来越多的产品加入对它的支持，包括我们的Wifi等等系统。Mesh网络引入片内总线是一个巨大的进步，它有很多优点：
 
+1. 首先当然是灵活性。新的模块或者节点在Mesh中增加十分方便，它带来的延迟不是像ring bus一样线性增加，而是非线性的。从而可以容纳更多的内核。
+2. 设计弹性很好，不需要1.5 ring和2ring的委曲求全。
+3. 双向mesh网络减小了两个node之间的延迟。过去两个node之间通讯，最坏要绕过半个ring。而mesh整体node之间距离大大缩减。
+4. 外部延迟大大缩短：
 
-# 参考
+⓵ RAM延迟大大缩短：
+
+Broadwell Ring V Skylake Mesh DRAM Example:
+
+![](./images/2019-04-23-13-23-35.png)
+
+左边的是ring bus，从**一个ring**里面访问**另一个ring**里面的**内存控制器！！！**。最坏情况下是那条绿线，拐了一个大圈才到达内存控制器，需要310个cycle。而在Mesh网络中则路径缩短很多。
+
+⓶ IO延迟缩短:
+
+Broadwell Ring V Skylake Mesh PCIe Example:
+
+![](./images/2019-04-23-13-25-30.png)
+
+# 6 结论
+
+Mesh网络带来了这么多好处，那么缺点有没有呢？它网格化设计带来复杂性的增加，从而对Die的大小带来了负面影响，这个我们会在下一篇文章中介绍，同时介绍相关性能详细数据，尽情期待。
+
+最后请大家思考一下，为什么不干脆用全互联Full Connected网络来连接Die中的各个节点呢？
+
+![](./images/2019-04-23-13-26-16.png)
+
+# 7 参考
 
 - 本文章来自: https://zhuanlan.zhihu.com/p/32216294
 - Xeon\_e5的wikichip: https://en.wikichip.org/wiki/intel/xeon_e5
 - Mesh Interconnect Architecture-Intel: https://en.wikichip.org/wiki/intel/mesh_interconnect_architecture
+- Things are getting Meshy: Next-Generation Intel Skylake-SP CPUs Mesh Architecture: https://www.servethehome.com/things-are-getting-meshy-next-generation-intel-skylake-sp-cpus-mesh-architecture/
+- Intel Core i9 7900X review: the best around, but the worst time to buy a high-end CPU: https://www.pcgamesn.com/intel/intel-core-i9-7900x-review-benchmarks
