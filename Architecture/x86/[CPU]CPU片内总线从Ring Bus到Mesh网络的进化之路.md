@@ -61,9 +61,11 @@ Ring Bus的缺点也很快随着内核的快速增加而暴露出来。由于**�
 
 和星型连接一样，一种变种产生了：
 
-![](./images/2019-04-23-12-46-21.png)
+![](./images/2019-04-23-13-09-27.png)
 
 Intel Xeon E5-2600 V4 **High Core Count** Die(HCC)
+
+注: **只有第一个NUMA节点**才连接QPI Link、PCIE、UBox和PCU, 但是每个都连接了Memory Controller
 
 在**至强HCC(High Core Count, 核很多版**)版本中，又加入了一个ring bus。
 
@@ -73,7 +75,7 @@ Intel Xeon E5-2600 V4 **High Core Count** Die(HCC)
 
 Intel Xeon E5 V4 MCC
 
-![](./images/2019-04-23-12-53-40.png)
+![](./images/2019-04-23-13-12-07.png)
 
 核大战的硝烟远远尚未平息，摩尔定律带来的晶体管更多的都用来增加内核而不是提高速度（[为什么CPU的频率止步于4G?我们触到频率天花板了吗？](https://zhuanlan.zhihu.com/p/30409360)）24个Core的至强也远远不是终点，那么更多的Core怎么办呢？三个Ring设计吗？多于3个Ring后，它们之间怎么互联呢？这些困难促使Intel寻找新的方向。
 
@@ -88,6 +90,8 @@ Intel Skylake SP Mesh Architecture Conceptual Diagram:
 ![](./images/2019-04-23-13-00-25.png)
 
 ![](./images/2019-04-23-13-07-23.png)
+
+
 
 # 参考
 
