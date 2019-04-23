@@ -52,7 +52,7 @@ Intel的服务器产品线是第一个受不了这种临时安排的。**至强C
 3. **高速的ring bus**保证了性能的极大提高。Core to Core latency只有**60ns**左右，而带宽则高达数百G(记得Nehalem是192GB/s).
 4. 方便灵活。**增加一个Core**，只要在Ring上面加个新的ring stop就好，不用像以前一样考虑复杂的互联问题。
 
-Intel Xeon E5 v4 Low Core Count(LCC)
+Intel Xeon E5 v4 Low Core Count(LCC, 最多10个core)
 
 ![](./images/2019-04-23-13-08-28.png)
 
@@ -64,7 +64,7 @@ Ring Bus的缺点也很快随着内核的快速增加而暴露出来。由于**�
 
 ![](./images/2019-04-23-13-09-27.png)
 
-Intel Xeon E5-2600 V4 **High Core Count** Die(HCC)
+Intel Xeon E5-2600 V4 **High Core Count** Die(HCC, 16个core以上)
 
 注: **只有第一个NUMA节点**才连接QPI Link、PCIE、UBox和PCU, 但是每个都连接了Memory Controller
 
@@ -72,9 +72,11 @@ Intel Xeon E5-2600 V4 **High Core Count** Die(HCC)
 
 **两个ring bus**各接**12个Core**，将**延迟**控制在可控的范围内。**俩个Ring Bus**直接用两个**双向Pipe Line连接**，保证通讯顺畅。于此同时由于Ring 0中的模块访问Ring 1中的模块延迟明显高于本Ring，亲缘度不同，所以**两个Ring分属于不同的NUMA！！！**（Non\-Uniform Memory Access Architecture）node。这点在 **BIOS设计！！！** 中要特别注意。
 
+也就是说NUMA不是
+
 聪明的同学可能要问了，如果Core比12个多，比24个少些呢？是不是凑合塞到第一个ring里拉倒呢？其实还有个1.5 ring的奇葩设计：
 
-Intel Xeon E5 V4 MCC
+Intel Xeon E5 V4 MCC(最多12 \~ 14个core)
 
 ![](./images/2019-04-23-13-12-07.png)
 
