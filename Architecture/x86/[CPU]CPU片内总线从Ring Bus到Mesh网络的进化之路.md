@@ -132,3 +132,4 @@ Mesh网络带来了这么多好处，那么缺点有没有呢？它网格化设�
 - Mesh Interconnect Architecture-Intel: https://en.wikichip.org/wiki/intel/mesh_interconnect_architecture
 - Things are getting Meshy: Next-Generation Intel Skylake-SP CPUs Mesh Architecture: https://www.servethehome.com/things-are-getting-meshy-next-generation-intel-skylake-sp-cpus-mesh-architecture/
 - Intel Core i9 7900X review: the best around, but the worst time to buy a high-end CPU: https://www.pcgamesn.com/intel/intel-core-i9-7900x-review-benchmarks
+- Skylake(server): https://en.wikichip.org/wiki/intel/microarchitectures/skylake_(server)
