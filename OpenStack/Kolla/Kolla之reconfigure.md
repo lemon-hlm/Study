@@ -257,9 +257,9 @@ config.yml 是用来**生成openstack sevice config文件**
     - Restart glance-registry container
 ```
 
-这里最核心的实现就是merge\_configs。
+这里最核心的实现就是**merge\_configs**。
 
-action plugin中在merge\_configs.py作用是导入template模板，并且run。代码在/usr/share/kolla-ansible/ansible/action\_plugins/merge\_configs.py
+action plugin中在**merge\_configs.py**作用是导入template模板，并且run。代码在/usr/share/kolla-ansible/ansible/action\_plugins/merge\_configs.py
 
 ```python
 import collections
