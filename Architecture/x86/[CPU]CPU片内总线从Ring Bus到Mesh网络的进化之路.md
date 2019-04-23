@@ -7,6 +7,7 @@
 * [2 为什么需要片内总线？](#2-为什么需要片内总线)
 * [3 星型连接](#3-星型连接)
 * [4 环形总线(Ring Bus)](#4-环形总线ring-bus)
+* [5 Mesh网路](#5-mesh网路)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -50,6 +51,10 @@ Intel的服务器产品线是第一个受不了这种临时安排的。**至强C
 3. **高速的ring bus**保证了性能的极大提高。Core to Core latency只有**60ns**左右，而带宽则高达数百G(记得Nehalem是192GB/s).
 4. 方便灵活。**增加一个Core**，只要在Ring上面加个新的ring stop就好，不用像以前一样考虑复杂的互联问题。
 
+Intel Xeon E5 v4 Low Core Count(LCC)
+
+![](./images/2019-04-23-12-52-04.png)
+
 真是个绝妙的设计！然而，**摩尔定律**是无情的，计划能使用好久的设计往往很快就过时了，这点在计算机界几乎变成了普遍规律。
 
 Ring Bus的缺点也很快随着内核的快速增加而暴露出来。由于**每加一个Core**，**ring bus**就长大一些，**延迟就变大一点**，很快ring bus性能就随着core的增多而严重下降，**多于12个core**后会严重拖累系统的**整体延迟**。
@@ -58,7 +63,7 @@ Ring Bus的缺点也很快随着内核的快速增加而暴露出来。由于**�
 
 ![](./images/2019-04-23-12-46-21.png)
 
-Intel Xeon E5-2600 V4 High Core Count Die
+Intel Xeon E5-2600 V4 **High Core Count** Die
 
 在**至强HCC(High Core Count, 核很多版**)版本中，又加入了一个ring bus。
 
@@ -66,9 +71,22 @@ Intel Xeon E5-2600 V4 High Core Count Die
 
 聪明的同学可能要问了，如果Core比12个多，比24个少些呢？是不是凑合塞到第一个ring里拉倒呢？其实还有个1.5 ring的奇葩设计：
 
+Intel Xeon E5 V4 MCC
+
+![](./images/2019-04-23-12-53-40.png)
+
+核大战的硝烟远远尚未平息，摩尔定律带来的晶体管更多的都用来增加内核而不是提高速度（[为什么CPU的频率止步于4G?我们触到频率天花板了吗？](https://zhuanlan.zhihu.com/p/30409360)）24个Core的至强也远远不是终点，那么更多的Core怎么办呢？三个Ring设计吗？多于3个Ring后，它们之间怎么互联呢？这些困难促使Intel寻找新的方向。
+
+# 5 Mesh网路
+
+Intel在**Skylake**和**Knight Landing**中引入了新的**片内总线**：Mesh。
+
+它是一种2D的Mesh网络：
+
 
 
 # 参考
 
 - 本文章来自: https://zhuanlan.zhihu.com/p/32216294
 - Xeon\_e5的wikichip: https://en.wikichip.org/wiki/intel/xeon_e5
+- Mesh Interconnect Architecture-Intel: https://en.wikichip.org/wiki/intel/mesh_interconnect_architecture

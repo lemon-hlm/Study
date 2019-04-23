@@ -20,4 +20,4 @@
 
 - Intel开发者论坛: https://software.intel.com/zh-cn/forum
 
-- WikiChip: https://en.wikichip.org/wiki/WikiChip
+- WikiChip(计算机体系结构与半导体很强的资源): https://en.wikichip.org/wiki/WikiChip
