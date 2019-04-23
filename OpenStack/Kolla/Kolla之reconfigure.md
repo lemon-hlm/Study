@@ -7,6 +7,7 @@
 * [2 reconfigure使用](#2-reconfigure使用)
 * [3 reconfigure 代码流程](#3-reconfigure-代码流程)
 	* [3.1 ansible role是什么？](#31-ansible-role是什么)
+	* [3.2 reconfigure具体代码](#32-reconfigure具体代码)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -104,13 +105,15 @@ Ansible Role 是一种分类 & 重用的概念，透过将 vars, tasks, files, t
 
 ansible会针对role（x）进行以下处理：
 
-1. 如果role/x／tasks／main.yml存在，则会自动加到playbook中的task list中
-2. 如果role/x／handlers／main.yml存在，则会自动加到playbook中的handler list中
-3. 如果role/x/vars/mani.yml存在，则会自动加入到playbook中的variables list中
-4. 如果role/x/meta/main.yml存在, 任何与指定的role想依赖的其他的role设置都会被自动加入
-5. roles/x/templates/ 目录中的 template tasks，在 playbook 中使用时不需要指定绝对(absolutely) or 相对(relatively)路径
-6. 在 roles/x/files/ 目录中的 copy tasks 或是 script tasks，在 playbook 中使用时不需要指定绝对(absolutely) or 相对(relatively)路径
-7. 定义在 roles/x/defaults/main.yml 中的变量將会是使用该role时所取得的预设变量
+1. 如果role/x/**task**/main.yml存在，则会**自动**加到playbook中的**task list**中
+2. 如果role/x/**handlers**/main.yml存在，则会自动加到playbook中的**handler list**中
+3. 如果role/x/**vars**/mani.yml存在，则会自动加入到playbook中的variables list中
+4. 如果role/x/**meta**/main.yml存在, 任何与**指定的role**想**依赖的其他的role设置**都会被**自动加入**
+5. roles/x/**templates**/ 目录中的 **template tasks**，在 playbook 中使用时**不需要指定绝对(absolutely**) or **相对(relatively)路径**
+6. 在 roles/x/**files**/ 目录中的 copy tasks 或是 script tasks，在 playbook 中使用时不需要指定绝对(absolutely) or 相对(relatively)路径
+7. 定义在 roles/x/defaults/main.yml 中的**变量**將会是**使用该role时所取得的预设变量**
+
+## 3.2 reconfigure具体代码
 
 再返回来看来 kolla-ansible reconfigure 具体代码就能理解了
 
