@@ -72,7 +72,7 @@ Intel Xeon E5-2600 V4 **High Core Count** Die(HCC, 16个core以上)
 
 **两个ring bus**各接**12个Core**，将**延迟**控制在可控的范围内。**俩个Ring Bus**直接用两个**双向Pipe Line连接**，保证通讯顺畅。于此同时由于Ring 0中的模块访问Ring 1中的模块延迟明显高于本Ring，亲缘度不同，所以**两个Ring分属于不同的NUMA！！！**（Non\-Uniform Memory Access Architecture）node。这点在 **BIOS设计！！！** 中要特别注意。
 
-也就是说NUMA不是
+这个是 **一个socket！！！** 里面的core， 也就是说NUMA不是以socket划分的！！！而和它的结构有关系！！！
 
 聪明的同学可能要问了，如果Core比12个多，比24个少些呢？是不是凑合塞到第一个ring里拉倒呢？其实还有个1.5 ring的奇葩设计：
 
