@@ -50,3 +50,4 @@ Intel和AMD的: http://www.mydrivers.com/zhuanti/tianti/cpu/index.html
 
 # 6 笔记本CPU性能配置天梯图
 
+http://www.mydrivers.com/zhuanti/tianti/cpum/index.html
