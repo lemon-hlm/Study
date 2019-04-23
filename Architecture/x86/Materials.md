@@ -15,3 +15,9 @@
 - Intel体系结构、微架构、指令集: https://blog.csdn.net/qq_43401808/article/category/8576377
 
 - Intel资源和设计中心: https://www.intel.com/content/www/cn/zh/design/resource-design-center.html
+
+- Intel文档中心: https://software.intel.com/zh-cn/documentation
+
+- Intel开发者论坛: https://software.intel.com/zh-cn/forum
+
+- WikiChip: https://en.wikichip.org/wiki/WikiChip

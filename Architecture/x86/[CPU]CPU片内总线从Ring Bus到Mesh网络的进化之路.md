@@ -56,13 +56,19 @@ Ring Bus的缺点也很快随着内核的快速增加而暴露出来。由于**�
 
 和星型连接一样，一种变种产生了：
 
+![](./images/2019-04-23-12-46-21.png)
 
 Intel Xeon E5-2600 V4 High Core Count Die
 
-在**至强HCC(High Core Count, 核很多版**)版本中，又加入了一个ring bus。**两个ring bus**各接**12个Core**，将延迟控制在可控的范围内。俩个Ring Bus直接用两个双向Pipe Line连接，保证通讯顺畅。于此同时由于Ring 0中的模块访问Ring 1中的模块延迟明显高于本Ring，亲缘度不同，所以两个Ring分属于不同的NUMA（Non-Uniform Memory Access Architecture）node。这点在BIOS设计中要特别注意。
+在**至强HCC(High Core Count, 核很多版**)版本中，又加入了一个ring bus。
+
+**两个ring bus**各接**12个Core**，将**延迟**控制在可控的范围内。**俩个Ring Bus**直接用两个**双向Pipe Line连接**，保证通讯顺畅。于此同时由于Ring 0中的模块访问Ring 1中的模块延迟明显高于本Ring，亲缘度不同，所以**两个Ring分属于不同的NUMA！！！**（Non\-Uniform Memory Access Architecture）node。这点在**BIOS设计**中要特别注意。
+
+聪明的同学可能要问了，如果Core比12个多，比24个少些呢？是不是凑合塞到第一个ring里拉倒呢？其实还有个1.5 ring的奇葩设计：
 
 
 
 # 参考
 
-https://zhuanlan.zhihu.com/p/32216294
+- 本文章来自: https://zhuanlan.zhihu.com/p/32216294
+- Xeon\_e5的wikichip: https://en.wikichip.org/wiki/intel/xeon_e5
