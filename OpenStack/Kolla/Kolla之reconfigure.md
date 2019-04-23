@@ -73,7 +73,7 @@ Ansible Role 是一种分类 & 重用的概念，透过将 vars, tasks, files, t
 
 答案是：role 的 include 机制是自动的!
 
-我們只要事前將 role 的 vars / tasks / files / handler …. 等等事先定义好按照特定的结构(下面會提到)放好，Ansible 就会自动 include 完成，不需要再自己一个一个指定 include。
+我们只要提前将 role 的 vars / tasks / files / handler …. 等等事先定义好按照特定的结构(下面會提到)放好，Ansible 就会自动 include 完成，不需要再自己一个一个指定 include。
 
 透过这样的方式，管理者可以透过設定 role 的方式將所需要安裝設定的功能分门别类，拆成细项來管理并编写相对应的 script，让原本可能很庞大的设定工作可以细分成多个不同的部分來分別设定，不仅仅可以让自己重复利用特定的设定，也可以共享給其他人一同使用。
 
