@@ -1,29 +1,27 @@
-https://zhuanlan.zhihu.com/p/31365115
 
-1. 传统BIOS
-2. UEFI
-3. UEFI的DXE与磁盘上的文件
-4. EFI系统分区
-5. Windows 8/8.1/10在UEFI和BIOS下，各种启动文件的顺序
-    5.1 BIOS下
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
-    5.2 UEFI下
+<!-- code_chunk_output -->
 
-6. 问题
-    
-    6.1 以前我一直装Ghost版的Windows，UEFI之后真的没法Ghost了么？
-    
-    6.2 Windows无法定位现有分区，也无法。。。。。
-    
-    6.3 不需要第三方工具就能做UEFI下的Windows安装盘？
-    
-    6.4 我电脑是UEFI的，想装Linux，但我手头没优盘，听说也能搞定？
-    
-    6.5 装个Linux，但我希望默认还是Windows；重装Windows，可是我开机不再默认Grub，怎么回Linux？
-    
-    6.6 重装Windows，提示我什么MBR、GPT，不让装？
+* [1 传统BIOS](#1-传统bios)
+* [2 UEFI](#2-uefi)
+* [3 UEFI的DXE与磁盘上的文件](#3-uefi的dxe与磁盘上的文件)
+* [4 EFI系统分区](#4-efi系统分区)
+* [5 Windows 8/8.1/10在UEFI和BIOS下，各种启动文件的顺序](#5-windows-88110在uefi和bios下各种启动文件的顺序)
+	* [5.1 BIOS下](#51-bios下)
+	* [5.2 UEFI下](#52-uefi下)
+* [6 问题](#6-问题)
+	* [6.1 以前我一直装Ghost版的Windows，UEFI之后真的没法Ghost了么？](#61-以前我一直装ghost版的windowsuefi之后真的没法ghost了么)
+	* [6.2 Windows无法定位现有分区，也无法。。。。。](#62-windows无法定位现有分区也无法)
+	* [6.3 不需要第三方工具就能做UEFI下的Windows安装盘？](#63-不需要第三方工具就能做uefi下的windows安装盘)
+	* [6.4 我电脑是UEFI的，想装Linux，但我手头没优盘，听说也能搞定？](#64-我电脑是uefi的想装linux但我手头没优盘听说也能搞定)
+	* [6.5 装个Linux，但我希望默认还是Windows；重装Windows，可是我开机不再默认Grub，怎么回Linux？](#65-装个linux但我希望默认还是windows重装windows可是我开机不再默认grub怎么回linux)
+	* [6.6 重装Windows，提示我什么MBR、GPT，不让装？](#66-重装windows提示我什么mbr-gpt不让装)
+* [7 参考](#7-参考)
 
-## 1. 传统BIOS
+<!-- /code_chunk_output -->
+
+# 1 传统BIOS
 
 一句话概括：**BIOS只认识设备，不认识分区、不认识文件**。
 
@@ -46,7 +44,7 @@ BIOS启动的时候，按照CMOS设置里的顺序，挨个存储设备看：（
 
 其实**BIOS并不认识分区表（不关心，BIOS开始执行512字节代码就不管了）**。哪怕磁盘上没有分区表，没分过区，只要前512字节有0x55 0xAA的结尾，有合适的引导代码，也是能启动的。
 
-## 2. UEFI
+# 2 UEFI
 
 （此处只讨论民用64位架构下的UEFI。）
 
@@ -64,7 +62,7 @@ UEFI启动的时候，经过一系列初始化（SEC、CAR、DXE什么的，SEC�
 
 比如CloverX64.efi就好像没有签名。
 
-## 3. UEFI的DXE与磁盘上的文件
+# 3 UEFI的DXE与磁盘上的文件
 
 一个磁盘**分区**，要**格式化**之后，才能往里存**文件**，格式化的时候，又能选择不同的**文件系统**。比如Win10可以选FAT32、NTFS、exFAT、ReFS几种，Linux可以选ext2、ext3、ext4、FAT32等，macOS可以选FAT32、HFS+、APFS、exFAT几种。
 
@@ -88,7 +86,7 @@ UEFI启动后，**进入了DXE阶段，就开始加载设备驱动（这里是�
 
 如同Windows可以安装驱动一样，**UEFI也能在后期加载驱动**。比如CloverX64.efi启动之后，会加载\EFI\Clover\drivers64UEFI下的所有驱动。包括VboxHFS.efi等各种efi。网上你也能搜到NTFS.efi。再比如，**UEFIShell下，你可以手动执行命令加载驱动**。
 
-## 4. EFI系统分区
+# 4 EFI系统分区
 
 UEFI规范里，在**GPT分区表**的基础上，规定了一个**EFI系统分区（EFI System Partition，ESP），ESP要格式化成FAT32（这个分区是要格式化为某个文件系统的），EFI启动文件要放在“\EFI\<厂商>”文件夹下面**。
 
@@ -119,9 +117,9 @@ Windows的BCD命令，其实也可以添加UEFI启动项，然而我没搞懂怎
 
 嗯，这一节就写到这吧。
 
-## 5. Windows 8/8.1/10在UEFI和BIOS下，各种启动文件的顺序
+# 5 Windows 8/8.1/10在UEFI和BIOS下，各种启动文件的顺序
 
-### 5.1 BIOS下
+## 5.1 BIOS下
 
 MBR->PBR->bootmgr->WinLoad.exe
 
@@ -139,7 +137,7 @@ bootmgr没了MBR和PBR的大小限制，可以做更多的事。它会加载并�
 
 这就解释了，为什么，有的时候，Windows装在磁盘2上，却要在BIOS里选磁盘0启动了。因为bootmgr可能在磁盘0上。
 
-### 5.2 UEFI下
+## 5.2 UEFI下
 
 UEFI固件->bootmgfw.efi->WinLoad.efi
 
@@ -155,9 +153,9 @@ UEFI查找**硬盘分区**中第一个**FAT分区**内的引导文件进行系�
 
 其中的虚线，跟上面的一样，意思是，**Windows启动盘和EFI启动盘，可以是一个硬盘，也可以是不同的硬盘**。所以**对于UEFI来说，启动盘是bootmgfw.efi所在的那个盘**。
 
-## 6. 问题
+# 6 问题
 
-### 6.1 以前我一直装Ghost版的Windows，UEFI之后真的没法Ghost了么？
+## 6.1 以前我一直装Ghost版的Windows，UEFI之后真的没法Ghost了么？
 
 先说一句，真不推荐用网上的Ghost版Windows安装盘来装系统了。微软公开放出了官方的原版Win10下载链接，而且还有启动盘制作程序。链接在这：[下载 Windows 10](https://link.zhihu.com/?target=https%3A//www.microsoft.com/zh-cn/software-download/windows10)。写这个的原因，是因为，有时候，自己做的Ghost备份，还是挺好用的。
 
@@ -169,13 +167,13 @@ UEFI查找**硬盘分区**中第一个**FAT分区**内的引导文件进行系�
 
 总结一下，Ghost还原Windows分区之后，调用BCDBoot配置启动项即可。
 
-### 6.2 Windows无法定位现有分区，也无法。。。。。
+## 6.2 Windows无法定位现有分区，也无法。。。。。
 
 这种报错信息，如果是**在UEFI模式下，一般是因为，你有多块硬盘，而且超过一块硬盘上，有ESP分区**。只要把不想用的ESP分区删掉，或者拔掉对应的硬盘，保证装Windows的时候，只有一个硬盘上有ESP分区，即可。
 
 如果实在做不到，考虑用DISM.exe安装Windows吧。Win7的DISM.exe真的太弱了。尽量用Win10安装盘或者Win10PE里的DISM.exe。
 
-### 6.3 不需要第三方工具就能做UEFI下的Windows安装盘？
+## 6.3 不需要第三方工具就能做UEFI下的Windows安装盘？
 
 确实啊，根据上文说的，**U盘，格式化成FAT32**，然后把Windows安装盘的ISO里面的东西拷贝到U盘就行了。（适用于Win8/8.1/10以及WinServer2012/2012R2/2016。WinVista x64/Win7x64以及WinServer2008x64/2008R2需要额外操作，WinVista x86/Win7x86/WinServer2008x86不支持UEFI）
 
@@ -183,7 +181,7 @@ UEFI查找**硬盘分区**中第一个**FAT分区**内的引导文件进行系�
 
 ![config](images/15.jpg)
 
-### 6.4 我电脑是UEFI的，想装Linux，但我手头没优盘，听说也能搞定？
+## 6.4 我电脑是UEFI的，想装Linux，但我手头没优盘，听说也能搞定？
 
 对啊对啊，搞个FAT32的分区，把Linux安装盘的iso镜像里面的文件拷贝进去，然后在Windows下，用工具给那个分区的BOOTx64.efi，添加为UEFI文件启动项，开机时候选那个启动项，就能启动到Linux安装盘了。下面示意图是Ubuntu的。记得查看一下你的Linux支不支持SecureBoot哦！如果你要装的Linux不支持SecureBoot，记得**关掉主板的SecureBoot设置**哦。
 
@@ -191,12 +189,16 @@ Ubuntu安装盘ISO镜像内的UEFI启动文件：
 
 ![config](images/16.jpg)
 
-### 6.5 装个Linux，但我希望默认还是Windows；重装Windows，可是我开机不再默认Grub，怎么回Linux？
+## 6.5 装个Linux，但我希望默认还是Windows；重装Windows，可是我开机不再默认Grub，怎么回Linux？
 
 如果是UEFI模式，那就跟之前一样，改启动项顺序就行了。
 
 如果是传统BIOS的，要么用bootsect.exe把MBR改成Windows的。要么用工具把MBR刷成Grub的。也可以考虑Linux下用dd命令备份MBR的前446字节，到时候再还原回去。
 
-### 6.6 重装Windows，提示我什么MBR、GPT，不让装？
+## 6.6 重装Windows，提示我什么MBR、GPT，不让装？
 
 这个就是Windows安装程序的限制了。BIOS模式下的Windows只允许被装在MBR分区表下面。UEFI模式下的Windows只允许被装在GPT分区下。但事实上，MBR分区表，也能启动UEFI模式下的Windows。
+
+# 7 参考
+
+本文来自: https://zhuanlan.zhihu.com/p/31365115

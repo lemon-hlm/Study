@@ -1,3 +1,19 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. 机械硬盘原理](#1-机械硬盘原理)
+* [2. MBR原理](#2-mbr原理)
+	* [2.1 主引导记录的结构](#21-主引导记录的结构)
+	* [2.2 分区表](#22-分区表)
+* [3. GPT原理](#3-gpt原理)
+* [4. 其他](#4-其他)
+* [5. 后记](#5-后记)
+
+<!-- /code_chunk_output -->
+
+
 https://zhuanlan.zhihu.com/p/26098509
 
 http://www.newskj.org/kjxx/2017062994604.html

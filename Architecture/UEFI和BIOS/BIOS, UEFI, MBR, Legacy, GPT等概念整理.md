@@ -1,40 +1,28 @@
-https://zhuanlan.zhihu.com/p/36976698
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
 
-1. 固件接口标准
+<!-- code_chunk_output -->
 
-    1.1 BIOS
-    
-    1.2 EFI/UEFI
-    
-2. 启动方式
-    
-    2.1 Legacy mode
+* [1. 固件接口标准](#1-固件接口标准)
+	* [1.1 BIOS](#11-bios)
+	* [1.2 EFI/UEFI](#12-efiuefi)
+* [2. 启动方式](#2-启动方式)
+	* [2.1 Legacy mode](#21-legacy-mode)
+	* [2.2 UEFI mode](#22-uefi-mode)
+	* [2.3 CSM mode](#23-csm-mode)
+* [3. 分区表](#3-分区表)
+	* [3.1 MBR分区表](#31-mbr分区表)
+	* [3.2 EBR分区表](#32-ebr分区表)
+	* [3.3 GPT分区表](#33-gpt分区表)
+* [4. 分区](#4-分区)
+	* [4.1 ESP（EFI系统分区）](#41-espefi系统分区)
+	* [4.2 Windows恢复分区](#42-windows恢复分区)
+* [5. Bootloader](#5-bootloader)
+	* [5.1 Grub](#51-grub)
+	* [5.2 Windows Boot Manager](#52-windows-boot-manager)
+	* [5.3 NTLDR](#53-ntldr)
 
-    2.2 UEFI mode
-    
-    2.3 CSM mode
+<!-- /code_chunk_output -->
 
-3. 分区表
-
-    3.1 MBR分区表
-
-    3.2 EBR分区表
-
-    3.3 GPT分区表
-
-4. 分区
-
-    4.1 ESP（EFI系统分区）
-    
-    4.2 Windows恢复分区
-
-5. Bootloader
-
-    5.1 Grub
-
-    5.2 Windows Boot Manager
-    
-    5.3 NTLDR
 
 信息的主要来源是维基百科。
 
@@ -167,3 +155,7 @@ NTLDR主要由两个文件组成，这两个文件必须放在系统分区（大
 
 1. NTLDR，引导程序本身
 2. boot.ini，引导程序的配置文件
+
+https://zhuanlan.zhihu.com/p/36976698
+
+
