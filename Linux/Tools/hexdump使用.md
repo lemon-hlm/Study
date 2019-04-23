@@ -1,3 +1,14 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [用法](#用法)
+* [选项](#选项)
+* [示例](#示例)
+
+<!-- /code_chunk_output -->
+
 参考：
 
 http://man.linuxde.net/hexdump

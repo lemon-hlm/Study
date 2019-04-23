@@ -1,3 +1,14 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. 物理地址与虚拟地址](#1-物理地址与虚拟地址)
+* [2. X86中的地址转换](#2-x86中的地址转换)
+* [3. UEFI中的地址转换](#3-uefi中的地址转换)
+
+<!-- /code_chunk_output -->
+
 https://zhuanlan.zhihu.com/p/26035864
 
 > 大家一定对计算机系统的地址空间概念有所了解。那么，UEFI的地址空间是什么样的呢？UEFI加载并把控制权交给操作系统时，地址空间又发生了什么变化呢？在这篇文章中，我们来一起探讨一下。

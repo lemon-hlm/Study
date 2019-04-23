@@ -1,4 +1,15 @@
-## 1. 操作步骤
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 操作步骤](#1-操作步骤)
+	* [1.1 修改/etc/rc.d/rc.local](#11-修改etcrcdrclocal)
+	* [1.2 创建/root/.xinitrc](#12-创建rootxinitrc)
+
+<!-- /code_chunk_output -->
+
+## 1 操作步骤
 
 ### 1.1 修改/etc/rc.d/rc.local 
 
