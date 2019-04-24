@@ -88,6 +88,21 @@ node  0  1  2  3
 
 通常情况下，用户可以通过numactl来进行NUMA访问策略的手工配置，cgroup中cpuset.mems也可以达到指定NUMA node的作用。以numactl命令为例，它有如下策略：
 
+- –interleave=nodes //允许进程在多个node之间交替访问
+- –membind=nodes //将内存固定在某个node上，CPU则选择对应的core。
+- –cpunodebind=nodes //与membind相反，将CPU固定在某（几）个core上，内存则限制在对应的NUMA node之上。
+- –physcpubind=cpus //与cpunodebind类似，不同的是物理core。
+- –localalloc //本地配置
+- –preferred=node //按照推荐配置
+
+对于某些大内存访问的应用，比如Mongodb，将NUMA的访问策略制定为interleave=all则意味着整个进程的内存是均匀分布在所有的node之上，进程可以以最快的方式访问本地内存。
+
+讲到这里似乎已经差不多了，但事实上还没完。如果你一直按照这个“**北桥去哪儿了**？”的思路理下来的话，就有了另一个问题，那就是之前的**北桥**还有一个功能就是**PCI/PCIe控制器**，当然**原来的南桥**，现在的**PCH**一样也整合了**PCIe控制器**。事实上，在**PCIe channel上**也是有**NUMA亲和性**的。
+
+比如：查看网卡enp0s20f0u5的NUMA，用到了netdev:<设备名称>这种方式。
+
+
+
 
 
 # 参考
