@@ -39,3 +39,4 @@ QPI的全称是**快速通道互联**，其实QPI总线在早期已经用于安�
 # 参考
 
 - 本文来自知乎专栏, 链接: https://zhuanlan.zhihu.com/p/38984035?utm_source=wechat_session&utm_medium=social&utm_oi=50718148919296
+- QPI: https://zh.wikipedia.org/wiki/%E5%BF%AB%E9%80%9F%E9%80%9A%E9%81%93%E4%BA%92%E8%81%94
