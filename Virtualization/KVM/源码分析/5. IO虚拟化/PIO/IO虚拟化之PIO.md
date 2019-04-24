@@ -1,3 +1,14 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. PIO](#1-pio)
+* [2. PIO在KVM中](#2-pio在kvm中)
+* [3. PIO运行在QEMU](#3-pio运行在qemu)
+
+<!-- /code_chunk_output -->
+
 ## 1. PIO
 
 Port IO，所谓端口IO，x86上使用in、out指令进行访问。和内存的地址空间完全隔离。

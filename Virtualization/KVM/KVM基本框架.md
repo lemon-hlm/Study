@@ -1,3 +1,18 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [KVM基本框架](#kvm基本框架)
+	* [背景](#背景)
+		* [开源全虚拟化方案](#开源全虚拟化方案)
+		* [历史](#历史)
+		* [云平台对KVM的支持](#云平台对kvm的支持)
+	* [KVM架构](#kvm架构)
+		* [虚拟化管理接口逻辑分层（libvirt、qemu、kvm）](#虚拟化管理接口逻辑分层libvirt-qemu-kvm)
+
+<!-- /code_chunk_output -->
+
 # KVM基本框架
 
 ```

@@ -1,3 +1,18 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [qemu,kvm,qemu-kvm,xen,libvirt的区别](#qemukvmqemu-kvmxenlibvirt的区别)
+	* [虚拟化类型](#虚拟化类型)
+	* [虚拟化技术](#虚拟化技术)
+		* [KVM](#kvm)
+	* [XEN](#xen)
+	* [QEMU](#qemu)
+	* [KVM和QEMU的关系](#kvm和qemu的关系)
+
+<!-- /code_chunk_output -->
+
 # qemu,kvm,qemu-kvm,xen,libvirt的区别
 
 > 

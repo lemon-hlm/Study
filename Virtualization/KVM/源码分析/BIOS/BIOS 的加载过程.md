@@ -1,19 +1,25 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. QEMU 中使用 BIOS 简介](#1-qemu-中使用-bios-简介)
+	* [清单 1. QEMU 源码树中的 BIOS 文件](#清单-1-qemu-源码树中的-bios-文件)
+			* [清单 2. QEMU 源码树以子模块方式保存的 BIOS 代码](#清单-2-qemu-源码树以子模块方式保存的-bios-代码)
+			* [清单 3. QEMU 的 Makefile 中关于 BIOS 的拷贝操作](#清单-3-qemu-的-makefile-中关于-bios-的拷贝操作)
+	* [2. QEMU 加载 BIOS 过程分析](#2-qemu-加载-bios-过程分析)
+			* [清单 4. 1.7.0 版本 x86_64 QEMU 中支持的类型](#清单-4-170-版本-x86_64-qemu-中支持的类型)
+			* [清单 5. QEMU 中 MemoryRegion 结构体](#清单-5-qemu-中-memoryregion-结构体)
+			* [清单 6. old\_pc\_system\_rom\_init函数中将 BIOS 映射到物理内存空间的代码：](#清单-6-old_pc_system_rom_init函数中将-bios-映射到物理内存空间的代码)
+	* [3. 小结](#3-小结)
+
+<!-- /code_chunk_output -->
+
 https://www.linuxidc.com/Linux/2014-12/110472.htm
-
-1. QEMU 中使用 BIOS 简介
-
-    清单 1. QEMU 源码树中的 BIOS 文件
-
-    清单 2. QEMU 源码树以子模块方式保存的 BIOS 代码
-
-    清单 3. QEMU 的 Makefile 中关于 BIOS 的拷贝操作
-    
-2. QEMU 加载 BIOS 过程分析
-3. 
 
 QEMU 是一个广泛使用的开源计算机仿真器和虚拟机，它提供了虚拟机硬件的虚拟化功能，其使用的某些特定硬件的固件则由一些开源项目提供。本文将介绍 QEMU 代码中使用到的 BIOS，通过分析 QEMU 代码，讲解 BIOS 是如何加载到虚拟机的物理内存。
 
-## 1. QEMU 中使用 BIOS 简介
+# 1. QEMU 中使用 BIOS 简介
 
 BIOS 提供主板或者显卡的固件信息以及基本输入输出功能，QEMU使用的是一些开源的项目，如 Bochs、openBIOS等。
 
@@ -23,7 +29,7 @@ QEMU中使用到的BIOS以及固件一部分以二进制文件的形式保存在
 
 QEMU支持多种启动方式，比如说efi、pxe 等，都包含在该目录下，这些都需要特定BIOS的支持。
 
-#### 清单 1. QEMU 源码树中的 BIOS 文件
+## 清单 1. QEMU 源码树中的 BIOS 文件
 
 ![config](images/1.png)
 

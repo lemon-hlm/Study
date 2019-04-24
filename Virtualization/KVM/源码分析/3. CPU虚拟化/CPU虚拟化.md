@@ -1,3 +1,14 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. VT-x 技术](#1-vt-x-技术)
+* [2. VMCS寄存器](#2-vmcs寄存器)
+* [3. VM-Entry/VM-Exit](#3-vm-entryvm-exit)
+
+<!-- /code_chunk_output -->
+
 ## 1. VT-x 技术
 
 Intel处理器支持的虚拟化技术即是VT-x，之所以CPU支持硬件虚拟化是因为软件虚拟化的效率太低。
