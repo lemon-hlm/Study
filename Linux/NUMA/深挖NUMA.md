@@ -7,7 +7,9 @@
 * [2 Intel处理器变化历史](#2-intel处理器变化历史)
 	* [2.1 UMA](#21-uma)
 	* [2.2 NUMA](#22-numa)
-	* [2.2.1](#221)
+		* [2.2.1 一个Socket一个Core(无core时代, Socket间NUMA)](#221-一个socket一个core无core时代-socket间numa)
+		* [2.2.2 一个Socket少量Core(Socket内UMA, Socket间NUMA)](#222-一个socket少量coresocket内uma-socket间numa)
+		* [2.2.3 一个Socket多Core(Socket内NUMA, Socket间NUMA)](#223-一个socket多coresocket内numa-socket间numa)
 * [3 Linux](#3-linux)
 * [参考](#参考)
 
@@ -29,21 +31,29 @@
 
 ## 2.2 NUMA
 
-之后的x86平台经历了一场从“**拼频率**”到“**拼核心数**”的转变，越来越多的**核心**被尽可能地塞进了**同一块芯片**上，**各个核心**对于**内存带宽的争抢**访问成为了瓶颈；此时软件、OS方面对于SMP多核心CPU的支持也愈发成熟；再加上各种商业上的考量，x86平台也顺水推舟的搞了**NUMA（Non-uniform memory access, 非一致性内存访问**）。
+之后的x86平台经历了一场从“**拼频率**”到“**拼核心数**”的转变，越来越多的**核心**被尽可能地塞进了**同一块芯片**上，**各个核心！！！** 对于 **内存带宽的争抢！！！** 访问成为了瓶颈；
 
-## 2.2.1 
+此时软件、OS方面对于SMP多核心CPU的支持也愈发成熟；
+
+再加上各种商业上的考量，x86平台也顺水推舟的搞了**NUMA（Non-uniform memory access, 非一致性内存访问**）。
+
+### 2.2.1 一个Socket一个Core(无core时代, Socket间NUMA)
 
 在这种架构之下，**每个Socket**都会有一个**独立的内存控制器IMC（integrated memory controllers, 集成内存控制器**），分属于**不同的socket**之内的**IMC之间**通过**QPI link**通讯。
 
 ![](./images/2019-04-24-09-09-45.png)
 
+### 2.2.2 一个Socket少量Core(Socket内UMA, Socket间NUMA)
+
 然后就是进一步的架构演进，由于**每个socket**上都会有**多个core**进行内存访问，这就会在 **每个core(每个socket内部？？？！！！**) 的 **内部** 出现一个**类似最早SMP架构**相似的**内存访问总**线，这个总线被称为**IMC bus**。即, 每个socket内部是SMP的, 不同socket是NUMA的
 
 ![](./images/2019-04-24-09-10-23.png)
 
-于是，很明显的，在这种架构之下，**两个socket**各自管理**1/2的内存插槽**，如果要访问**不属于本socket的内存**则必须通过**QPI link**。也就是说**内存的访问**出现了**本地/远程（local/remote**）的概念，内存的延时是会有显著的区别的。这也就是之前那篇文章中提到的为什么NUMA的设置能够明显的影响到JVM的性能。
+于是，很明显的，在这种架构之下，**两个socket**各自管理**1/2的内存插槽**，如果要访问**不属于本socket的内存**则必须通过**QPI link**。也就是说**内存的访问**出现了**本地/远程（local/remote**）的概念，**内存的延时**是会有**显著的区别**的。这也就是之前那篇文章中提到的为什么NUMA的设置能够明显的影响到JVM的性能。
 
-回到当前世面上的CPU，工程上的实现其实更加复杂了。以[Xeon 2699 v4系列CPU的标准](https://link.zhihu.com/?target=https%3A//ark.intel.com/products/96899/Intel-Xeon-Processor-E5-2699A-v4-55M-Cache-2_40-GHz)来看，**两个Socket**之之间通过各自的一条**9.6GT/s的QPI link互访**。而**每个Socket里面！！！** 事实上有 **2个内存控制器！！！**。**双通道**的缘故，**每个控制器**又有**两个内存通道（channel**），**每个通道**最多支持**3根内存条（DIMM**）。理论上最大**单socket**支持**76.8GB/s的内存带宽**，而**两个QPI link**，每个**QPI link**有**9.6GT/s**的速率（\~57.6GB/s）事实上QPI link已经出现瓶颈了。所以出现了UPI总线。
+### 2.2.3 一个Socket多Core(Socket内NUMA, Socket间NUMA)
+
+回到当前世面上的CPU，工程上的实现其实更加复杂了。以[Xeon 2699 v4系列CPU的标准](https://ark.intel.com/content/www/us/en/ark/products/96899/intel-xeon-processor-e5-2699a-v4-55m-cache-2-40-ghz.html)来看，**两个Socket**之之间通过各自的一条**9.6GT/s的QPI link互访**。而**每个Socket里面！！！** 事实上有 **2个内存控制器！！！**。**双通道**的缘故，**每个控制器**又有**两个内存通道（channel**），**每个通道**最多支持**3根内存条（DIMM**）。理论上最大**单socket**支持**76.8GB/s的内存带宽**，而**两个QPI link**，每个**QPI link**有**9.6GT/s**的速率（\~57.6GB/s）事实上QPI link已经出现瓶颈了。所以出现了UPI总线。
 
 ![](./images/2019-04-24-09-12-24.png)
 
@@ -55,6 +65,26 @@
 
 回到Linux，内核mm/mmzone.c, include/linux/mmzone.h文件定义了NUMA的数据结构和操作方式。
 
+Linux Kernel中NUMA的调度位于kernel/sched/core.c函数int sysctl_numa_balancing
+
+1. 在一个**启用了NUMA支持**的Linux中，Kernel**不会将**任务内存从一个NUMA node搬迁到另一个NUMA node。
+2. 一个进程一旦被启用，它所在的NUMA node就不会被迁移，为了尽可能的优化性能，在正常的调度之中，CPU的core也会尽可能的使用可以local访问的本地core，在进程的整个生命周期之中，NUMA node保持不变。
+3. 一旦当某个NUMA node的负载超出了另一个node一个阈值（默认25%），则认为需要在此node上减少负载，不同的NUMA结构和不同的负载状况，系统见给予一个延时任务的迁移——类似于漏杯算法。在这种情况下将会产生内存的remote访问。
+4. NUMA node之间有不同的拓扑结构，各个 node 之间的访问会有一个**距离**（node distances）的概念，如numactl -H命令的结果有这样的描述：
+
+```
+node distances:
+node  0  1  2  3
+  0: 10 11 21  21
+  1: 11 10 21 21
+  2: 21 21 10 11
+  3: 21 21 11 10
+```
+可以看出：0 node 到0 node之间距离为10，这肯定的最近的距离，不提。0-1之间的距离远小于2或3的距离。这种距离方便系统在较复杂的情况下选择最合适的NUMA设定。
+
+
+
 # 参考
 
 - 本文来自于知乎专栏, 链接: https://zhuanlan.zhihu.com/p/33621500?utm_source=wechat_session&utm_medium=social&utm_oi=50718148919296
+- Xeon 2699 v4系列CPU的标准: https://ark.intel.com/content/www/us/en/ark/products/96899/intel-xeon-processor-e5-2699a-v4-55m-cache-2-40-ghz.html
