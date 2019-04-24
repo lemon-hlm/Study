@@ -1,17 +1,22 @@
-[TOC]
 
-- 1 前言
-    - 1.1 为什么需要内核栈
-    - 1.2 为什么需要thread\_info
-    - 1.3 将两种结构融合在一起
-- 2 内核数据结构描述
-    - 2.1 thread_union
-    - 2.2 task\_struct中的内核栈stack
-    - 2.3 内核栈数据结构描述thread\_info
-- 3 函数接口
-    - 3.1 内核栈与thread\_info的通用操作
-    - 3.2 获取当前在CPU上正在运行进程的thread\_info
-    - 3.3 分配和销毁thread\_info
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 前言](#1-前言)
+	* [1.1 为什么需要内核栈](#11-为什么需要内核栈)
+	* [1.2 为什么需要thread\_info](#12-为什么需要thread_info)
+	* [1.3 将两种结构融合在一起](#13-将两种结构融合在一起)
+* [2 内核数据结构描述](#2-内核数据结构描述)
+	* [2.1 thread\_union](#21-thread_union)
+	* [2.2 task\_struct中的内核栈stack](#22-task_struct中的内核栈stack)
+	* [2.3 内核栈数据结构描述thread\_info](#23-内核栈数据结构描述thread_info)
+* [3 函数接口](#3-函数接口)
+	* [3.1 内核栈与thread\_info的通用操作](#31-内核栈与thread_info的通用操作)
+	* [3.2 获取当前在CPU上正在运行进程的thread\_info](#32-获取当前在cpu上正在运行进程的thread_info)
+	* [3.3 分配和销毁thread\_info](#33-分配和销毁thread_info)
+
+<!-- /code_chunk_output -->
 
 # 1 前言
 

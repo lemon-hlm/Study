@@ -1,21 +1,26 @@
-[TOC]
 
-- 1 用户空间创建进程/线程的三种方法
-- 2 fork, vfork, clone系统调用的实现
-    - 2.1 关于do\_fork和\_do\_frok
-- 3 sys\_fork的实现
-- 4 sys\_vfork的实现
-- 5 sys\_clone的实现
-- 6 创建子进程的流程
-    - 6.1 \_do\_fork的流程
-    - 6.2 copy\_process流程
-    - 6.3 dup\_task\_struct流程
-    - 6.4 sched\_fork流程
-    - 6.5 copy\_thread和copy\_thread\_tls流程
-- 7 总结
-    - 7.1 简化的copy\_process()流程
-    - 7.2 进程退出
-- 8 参考链接
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 用户空间创建进程/线程的三种方法](#1-用户空间创建进程线程的三种方法)
+* [2 fork, vfork, clone系统调用的实现](#2-fork-vfork-clone系统调用的实现)
+	* [2.1 关于do\_fork和\_do\_frok](#21-关于do_fork和_do_frok)
+* [3 sys\_fork的实现](#3-sys_fork的实现)
+* [4 sys\_vfork的实现](#4-sys_vfork的实现)
+* [5 sys\_clone的实现](#5-sys_clone的实现)
+* [6 创建子进程的流程](#6-创建子进程的流程)
+	* [6.1 \_do\_fork的流程](#61-_do_fork的流程)
+	* [6.2 copy\_process流程](#62-copy_process流程)
+	* [6.3 dup\_task\_struct流程](#63-dup_task_struct流程)
+	* [6.4 sched\_fork流程](#64-sched_fork流程)
+	* [6.5 copy\_thread和copy\_thread\_tls流程](#65-copy_thread和copy_thread_tls流程)
+* [7 总结](#7-总结)
+	* [7.1 简化的copy\_process()流程](#71-简化的copy_process流程)
+	* [7.2 进程退出](#72-进程退出)
+* [8 参考链接](#8-参考链接)
+
+<!-- /code_chunk_output -->
 
 >参照
 >

@@ -1,62 +1,67 @@
-[TOC]
 
-- 1 对象文件格式
-    - 1.1 对象文件
-    - 1.2 文件格式
-    - 1.3 ELF对象文件格式
-    - 1.4 ELF文件标准历史
-- 2 本文所使用的测试程序结构
-    - 2.1 add.c
-    - 2.2 sub.c
-    - 2.3 testelf.c
-    - 2.4 Makefile
-- 3 ELF可执行与链接文件格式详解
-    - 3.1 布局和结构
-    - 3.2 ELF基本数据类型定义
-- 4 ELF头部Elfxx\_Ehdr
-    - 4.1 数据成员
-    - 4.2 ELF魔数e\_ident
-        - 4.2.1 魔数
-        - 4.2.2 ELF魔数
-    - 4.3 目标文件类型e\_type
-    - 4.4 目标体系结构类型e\_machine
-    - 4.5 ELF版本e\_version
-    - 4.6 readelf \-h查看elf头部
-        - 4.6.1 可重定位的对象文件(Relocatable file)
-        - 4.6.2 可执行的对象文件(Executable file)
-        - 4.6.3 可被共享的对象文件(Shared object file)
-- 5 程序头部Elf32\_phdr
-    - 5.1 数据结构
-    - 5.2 段类型p\_type
-    - 5.3 readelf \-l查看程序头表
-        - 5.3.1 可重定位的对象文件(Relocatable file)
-        - 5.3.2 可执行的对象文件(Executable file)
-    - 5.3.3 可被共享的对象文件(Shared object file)
-- 6 节区（Sections）
-    - 6.1 节区头部表格
-        - 6.1.1 数据结构
-        - 6.1.2 节区类型sh\_type
-        - 6.1.3 节区标志sh\_flags
-        - 6.1.4 sh\_link 和 sh\_info 字段
-    - 6.2 特殊节区
-    - 6.3 readelf \-S查看节区头表
-        - 6.3.1 可重定位的对象文件(Relocatable file)
-        - 6.3.2 可执行的对象文件(Executable file)
-        - 6.3.3 可被共享的对象文件(Shared object file)
-- 7 字符串表
-    - 7.1 字符串表
-- 8 符号表（Symbol Table）
-    - 8.1 数据结构
-    - 8.2 st\_info给出符号的类型和绑定属性
-    - 8.3 st\_shndx
-    - 8.4 st\_value
-    - 8.5 nm查看符号表
-        - 8.5.1 可执行的对象文件(Executable file)
-        - 8.5.2 可被共享的对象文件(Shared object file)
-    - 8.6 重定位信息
-        - 8.6.1 重定位表项
-        - 8.6.2 ELF32\_R\_TYPE(i)
-- 9 参考
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 对象文件格式](#1-对象文件格式)
+	* [1.1 对象文件](#11-对象文件)
+	* [1.2 文件格式](#12-文件格式)
+	* [1.3 ELF对象文件格式](#13-elf对象文件格式)
+	* [1.4 ELF文件标准历史](#14-elf文件标准历史)
+* [2 本文所使用的测试程序结构](#2-本文所使用的测试程序结构)
+	* [2.1 add.c](#21-addc)
+	* [2.2 sub.c](#22-subc)
+	* [2.3 testelf.c](#23-testelfc)
+	* [2.4 Makefile](#24-makefile)
+* [3 ELF可执行与链接文件格式详解](#3-elf可执行与链接文件格式详解)
+	* [3.1 布局和结构](#31-布局和结构)
+	* [3.2 ELF基本数据类型定义](#32-elf基本数据类型定义)
+* [4 ELF头部Elfxx\_Ehdr](#4-elf头部elfxx_ehdr)
+	* [4.1 数据成员](#41-数据成员)
+	* [4.2 ELF魔数e\_ident](#42-elf魔数e_ident)
+		* [4.2.1 魔数](#421-魔数)
+		* [4.2.2 ELF魔数](#422-elf魔数)
+	* [4.3 目标文件类型e\_type](#43-目标文件类型e_type)
+	* [4.4 目标体系结构类型e\_machine](#44-目标体系结构类型e_machine)
+	* [4.5 ELF版本e\_version](#45-elf版本e_version)
+	* [4.6 readelf \-h查看elf头部](#46-readelf-h查看elf头部)
+		* [4.6.1 可重定位的对象文件(Relocatable file)](#461-可重定位的对象文件relocatable-file)
+		* [4.6.2 可执行的对象文件(Executable file)](#462-可执行的对象文件executable-file)
+		* [4.6.3 可被共享的对象文件(Shared object file)](#463-可被共享的对象文件shared-object-file)
+* [5 程序头部Elf32\_phdr](#5-程序头部elf32_phdr)
+	* [5.1 数据结构](#51-数据结构)
+	* [5.2 段类型p\_type](#52-段类型p_type)
+	* [5.3 readelf \-l查看程序头表](#53-readelf-l查看程序头表)
+		* [5.3.1 可重定位的对象文件(Relocatable file)](#531-可重定位的对象文件relocatable-file)
+		* [5.3.2 可执行的对象文件(Executable file)](#532-可执行的对象文件executable-file)
+		* [5.3.3 可被共享的对象文件(Shared object file)](#533-可被共享的对象文件shared-object-file)
+* [6 节区（Sections）](#6-节区sections)
+	* [6.1 节区头部表格](#61-节区头部表格)
+		* [6.1.1 数据结构](#611-数据结构)
+		* [6.1.2 节区类型sh\_type](#612-节区类型sh_type)
+		* [6.1.3 节区标志sh\_flags](#613-节区标志sh_flags)
+		* [6.1.4 sh\_link 和 sh\_info 字段](#614-sh_link-和-sh_info-字段)
+	* [6.2 特殊节区](#62-特殊节区)
+	* [6.3 readelf -S查看节区头表](#63-readelf-s查看节区头表)
+		* [6.3.1 可重定位的对象文件(Relocatable file)](#631-可重定位的对象文件relocatable-file)
+		* [6.3.2 可执行的对象文件(Executable file)](#632-可执行的对象文件executable-file)
+		* [6.3.3 可被共享的对象文件(Shared object file)](#633-可被共享的对象文件shared-object-file)
+* [7 字符串表](#7-字符串表)
+	* [7.1 字符串表](#71-字符串表)
+* [8 符号表（Symbol Table）](#8-符号表symbol-table)
+	* [8.1 数据结构](#81-数据结构)
+	* [8.2 st\_info给出符号的类型和绑定属性](#82-st_info给出符号的类型和绑定属性)
+	* [8.3 st\_shndx](#83-st_shndx)
+	* [8.4 st\_value](#84-st_value)
+	* [8.5 nm查看符号表](#85-nm查看符号表)
+		* [8.5.1 可执行的对象文件(Executable file)](#851-可执行的对象文件executable-file)
+		* [8.5.2 可被共享的对象文件(Shared object file)](#852-可被共享的对象文件shared-object-file)
+	* [8.6 重定位信息](#86-重定位信息)
+		* [8.6.1 重定位表项](#861-重定位表项)
+		* [8.6.2 ELF32\_R\_TYPE(i)](#862-elf32_r_typei)
+* [9 参考](#9-参考)
+
+<!-- /code_chunk_output -->
 
 # 1 对象文件格式
 

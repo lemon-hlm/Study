@@ -1,20 +1,25 @@
-[TOC]
 
-- 1 Linux中3个特殊的进程
-- 2 idle的创建
-    - 2.1 0号进程上下文信息--init\_task描述符
-        - 2.1.1 进程堆栈init\_thread\_union
-        - 2.1.2 进程内存空间
-- 3 0号进程的演化
-    - 3.1 rest\_init创建init进程(PID=1)和kthread进程(PID=2)
-        - 3.1.1 创建kernel\_init
-        - 3.1.2 创建kthreadd
-    - 3.2 0号进程演变为idle
-- 4 idle的运行与调度
-    - 4.1 idle的workload--cpu\_idle\_loop
-    - 4.2 idle的调度和运行时机
-- 5 idle进程总结
-- 6 附录\-\-rest\_init的执行解析
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 Linux中3个特殊的进程](#1-linux中3个特殊的进程)
+* [2 idle的创建](#2-idle的创建)
+	* [2.1 0号进程上下文信息--init\_task描述符](#21-0号进程上下文信息-init_task描述符)
+		* [2.1.1 进程堆栈init\_thread\_union](#211-进程堆栈init_thread_union)
+		* [2.1.2 进程内存空间](#212-进程内存空间)
+* [3 0号进程的演化](#3-0号进程的演化)
+	* [3.1 rest\_init创建init进程(PID=1)和kthread进程(PID=2)](#31-rest_init创建init进程pid1和kthread进程pid2)
+		* [3.1.1 创建kernel\_init](#311-创建kernel_init)
+		* [3.1.2 创建kthreadd](#312-创建kthreadd)
+	* [3.2 0号进程演变为idle](#32-0号进程演变为idle)
+* [4 idle的运行与调度](#4-idle的运行与调度)
+	* [4.1 idle的workload--cpu\_idle\_loop](#41-idle的workload-cpu_idle_loop)
+	* [4.2 idle的调度和运行时机](#42-idle的调度和运行时机)
+* [5 idle进程总结](#5-idle进程总结)
+* [6 附录\-\-rest\_init的执行解析](#6-附录-rest_init的执行解析)
+
+<!-- /code_chunk_output -->
 
 # 1 Linux中3个特殊的进程
 

@@ -1,35 +1,40 @@
-[TOC]
 
-- 1 前景回顾
-    - 1.1 进程调度
-    - 1.2 进程的分类
-    - 1.3 linux调度器的演变
-    - 1.4 Linux的调度器组成
-        - 1.4.1 2个调度器
-        - 1.4.2 6种调度策略
-        - 1.4.3 5个调度器类
-        - 1.4.4 3个调度实体
-- 2 主调度器
-    - 2.1 调度函数的\_\_sched前缀
-    - 2.2 schedule函数
-        - 2.2.1 schedule主框架
-        - 2.2.2 sched\_submit\_work避免死锁
-        - 2.2.3 preempt\_disable和sched\_preempt\_enable\_no\_resched开关内核抢占
-    - 2.3 \_\_schedule开始进程调度
-        - 2.3.1 \_\_schedule函数主框架
-        - 2.3.2 pick\_next\_task选择抢占的进程
-    - 2.4 context\_switch进程上下文切换
-        - 2.4.1 进程上下文切换
-        - 2.4.2 context\_switch流程
-        - 2.4.3 switch\_mm切换进程虚拟地址空间
-        - 2.4.4 switch\_to切换进程堆栈和寄存器
-    - 2.5 need\_resched, TIF\_NEED\_RESCHED标识与用户抢占
-        - 2.5.1 need\_resched标识TIF\_NEED\_RESCHED
-        - 2.5.2 用户抢占和内核抢占
-- 3 总结
-    - 3.1 schedule调度流程
-    - 3.2 \_\_schedule如何完成内核抢占
-    - 3.3 调度的内核抢占和用户抢占
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 前景回顾](#1-前景回顾)
+	* [1.1 进程调度](#11-进程调度)
+	* [1.2 进程的分类](#12-进程的分类)
+	* [1.3 linux调度器的演变](#13-linux调度器的演变)
+	* [1.4 Linux的调度器组成](#14-linux的调度器组成)
+		* [1.4.1 2个调度器](#141-2个调度器)
+		* [1.4.2 6种调度策略](#142-6种调度策略)
+		* [1.4.3 5个调度器类](#143-5个调度器类)
+		* [1.4.4 3个调度实体](#144-3个调度实体)
+* [2 主调度器](#2-主调度器)
+	* [2.1 调度函数的\_\_sched前缀](#21-调度函数的__sched前缀)
+	* [2.2 schedule函数](#22-schedule函数)
+		* [2.2.1 schedule主框架](#221-schedule主框架)
+		* [2.2.2 sched\_submit\_work()避免死锁](#222-sched_submit_work避免死锁)
+		* [2.2.3 preempt\_disable和sched\_preempt\_enable\_no\_resched开关内核抢占](#223-preempt_disable和sched_preempt_enable_no_resched开关内核抢占)
+	* [2.3 \_\_schedule开始进程调度](#23-__schedule开始进程调度)
+		* [2.3.1 \_\_schedule函数主框架](#231-__schedule函数主框架)
+		* [2.3.2 pick\_next\_task选择抢占的进程](#232-pick_next_task选择抢占的进程)
+	* [2.4 context\_switch进程上下文切换](#24-context_switch进程上下文切换)
+		* [2.4.1 进程上下文切换](#241-进程上下文切换)
+		* [2.4.2 context\_switch流程](#242-context_switch流程)
+		* [2.4.3 switch\_mm切换进程虚拟地址空间](#243-switch_mm切换进程虚拟地址空间)
+		* [2.4.4 switch\_to切换进程堆栈和寄存器](#244-switch_to切换进程堆栈和寄存器)
+	* [2.5 need\_resched, TIF\_NEED\_RESCHED标识与用户抢占](#25-need_resched-tif_need_resched标识与用户抢占)
+		* [2.5.1 need\_resched标识TIF\_NEED\_RESCHED](#251-need_resched标识tif_need_resched)
+		* [2.5.2 用户抢占和内核抢占](#252-用户抢占和内核抢占)
+* [3 总结](#3-总结)
+	* [3.1 **schedule调度流程**](#31-schedule调度流程)
+	* [3.2 **\_\_schedule如何完成内核抢占**](#32-__schedule如何完成内核抢占)
+	* [3.3 **调度的内核抢占和用户抢占**](#33-调度的内核抢占和用户抢占)
+
+<!-- /code_chunk_output -->
 
 # 1 前景回顾
 

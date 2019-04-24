@@ -1,25 +1,30 @@
-[TOC]
 
-- 1 前景回顾
-    - 1.1 CFS调度算法
-    - 1.2 CFS的pick\_next\_fair选择下一个进程
-    - 1.3 CFS如何处理周期性调度
-    - 1.4 唤醒抢占
-- 2 Linux进程的睡眠
-- 3 linux进程的唤醒
-    - 3.1 wake\_up\_process
-    - 3.2 try\_to\_wake\_up
-    - 3.3 wake\_up\_new\_task
-    - 3.4 check\_preempt\_curr
-- 4 无效唤醒
-    - 4.1 无效唤醒的概念
-    - 4.2 无效唤醒的原因
-    - 4.3 避免无效抢占
-- 5 Linux内核的例子
-    - 5.1 一个最基本的例子
-    - 5.2 2号进程的例子-避免无效抢占
-    - 5.3 kthread\_worker\_fn
-- 6 总结
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 前景回顾](#1-前景回顾)
+	* [1.1 CFS调度算法](#11-cfs调度算法)
+	* [1.2 CFS的pick\_next\_fair选择下一个进程](#12-cfs的pick_next_fair选择下一个进程)
+	* [1.3 CFS如何处理周期性调度](#13-cfs如何处理周期性调度)
+	* [1.4 唤醒抢占](#14-唤醒抢占)
+* [2 Linux进程的睡眠](#2-linux进程的睡眠)
+* [3 linux进程的唤醒](#3-linux进程的唤醒)
+	* [3.1 wake\_up\_process](#31-wake_up_process)
+	* [3.2 try\_to\_wake\_up](#32-try_to_wake_up)
+	* [3.3 wake\_up\_new\_task](#33-wake_up_new_task)
+	* [3.4 check\_preempt\_curr](#34-check_preempt_curr)
+* [4 无效唤醒](#4-无效唤醒)
+	* [4.1 无效唤醒的概念](#41-无效唤醒的概念)
+	* [4.2 无效唤醒的原因](#42-无效唤醒的原因)
+	* [4.3 避免无效抢占](#43-避免无效抢占)
+* [5 Linux内核的例子](#5-linux内核的例子)
+	* [5.1 一个最基本的例子](#51-一个最基本的例子)
+	* [5.2 2号进程的例子-避免无效抢占](#52-2号进程的例子-避免无效抢占)
+	* [5.3 kthread\_worker\_fn](#53-kthread_worker_fn)
+* [6 总结](#6-总结)
+
+<!-- /code_chunk_output -->
 
 CFS负责处理普通非实时进程, 这类进程是我们linux中最普遍的进程
 

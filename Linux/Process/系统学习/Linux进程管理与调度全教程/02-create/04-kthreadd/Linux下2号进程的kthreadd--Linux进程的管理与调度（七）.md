@@ -1,11 +1,16 @@
-[TOC]
 
-- 1 2号进程
-- 2 2号进程的创建
-- 3 2号进程的事件循环
-- 4 create\_kthread完成内核线程创建
-- 5 新创建的内核线程kthread函数
-- 6 总结
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 2号进程](#1-2号进程)
+* [2 2号进程的创建](#2-2号进程的创建)
+* [3 2号进程的事件循环](#3-2号进程的事件循环)
+* [4 create\_kthread完成内核线程创建](#4-create_kthread完成内核线程创建)
+* [5 新创建的内核线程kthread函数](#5-新创建的内核线程kthread函数)
+* [6 总结](#6-总结)
+
+<!-- /code_chunk_output -->
 
 我们下面就详解分析2号进程kthreadd
 

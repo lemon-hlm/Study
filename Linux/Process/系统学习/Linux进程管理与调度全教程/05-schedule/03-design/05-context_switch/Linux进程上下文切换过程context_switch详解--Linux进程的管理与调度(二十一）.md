@@ -1,31 +1,36 @@
-[TOC]
 
-- 1 前景回顾
-    - 1.1 Linux的调度器组成
-        - 1.1.1 2个调度器
-        - 1.1.2 6种调度策略
-        - 1.1.3 5个调度器类
-        - 1.1.4 3个调度实体
-    - 1.2 调度工作
-- 2 进程上下文
-    - 2.1 进程上下文的概念
-    - 2.2 上下文切换
-- 3 context\_switch进程上下文切换
-    - 3.1 context\_switch完全注释
-    - 3.2 prepare\_arch\_switch切换前的准备工作
-    - 3.3 next是内核线程时的处理
-    - 3.4 switch\_mm切换进程虚拟地址空间
-        - 3.4.1 switch\_mm函数
-        - 3.4.2 CPU\-CR0\~CR4寄存器
-        - 3.4.3 保护模式下的GDT、LDT和IDT
-        - 3.4.4 switch\_mm函数注释
-    - 3.5 prev是内核线程时的处理
-    - 3.6 switch\_to完成进程切换
-        - 3.6.1 switch\_to函数
-        - 3.6.2 为什么switch\_to需要3个参数
-        - 3.6.3 switch\_to函数注释
-    - 3.7 barrier路障同步
-    - 3.8 finish\_task\_switch完成清理工作
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 前景回顾](#1-前景回顾)
+	* [1.1 Linux的调度器组成](#11-linux的调度器组成)
+		* [1.1.1 2个调度器](#111-2个调度器)
+		* [1.1.2 6种调度策略](#112-6种调度策略)
+		* [1.1.3 5个调度器类](#113-5个调度器类)
+		* [1.1.4 3个调度实体](#114-3个调度实体)
+	* [1.2 调度工作](#12-调度工作)
+* [2 进程上下文](#2-进程上下文)
+	* [2.1 进程上下文的概念](#21-进程上下文的概念)
+	* [2.2 上下文切换](#22-上下文切换)
+* [3 context\_switch进程上下文切换](#3-context_switch进程上下文切换)
+	* [3.1 context\_switch完全注释](#31-context_switch完全注释)
+	* [3.2 prepare\_arch\_switch切换前的准备工作](#32-prepare_arch_switch切换前的准备工作)
+	* [3.3 next是内核线程时的处理](#33-next是内核线程时的处理)
+	* [3.4 switch\_mm切换进程虚拟地址空间](#34-switch_mm切换进程虚拟地址空间)
+		* [3.4.1 switch\_mm函数](#341-switch_mm函数)
+		* [3.4.2 CPU-CR0\~CR4寄存器](#342-cpu-cr0~cr4寄存器)
+		* [3.4.3 保护模式下的GDT、LDT和IDT](#343-保护模式下的gdt-ldt和idt)
+		* [3.4.4 switch\_mm函数注释](#344-switch_mm函数注释)
+	* [3.5 prev是内核线程时的处理](#35-prev是内核线程时的处理)
+	* [3.6 switch\_to完成进程切换](#36-switch_to完成进程切换)
+		* [3.6.1 switch\_to函数](#361-switch_to函数)
+		* [3.6.2 为什么switch\_to需要3个参数](#362-为什么switch_to需要3个参数)
+		* [3.6.3 switch\_to函数注释](#363-switch_to函数注释)
+	* [3.7 barrier路障同步](#37-barrier路障同步)
+	* [3.8 finish\_task\_switch完成清理工作](#38-finish_task_switch完成清理工作)
+
+<!-- /code_chunk_output -->
 
 前面我们了解了linux进程调度器的设计思路和注意框架
 

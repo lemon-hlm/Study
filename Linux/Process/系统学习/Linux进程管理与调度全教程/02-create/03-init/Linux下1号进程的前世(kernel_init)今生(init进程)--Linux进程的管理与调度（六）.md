@@ -1,12 +1,17 @@
-[TOC]
 
-- 1 1号进程
-    - 1.1 kernel\_init
-    - 1.2 init进程
-    - 1.3 关于init程序
-- 2 附录
-    - 2.1 kernel\_init\_freeable流程分析
-    - 2.2 kernel\_init分析
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 1号进程](#1-1号进程)
+	* [1.1 kernel\_init](#11-kernel_init)
+	* [1.2 init进程](#12-init进程)
+	* [1.3 关于init程序](#13-关于init程序)
+* [2 附录](#2-附录)
+	* [2.1 kernel\_init\_freeable流程分析](#21-kernel_init_freeable流程分析)
+	* [2.2 kernel\_init分析](#22-kernel_init分析)
+
+<!-- /code_chunk_output -->
 
 我们下面就详解分析1号进程的前世(kernel\_init)今生(init进程)
 
