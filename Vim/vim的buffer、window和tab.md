@@ -1,3 +1,13 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [标签页(Tab)](#标签页tab)
+* [Buffer](#buffer)
+
+<!-- /code_chunk_output -->
+
 Vim 中的 window 和 tab 非常具有迷惑性，跟我们平时所说的 “窗口” 和 “标签页” ，是完全不同的两个概念，请看 vimdoc 给出的定义:
 
 ```

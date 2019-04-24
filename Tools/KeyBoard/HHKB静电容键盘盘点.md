@@ -1,4 +1,17 @@
-https://www.wstx.com/p-24109
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [0 概述](#0-概述)
+* [1 HHKB Professional 2](#1-hhkb-professional-2)
+* [2 HHKB Professional 2 Type\-S](#2-hhkb-professional-2-type-s)
+* [3 HHKB Professional BT](#3-hhkb-professional-bt)
+* [4 参考](#4-参考)
+
+<!-- /code_chunk_output -->
+
+# 0 概述
 
 HHKB 全称 Happy Hacking Keyboard ，于 1996 年 12 月 20 日诞生于日本，由和田英一教授和株式会社 PFU 共同开发。
 
@@ -37,3 +50,7 @@ HHKB Professional BT外观依旧是延续其经典的按键布局，共推出了
 与以往系列的静电容键盘不同的是HHKB Professional BT在上边缘位置设计了圆柱形的电池仓，采用AA电池进行供电，虽然看起来有点落伍，但与内置锂电池的设计相比，续航时间大幅延长，即便偶尔遇到电池没电也可以通过更换电池来快速解决。
 
 HHKB Professional BT的按键行程同HHKB Professional 2，为4.0mm，手感也相同。可以说HHKB Professional BT就是蓝牙版的HHKB Professional 2。
+
+# 4 参考
+
+https://www.wstx.com/p-24109

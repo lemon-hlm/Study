@@ -1,4 +1,22 @@
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [图形小抄（Graphical cheat sheet）](#图形小抄graphical-cheat-sheet)
+* [图形化教程（Graphical cheat sheet based tutorial）](#图形化教程graphical-cheat-sheet-based-tutorial)
+		* [lession 1:](#lession-1)
+		* [lession 2:](#lession-2)
+		* [lession 3:](#lession-3)
+		* [lession 4:](#lession-4)
+		* [lession 5:](#lession-5)
+		* [lession 6:](#lession-6)
+		* [lession 7:](#lession-7)
+* [vim 命令图解](#vim-命令图解)
+* [Vim特性图解](#vim特性图解)
+
+<!-- /code_chunk_output -->
+
 ```
 翻译自
 http://www.viemu.com/a_vi_vim_graphical_cheat_sheet_tutorial.html

@@ -1,4 +1,13 @@
-[TOC]
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 不/显示隐藏文件](#1-不显示隐藏文件)
+* [2 剪切功能实现](#2-剪切功能实现)
+* [3 重命名功能](#3-重命名功能)
+
+<!-- /code_chunk_output -->
 
 # 1 不/显示隐藏文件
 

@@ -1,3 +1,20 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. 简介](#1-简介)
+* [2. Vundle的安装和使用](#2-vundle的安装和使用)
+	* [1. Vundle的安装](#1-vundle的安装)
+	* [2. 配置说明](#2-配置说明)
+	* [3. 配置vundle插件](#3-配置vundle插件)
+	* [4. 安装需要的插件](#4-安装需要的插件)
+	* [5. 卸载插件](#5-卸载插件)
+* [3. Vundle常用命令](#3-vundle常用命令)
+* [4. 参考](#4-参考)
+
+<!-- /code_chunk_output -->
+
 参考：
 
 http://blog.csdn.net/jiaolongdy/article/details/17889787/
