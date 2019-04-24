@@ -1,6 +1,22 @@
-https://www.cnblogs.com/arnoldlu/p/6695451.html
 
-## 概要
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [0 概要](#0-概要)
+* [1 测试方法准备](#1-测试方法准备)
+* [2 链表、双向链表、无锁链表](#2-链表-双向链表-无锁链表)
+	* [2.1 Simple doubly linked list](#21-simple-doubly-linked-list)
+	* [2.2 Doubly linked list with a single pointer list head](#22-doubly-linked-list-with-a-single-pointer-list-head)
+	* [2.3 Lock-less NULL terminated single linked list](#23-lock-less-null-terminated-single-linked-list)
+* [3 B\+树](#3-b树)
+* [4 优先排序列表](#4-优先排序列表)
+* [5 红黑树](#5-红黑树)
+* [6 参考](#6-参考)
+
+<!-- /code_chunk_output -->
+
+# 0 概要
 
 算法和数据结构纷繁复杂，但是对于Linux Kernel开发人员来说重点了解Linux内核中使用到的算法和数据结构很有必要。
 
@@ -22,7 +38,7 @@ https://www.cnblogs.com/arnoldlu/p/6695451.html
 
 5. 红黑树
 
-## 1. 测试方法准备
+# 1 测试方法准备
 
 由于需要在内核中进行代码测试验证，完整编译安装内核比较耗时耗力。准备采用module形式来验证。
 
@@ -89,7 +105,7 @@ lsmod | grep linked-list
 sudo rmmod linked-list
 ```
 
-## 2. 链表、双向链表、无锁链表
+# 2 链表、双向链表、无锁链表
 
 
 > [Linked list](https://github.com/mirrors/linux-2.6/blob/master/lib/llist.c), [doubly linked list](https://github.com/mirrors/linux-2.6/blob/master/include/linux/list.h), [lock-free linked list](https://github.com/mirrors/linux-2.6/blob/master/include/linux/llist.h).
@@ -106,7 +122,7 @@ sudo rmmod linked-list
 
 循环链表的特点是尾节点的后继指向首节点。前面已经给出了双循环链表的示意图，它的特点是从任意一个节点出发，沿两个方向的任何一个，都能找到链表中的任意一个数据。如果去掉前驱指针，就是单循环链表。
 
-### 2.1 Simple doubly linked list
+## 2.1 Simple doubly linked list
 
 数据结构：
 
@@ -202,7 +218,7 @@ list_for_each_entry_reverse(pos, head, member) 反向操作
 static inline int list_empty(const struct list_head *head)
 ```
 
-### 2.2 Doubly linked list with a single pointer list head
+## 2.2 Doubly linked list with a single pointer list head
 
 linux内核里边除了著名的list双向循环链表以外，还有一个重要的数据结构，就是哈希链表。哈希链表也在很多重要的地方有所使用，比如linux内核的dentry，进程查询，文件系统等，可以说，弄明白hlist对于理解linux内核具有重要的意义。
 
@@ -260,7 +276,7 @@ hlist_for_each_entry(pos, head, member)
 hlist_for_each_entry_safe(pos, n, head, member)
 ```
 
-### 2.3 Lock-less NULL terminated single linked list
+## 2.3 Lock-less NULL terminated single linked list
 
 无锁链表定义在include/linux/llist.h。
 
@@ -302,7 +318,7 @@ llist\_add、llist\_add\_batch、llist\_del\_first都是基于cmpxchg原子操�
 
 cmpxchg(void\* ptr, int old, int new)，如果ptr和old的值一样，则把new写到ptr内存，否则返回ptr的值，整个操作是原子的。在Intel平台下，会用lock cmpxchg来实现，这里的lock个人理解是锁住内存总线，这样如果有另一个线程想访问ptr的内存，就会被block住。
 
-## 3. B\+树
+# 3 B\+树
 
 关于B树及B树衍生树有篇介绍不错《从B树、B+树、B*树谈到R 树》。
 
@@ -317,13 +333,13 @@ B树诞生的背景：
 O(n) 表示某函数值(未列出)是 n 的常数倍；亦即他们增长的速度相当.称 大O,big O (发音 "欧" 英文字母 O )
 同理:O(logN):是 logN 的常数倍；O(nlogn):是 nlogn 的常数倍
 
-## 4. 优先排序列表
+# 4 优先排序列表
 
 > [Priority sorted lists](https://github.com/mirrors/linux-2.6/blob/master/include/linux/plist.h) used for [mutexes](https://github.com/mirrors/linux-2.6/blob/b3a3a9c441e2c8f6b6760de9331023a7906a4ac6/include/linux/rtmutex.h), [drivers](https://github.com/mirrors/linux-2.6/blob/f0d55cc1a65852e6647d4f5d707c1c9b5471ce3c/drivers/powercap/intel_rapl.c), etc.
 
 plist有两个重要结构体struct plist\_head和struct plist\_node，分别用来表示plist表头和plist节点。
 
-```
+```cpp
 struct plist_head {
     struct list_head node_list;
 }；
@@ -337,7 +353,7 @@ struct plist_node {
 
 相关函数：
 
-```
+```cpp
 PLIST_HEAD(head) 初始化plist表头
 PLIST_NODE_INIT(node, __prio) 初始化plist节点
 static inline void plist_head_init(struct plist_head *head) 初始化plist表头
@@ -369,7 +385,7 @@ static inline struct plist_node *plist_last(const struct plist_head *head)
 
 下面是对plist进行的一些验证：
 
-```
+```cpp
 static dump_list(void)
 {
     struct plist_node *node_pos, *first_node, *last_node;
@@ -486,6 +502,10 @@ static int  __init plist_test(void)
 *        |-------------------------------------------------|
 ```
 
-## 5. 红黑树
+# 5 红黑树
 
 > [Red-Black trees](https://github.com/mirrors/linux-2.6/blob/master/include/linux/rbtree.h) are [used](http://lwn.net/Articles/184495/) for scheduling, virtual memory management, to track file descriptors and directory entries,etc.
+
+# 6 参考
+
+https://www.cnblogs.com/arnoldlu/p/6695451.html

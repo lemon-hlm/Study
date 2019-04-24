@@ -1,10 +1,27 @@
-https://blog.csdn.net/ljy1988123/article/details/48391745
 
-## 1 链表与哈希表
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 链表与哈希表](#1-链表与哈希表)
+	* [1.1 双向链表](#11-双向链表)
+	* [1.2 hlist](#12-hlist)
+	* [1.3 ScatterList](#13-scatterlist)
+		* [1.3.1 scatterlist的存储结构](#131-scatterlist的存储结构)
+		* [1.3.2 scatterlist的遍历](#132-scatterlist的遍历)
+	* [1.4 llist](#14-llist)
+* [LRU](#lru)
+	* [List-lru](#list-lru)
+	* [LIRS](#lirs)
+* [参考](#参考)
+
+<!-- /code_chunk_output -->
+
+# 1 链表与哈希表
 
 链表可以把离散时间到达的数据结构串起来，使其可以被更容易的索引。Linux内核中全部使用双向链表。那为何链表要与哈希表放在一起介绍呢？因为哈希表是由链表群组成的，其每一个哈希桶都是一个链表。而linux内核中全部使用双向链表，这个链表在应用到哈希表时要针对性的优化。
 
-### 1.1 双向链表
+## 1.1 双向链表
 
 ![config](images/19.png)
 
@@ -14,7 +31,7 @@ Linux采用了一个取巧的做法。其双向链表的节点不包含实际的
 
 Container\_of的作用是已知结构体某个域的指针，求出结构体实例的指针。原理是根据结构体定义得出已知指针的便宜，用已知指针减去这个偏移就是结构体的指针。
 
-### 1.2 hlist
+## 1.2 hlist
 
 双向链表有个显而易见的坏处，就是如果有很多链表，但可能大部分链表都很短的时候（很可能只有一个节点），此时双向链表的next和prev的作用都可以用一个域来替代。典型的是哈希表，我们知道哈希表使用哈希函数计算得到一个地址，然后直接访问该地址的机制实现快速访问的，但是哈希算法不可避免的会有哈希冲突（多个输入产生了同一个地址输出），此时解决冲突的方法就是哈希桶，一般在同一个计算地址的位置实现一个链表，该链表链出所有哈希结果为本地址的值。
 
@@ -24,7 +41,7 @@ Container\_of的作用是已知结构体某个域的指针，求出结构体实�
 
 哈希链表本质上也是个双向链表，但是组织方式与双向列表并不完全一样。
 
-```
+```cpp
 //hash桶的头结点  
 struct hlist_head {  
     struct hlist_node *first;//指向每一个hash桶的第一个结点的指针  
@@ -40,15 +57,15 @@ Linux双向列表是环形的，而hlist是有特定的头部结构的。其头�
 
 这个问题其实为了适应头部设计而引入的副作用的解决方法。我们前面讨论过，之所以要设计头部为一个整数大小的原因（哈希桶的空间利用率），而这个头部的引入，导致了第一个节点和后面节点的不同。第一个节点指向的prev和后面的节点的prev在结构上和定义上不同。为此，所有相关的操作（添加、删除、遍历等）都得特别照顾第一个节点（多一个特殊情况判断）。无疑能从数据结构设计上将这种特殊情况去掉是最好的。hlist的设计做到。其prev并不是指向上一个节点的数据结构，而是指向上一个节点的next节点。这对于头部节点来说，上一个节点的数据结构是hlist\_head，而上一个节点的下一个next节点的类型是struct hlist\_node *，采用后者就能让第一个节点和后续的节点对所有操作展现出一样的接口。
 
-### 1.3 ScatterList
+## 1.3 ScatterList
 
-#### 1.3.1 scatterlist的存储结构
+### 1.3.1 scatterlist的存储结构
          
 该数据结构存在的原因是系统运行会产生内存碎片，为了利用内存碎片传送大数据，在DMA支持分离的多块内存同时的传输下，对应的产生的软件结构。其表示的是多块分离的内存。
 
 scatterlist的主要结构体是：
 
-```
+```cpp
 struct scatterlist {
 
          unsignedlong  page_link;    //指向下个scatterlist节点的地址
@@ -70,7 +87,7 @@ struct scatterlist {
 
 当一个scatterlist结构体用作级联的情况下，该结构体内的其他域都为0，表示该节点不指向任何可用的存储空间，而是只是用来连接下一个scatterlist table的桥梁。
 
-```
+```cpp
 struct sg_table {
 
          structscatterlist *sgl;     /* the list */
@@ -84,11 +101,11 @@ struct sg_table {
 
 sg\_table是对scatter\_list的总体概括，内含了scaterlist和一个map之前的块数目，和一个map之后的块数目。这里的map的意义是，各个分离的内存有可能恰好相邻，可以合并。
 
-#### 1.3.2 scatterlist的遍历
+### 1.3.2 scatterlist的遍历
 
 scatterlist table由于可以被拼接（chain），不同的scatterlist如果所指向的内存是相邻的还可以被合并，所以其遍历格外复杂。
 
-### 1.4 llist
+## 1.4 llist
 
 llist全称是Lock-less NULL terminated single linked list，意思是不需要加锁的list。在生产者消费者模型下，如果有多个生产者和多个消费者，生产者意味者链表添加，消费者意味着链表删除操作。但多个一起操作时就需要加锁，加锁毕竟是高耗费的操作，内核现在流行无锁操作，为这个需求诞生的专门的list就是llist。
 
@@ -98,12 +115,16 @@ llist全称是Lock-less NULL terminated single linked list，意思是不需要�
 
 作者是intel公司的 Huang Ying。
 
-## LRU
+# LRU
 
-### List-lru
+## List-lru
 
 在mm下有定义，主要用在内存管理。在 Linux 中，操作系统对 LRU 的实现主要是基于一对双向链表：active链表和 inactive 链表，这两个链表是 Linux操作系统进行页面回收所依赖的关键数据结构，每个内存区域都存在一对这样的链表。顾名思义，那些经常被访问的处于活跃状态的页面会被放在active链表上，而那些虽然可能关联到一个或者多个进程，但是并不经常使用的页面则会被放到inactive链表上。页面会在这两个双向链表中移动，操作系统会根据页面的活跃程度来判断应该把页面放到哪个链表上。页面可能会从 active 链表上被转移到 inactive链表上，也可能从 inactive 链表上被转移到 active链表上，但是，这种转移并不是每次页面访问都会发生，页面的这种转移发生的间隔有可能比较长。那些最近最少使用的页面会被逐个放到inactive 链表的尾部。进行页面回收的时候，Linux操作系统会从 inactive链表的尾部开始进行回收。
 
-### LIRS
+## LIRS
 
 这个算法是LRU的改进算法。LRU在遍历时会导致被全部刷新，失去意义，反而会带来效率的损失。但是LIRS使用两层列表，一个是cold，一个是hot。利用两层数据保证经常使用的数据不被遍历操作刷掉。但是这个算法在内核中还没有实现，估计日后有人会做。
+
+# 参考
+
+https://blog.csdn.net/ljy1988123/article/details/48391745
