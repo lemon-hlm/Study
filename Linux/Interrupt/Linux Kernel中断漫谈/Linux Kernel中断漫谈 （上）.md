@@ -1,10 +1,17 @@
-- 1 概述
-- 2 中断
-    - 2.1 x86中断子系统
-        - 2.1.1 Intel 8259A芯片
-        - 2.1.2 APIC
-    - 2.2 ARM中断子系统
-    - 2.3 SMP IRQ affinity
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 概述](#1-概述)
+* [2 中断](#2-中断)
+	* [2.1 x86中断子系统](#21-x86中断子系统)
+		* [2.1.1 Intel 8259A芯片](#211-intel-8259a芯片)
+		* [2.1.2 APIC](#212-apic)
+	* [2.2 ARM中断子系统](#22-arm中断子系统)
+	* [2.3 SMP IRQ affinity](#23-smp-irq-affinity)
+
+<!-- /code_chunk_output -->
 
 # 1 概述
 

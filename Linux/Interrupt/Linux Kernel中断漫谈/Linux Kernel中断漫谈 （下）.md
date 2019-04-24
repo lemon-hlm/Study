@@ -1,20 +1,27 @@
-- 3 x86下Linux的中断向量表
-    - 3.1 异常中断向量（0 - 15, 0x0h - 0xfh）
-    - 3.2 不可屏蔽中断向量（16 - 31， 0x10h - 0x1fh）
-    - 3.3 可屏蔽中断向量（32 - 47， 0x20h - 0x2fh）
-    - 3.4 软中断向量（48 - 255， 0x30h - 0xffh）
-- 4 protect mode中断模式切换
-    - 4.1 Call gates & Task Gate
-    - 4.2 Trap gates & Interrupt gates
-    - 4.3 Fast System Call
-    - 4.4 Interrupt Context
-- 5 Linux Top and Bottom Half
-    - 5.1 Softirq & Tasklet
-    - 5.2 WOrking Queue
-- 6 热插拔(Hot-Plug)
-- 7 时钟中断
-- 8 网络中断
-- 9 TX and RX
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [3 x86下Linux的中断向量表](#3-x86下linux的中断向量表)
+	* [3.1 异常中断向量（0 - 15, 0x0h - 0xfh）](#31-异常中断向量0-15-0x0h-0xfh)
+	* [3.2 不可屏蔽中断向量（16 - 31， 0x10h - 0x1fh）](#32-不可屏蔽中断向量16-31-0x10h-0x1fh)
+	* [3.3 可屏蔽中断向量（32 - 47， 0x20h - 0x2fh）](#33-可屏蔽中断向量32-47-0x20h-0x2fh)
+	* [3.4 软中断向量（48 - 255， 0x30h - 0xffh）](#34-软中断向量48-255-0x30h-0xffh)
+* [4 protect mode中断模式切换](#4-protect-mode中断模式切换)
+	* [4.1 Call gates & Task Gate](#41-call-gates-task-gate)
+	* [4.2 Trap gates & Interrupt gates](#42-trap-gates-interrupt-gates)
+	* [4.3 Fast System Call](#43-fast-system-call)
+	* [4.4 Interrupt Context](#44-interrupt-context)
+* [5 Linux Top and Bottom Half](#5-linux-top-and-bottom-half)
+	* [5.1 Softirq & Tasklet](#51-softirq-tasklet)
+	* [5.2 WOrking Queue](#52-working-queue)
+* [6 热插拔(Hot\-Plug)](#6-热插拔hot-plug)
+* [7 时钟中断](#7-时钟中断)
+* [8 网络中断](#8-网络中断)
+* [9 TX and RX](#9-tx-and-rx)
+
+<!-- /code_chunk_output -->
 
 # 3 x86下Linux的中断向量表
 

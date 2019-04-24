@@ -1,13 +1,19 @@
-[TOC]
-- 1 命名空间概念
-- 2 Linux内核命名空间描述
-- 3 命名空间的创建
-    - 3.1 PID Namespace
-    - 3.2 IPC Namespace
-    - 3.3 mount Namespace
-    - 3.4 Network Namespace
-    - 3.5 UTS Namespace
-    - 3.6 user\_namespace
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 命名空间概念](#1-命名空间概念)
+* [2 Linux内核命名空间描述](#2-linux内核命名空间描述)
+* [3 命名空间的创建](#3-命名空间的创建)
+	* [3.1 PID Namespace](#31-pid-namespace)
+	* [3.2 IPC Namespace](#32-ipc-namespace)
+	* [3.3 mount Namespace](#33-mount-namespace)
+	* [3.4 Network Namespace](#34-network-namespace)
+	* [3.5 UTS Namespace](#35-uts-namespace)
+	* [3.6 user\_namespace](#36-user_namespacehttplxrfree-electronscomsourceincludelinuxuser_namespacehl25)
+
+<!-- /code_chunk_output -->
 
 Linux Namespaces机制提供一种**资源隔离**方案。
 

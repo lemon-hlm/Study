@@ -1,27 +1,32 @@
-[TOC]
 
-- 1 进程ID概述
-    - 1.1 进程ID类型
-    - 1.2 PID命名空间
-        - 1.2.1 pid命名空间概述
-        - 1.2.2 局部ID和全局ID
-        - 1.2.3 PID命名空间数据结构pid\_namespace
-- 2 pid结构描述
-    - 2.1 pid与upid
-    - 2.2 pidmap用于分配pid的位图
-    - 2.3 pid\_link哈希表存储
-    - 2.4 task\_struct中的进程ID相关描述符信息
-- 3 内核是如何设计task\_struct中进程ID相关数据结构的
-    - 3.1 一个PID对应一个task时的task\_struct设计
-    - 3.2 如何快速地根据局部ID、命名空间、ID类型找到对应进程的task\_struct
-    - 3.3 如何快速地给新进程在可见的命名空间内分配一个唯一的PID
-    - 3.4 带进程ID类型的task\_struct设计
-    - 3.5 进一步增加进程PID命名空间的task\_struct设计
-- 4 进程ID管理函数
-    - 4.1 pid号到struct pid实体
-    - 4.2 获得局部ID
-    - 4.3 根据PID查找进程task\_struct
-    - 4.4 生成唯一的PID
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 进程ID概述](#1-进程id概述)
+	* [1.1 进程ID类型](#11-进程id类型)
+	* [1.2 PID命名空间](#12-pid命名空间)
+		* [1.2.1 pid命名空间概述](#121-pid命名空间概述)
+		* [1.2.2 局部ID和全局ID](#122-局部id和全局id)
+		* [1.2.3 PID命名空间数据结构pid\_namespace](#123-pid命名空间数据结构pid_namespace)
+* [2 pid结构描述](#2-pid结构描述)
+	* [2.1 pid与upid](#21-pid与upid)
+	* [2.2 pidmap用于分配pid的位图](#22-pidmap用于分配pid的位图)
+	* [2.3 pid\_link哈希表存储](#23-pid_link哈希表存储)
+	* [2.4 task\_struct中的进程ID相关描述符信息](#24-task_struct中的进程id相关描述符信息)
+* [3 内核是如何设计task\_struct中进程ID相关数据结构的](#3-内核是如何设计task_struct中进程id相关数据结构的)
+	* [3.1 一个PID对应一个task时的task\_struct设计](#31-一个pid对应一个task时的task_struct设计)
+	* [3.2 如何快速地根据局部ID、命名空间、ID类型找到对应进程的task\_struct](#32-如何快速地根据局部id-命名空间-id类型找到对应进程的task_struct)
+	* [3.3 如何快速地给新进程在可见的命名空间内分配一个唯一的PID](#33-如何快速地给新进程在可见的命名空间内分配一个唯一的pid)
+	* [3.4 带进程ID类型的task\_struct设计](#34-带进程id类型的task_struct设计)
+	* [3.5 进一步增加进程PID命名空间的task\_struct设计](#35-进一步增加进程pid命名空间的task_struct设计)
+* [4 进程ID管理函数](#4-进程id管理函数)
+	* [4.1 pid号到struct pid实体](#41-pid号到struct-pid实体)
+	* [4.2 获得局部ID](#42-获得局部id)
+	* [4.3 根据PID查找进程task\_struct](#43-根据pid查找进程task_struct)
+	* [4.4 生成唯一的PID](#44-生成唯一的pid)
+
+<!-- /code_chunk_output -->
 
 Linux 内核使用 task\_struct 数据结构来关联所有与进程有关的数据和结构，Linux 内核所有涉及到进程和程序的所有算法都是围绕该数据结构建立的，是内核中最重要的数据结构之一。
 

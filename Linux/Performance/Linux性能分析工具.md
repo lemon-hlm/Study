@@ -1,4 +1,31 @@
-[TOC]
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 性能分析工具](#1-性能分析工具)
+	* [1.1 vmstat -- 虚拟内存统计](#11-vmstat-虚拟内存统计)
+	* [1.2 iostat -- 用于设备的IO统计信息](#12-iostat-用于设备的io统计信息)
+	* [1.3 dstat -- 系统监控工具](#13-dstat-系统监控工具)
+	* [1.4 iotop -- Linux进程对IO的实时监控工具](#14-iotop-linux进程对io的实时监控工具)
+	* [1.5 pidstat -- 监控进程对系统资源情况](#15-pidstat-监控进程对系统资源情况)
+	* [1.6 top](#16-top)
+	* [1.7 htop -- 进程查看器](#17-htop-进程查看器)
+	* [1.8 mpstat -- 多处理器实时系统监控工具](#18-mpstat-多处理器实时系统监控工具)
+	* [1.9 netstat -- 网络连接信息](#19-netstat-网络连接信息)
+	* [1.10 ps -- 显示当前进程的状态](#110-ps-显示当前进程的状态)
+	* [1.11 strace -- 跟踪程序执行过程中系统调用及收到的信号](#111-strace-跟踪程序执行过程中系统调用及收到的信号)
+	* [1.12 uptime -- 系统运行时间与平均负荷](#112-uptime-系统运行时间与平均负荷)
+	* [1.13 lsof -- 列出当前系统打开文件](#113-lsof-列出当前系统打开文件)
+	* [1.14 perf -- 性能调优工具](#114-perf-性能调优工具)
+* [2 常用的性能测试工具](#2-常用的性能测试工具)
+	* [2.1 Linux observability tools | Linux性能测试工具](#21-linux-observability-tools-linux性能测试工具)
+	* [2.2 Linux benchmarking tools | Linux 性能测评工具](#22-linux-benchmarking-tools-linux-性能测评工具)
+	* [2.3 Linux tuning tools | Linux 性能调优工具](#23-linux-tuning-tools-linux-性能调优工具)
+	* [2.4 Linux observability sar | linux性能观测工具](#24-linux-observability-sar-linux性能观测工具)
+* [3 参考详单](#3-参考详单)
+
+<!-- /code_chunk_output -->
 
 # 1 性能分析工具
 
