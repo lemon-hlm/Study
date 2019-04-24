@@ -1,11 +1,16 @@
-[TOC]
 
-- 1 stop调度器类stop\_sched\_class
-- 2 stop\_machine机制
-    - 2.1 cpu\_stop\_work
-    - 2.2 stop\_one\_cpu
-    - 2.3 stop\_machine
-    - 2.4 stop\_machine机制的应用
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 stop调度器类stop\_sched\_class](#1-stop调度器类stop_sched_class)
+* [2 stop\_machine机制](#2-stop_machine机制)
+	* [2.1 cpu\_stop\_work](#21-cpu_stop_work)
+	* [2.2 stop\_one\_cpu](#22-stop_one_cpu)
+	* [2.3 stop\_machine](#23-stop_machine)
+* [2.4 stop\_machine机制的应用](#24-stop_machine机制的应用)
+
+<!-- /code_chunk_output -->
 
 所属调度器类为stop\_sched\_class的进程是系统中优先级最高的进程,其次才是dl\_shced\_class和rt\_sched\_class
 

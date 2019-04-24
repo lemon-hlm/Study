@@ -1,3 +1,26 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1	前景回顾](#1前景回顾)
+	* [1.1	CFS调度算法](#11cfs调度算法)
+	* [1.2	负荷权重和虚拟时钟](#12负荷权重和虚拟时钟)
+	* [1.3	今日内容--CFS进程入队和出队](#13今日内容-cfs进程入队和出队)
+* [2 enqueue_task_fair入队操作](#2-enqueue_task_fair入队操作)
+	* [2.1	enque_task_fair函数](#21enque_task_fair函数)
+	* [2.2	enque_task_fair完全函数](#22enque_task_fair完全函数)
+	* [2.3	for_each_sched_entity](#23for_each_sched_entity)
+	* [2.4	enqueue_entity插入进程](#24enqueue_entity插入进程)
+	* [2.5	place_entity处理睡眠进程](#25place_entity处理睡眠进程)
+	* [2.6	__enqueue_entity完成红黑树的插入](#26__enqueue_entity完成红黑树的插入)
+* [3	dequeue_task_fair出队操作](#3dequeue_task_fair出队操作)
+	* [3.1  dequeue_task_fair函数](#31-dequeue_task_fair函数)
+	* [3.2	dequeue_entity将调度实体出队](#32dequeue_entity将调度实体出队)
+	* [3.3	__dequeue_entity完成真正的出队操作](#33__dequeue_entity完成真正的出队操作)
+
+<!-- /code_chunk_output -->
+
 Linux CFS调度器之队列操作
 =======
 

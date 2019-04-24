@@ -1,3 +1,20 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 前景回顾](#1-前景回顾)
+	* [1.1	进程调度](#11进程调度)
+	* [1.2	进程的分类](#12进程的分类)
+	* [1.3	linux调度器的演变](#13linux调度器的演变)
+	* [1.4	Linux的调度器组成](#14linux的调度器组成)
+* [2	cfs完全公平调度器](#2cfs完全公平调度器)
+	* [2.1	CFS调度器类fair_sched_class](#21cfs调度器类fair_sched_class)
+	* [2.2	cfs的就绪队列](#22cfs的就绪队列)
+* [3	参考](#3参考)
+
+<!-- /code_chunk_output -->
+
 Linux进程调度CFS调度器
 =======
 
@@ -7,7 +24,7 @@ Linux进程调度CFS调度器
 | 2016-06-14 | [Linux-4.6](http://lxr.free-electrons.com/source/?v=4.6) | X86 & arm | [gatieme](http://blog.csdn.net/gatieme) | [LinuxDeviceDrivers](https://github.com/gatieme/LDD-LinuxDeviceDrivers) | [Linux进程管理与调度](http://blog.csdn.net/gatieme/article/category/6225543) |
 
 
-1	前景回顾
+# 1 前景回顾
 -------
 
 

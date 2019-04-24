@@ -1,3 +1,21 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1	前景回顾](#1前景回顾)
+	* [1.1	CFS调度算法](#11cfs调度算法)
+	* [1.2	CFS的pick_next_fair选择下一个进程](#12cfs的pick_next_fair选择下一个进程)
+	* [1.3	今日看点--(CFS如何处理周期性调度器)](#13今日看点-cfs如何处理周期性调度器)
+* [2	CFS的周期性调度](#2cfs的周期性调度)
+	* [2.1	task_tick_fair与周期性调度](#21task_tick_fair与周期性调度)
+	* [2.2	entity_tick函数](#22entity_tick函数)
+	* [2.3	check_preempt_tick函数](#23check_preempt_tick函数)
+	* [2.4  resched_curr设置重调度标识TIF_NEED_RESCHED](#24-resched_curr设置重调度标识tif_need_resched)
+* [3	总结](#3总结)
+
+<!-- /code_chunk_output -->
+
 Linux CFS调度器之task_tick_fair处理周期性调度器
 =======
 

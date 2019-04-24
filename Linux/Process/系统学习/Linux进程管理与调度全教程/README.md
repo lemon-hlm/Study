@@ -1,7 +1,17 @@
-| 日期 | 内核版本 | 架构| 作者 | GitHub| CSDN |
-| ------------- |:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
-| 2016-07-21  | [Linux-4.6](http://lxr.free-electrons.com/source/?v=4.5) | X86 & arm | [gatieme](http://blog.csdn.net/gatieme) | [LinuxDeviceDrivers](https://github.com/gatieme/LDD-LinuxDeviceDrivers) | [Linux进程管理与调度](http://blog.csdn.net/gatieme/article/category/6225543) |
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 项目链接](#1-项目链接)
+* [2 进程的描述](#2-进程的描述)
+* [3 进程的创建](#3-进程的创建)
+* [4 进程的加载与运行](#4-进程的加载与运行)
+* [5 进程的退出](#5-进程的退出)
+* [6 进程的调度](#6-进程的调度)
+* [7 调度普通进程-完全公平调度器CFS](#7-调度普通进程-完全公平调度器cfs)
+
+<!-- /code_chunk_output -->
 
 # 1 项目链接
 

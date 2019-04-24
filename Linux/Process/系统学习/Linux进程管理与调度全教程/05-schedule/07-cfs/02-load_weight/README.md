@@ -1,3 +1,32 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1	前景回顾](#1前景回顾)
+	* [1.1	linux调度器的演变](#11linux调度器的演变)
+	* [1.2	Linux的调度器组成](#12linux的调度器组成)
+	* [1.3	优先级的内核表示](#13优先级的内核表示)
+	* [1.4	进程的优先级表示](#14进程的优先级表示)
+* [2	负荷权重](#2负荷权重)
+	* [2.1	负荷权重结构struct load_weight](#21负荷权重结构struct-load_weight)
+	* [2.2	调度实体的负荷权重load](#22调度实体的负荷权重load)
+	* [2.3	进程的负荷权重](#23进程的负荷权重)
+* [3	优先级和权重的转换](#3优先级和权重的转换)
+	* [3.1	优先级->权重转换表](#31优先级-权重转换表)
+	* [3.2	linux-4.4之前的shced_prio_to_weight和sched_prio_to_wmult](#32linux-44之前的shced_prio_to_weight和sched_prio_to_wmult)
+	* [3.3	1.25的乘积因子](#33125的乘积因子)
+* [4	进程负荷权重的计算](#4进程负荷权重的计算)
+	* [4.1	set_load_weight依据静态优先级设置进程的负荷权重](#41set_load_weight依据静态优先级设置进程的负荷权重)
+	* [4.2	scale_load取得负荷权重的值](#42scale_load取得负荷权重的值)
+	* [4.3	set_load_weight的演变](#43set_load_weight的演变)
+* [5	就绪队列的负荷权重](#5就绪队列的负荷权重)
+	* [5.1	cfs就绪队列的负荷权重](#51cfs就绪队列的负荷权重)
+	* [5.2	就绪队列的负荷权重计算](#52就绪队列的负荷权重计算)
+* [6	总结](#6总结)
+
+<!-- /code_chunk_output -->
+
 Linux CFS调度器之负荷权重load_weight
 =======
 

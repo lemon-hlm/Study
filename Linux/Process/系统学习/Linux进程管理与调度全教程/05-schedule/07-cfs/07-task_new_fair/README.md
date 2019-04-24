@@ -1,3 +1,19 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1	前景回顾](#1前景回顾)
+	* [1.1	CFS调度算法](#11cfs调度算法)
+	* [1,2	进程的创建](#12进程的创建)
+	* [1.3	处理新进程](#13处理新进程)
+* [处理新进程](#处理新进程)
+	* [place_entity设置新进程的虚拟运行时间](#place_entity设置新进程的虚拟运行时间)
+	* [sysctl_sched_child_runs_first控制子进程运行时机](#sysctl_sched_child_runs_first控制子进程运行时机)
+	* [适应迁移的vruntime值](#适应迁移的vruntime值)
+
+<!-- /code_chunk_output -->
+
 Linux CFS调度器之唤醒抢占
 =======
 

@@ -1,3 +1,32 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1	前景回顾](#1前景回顾)
+	* [1.1	CFS调度算法](#11cfs调度算法)
+	* [1.2  负荷权重和虚拟时钟](#12-负荷权重和虚拟时钟)
+	* [1.3	CFS进程入队和出队](#13cfs进程入队和出队)
+	* [1.4	今日看点(CFS如何选择最合适的进程)](#14今日看点cfs如何选择最合适的进程)
+* [2	simple无组调度最简单的pick_next_task_fair](#2simple无组调度最简单的pick_next_task_fair)
+	* [2.1	simple的基本流程](#21simple的基本流程)
+	* [2.2  put_prev_task](#22-put_prev_task)
+		* [2.2.1	**全局put_prev_task函数**](#221全局put_prev_task函数)
+		* [2.2.2	**CFS的put_prev_task_fair函数**](#222cfs的put_prev_task_fair函数)
+		* [2.2.3	**put_prev_entity函数**](#223put_prev_entity函数)
+	* [2.3  pick_next_entity](#23-pick_next_entity)
+		* [2.3.1	**pick_next_entity函数完全注释**](#231pick_next_entity函数完全注释)
+		* [2.3.2	**从left, second和curr进程中选择最优的进程**](#232从left-second和curr进程中选择最优的进程)
+		* [2.3.3	**cfs_rq的last和next指针域**](#233cfs_rq的last和next指针域)
+		* [2.3.4	**wakeup_preempt_entity检查是否可以被抢占**](#234wakeup_preempt_entity检查是否可以被抢占)
+	* [2.4  set_next_entity](#24-set_next_entity)
+* [3	idle进程的调度](#3idle进程的调度)
+* [4	组调度策略的支持](#4组调度策略的支持)
+* [5	与主调度器schedule进行通信](#5与主调度器schedule进行通信)
+* [6	总结](#6总结)
+
+<!-- /code_chunk_output -->
+
 Linux CFS调度器之pick_next_task_fair选择下一个被调度的进程
 =======
 
