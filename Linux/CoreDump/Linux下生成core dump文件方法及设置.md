@@ -1,3 +1,17 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [一、 **什么是coredump**](#一-什么是coredump)
+* [二、 **coredump文件的存储位置**](#二-coredump文件的存储位置)
+* [三、 **如何判断一个文件是coredump文件**](#三-如何判断一个文件是coredump文件)
+* [四、 **产生coredum的一些条件总结**](#四-产生coredum的一些条件总结)
+		* [a. 打开core dump](#a-打开core-dump)
+		* [b. 查看保存路径和文件名格式](#b-查看保存路径和文件名格式)
+
+<!-- /code_chunk_output -->
+
 # 一、 **什么是coredump**
 
 在使用半导体作为内存的材料前，人类是利用线圈当作内存的材料（发明者为王安），线圈就叫作core ，用线圈做的内存就叫作“core memory”。（线圈的单词应该是coil）如今，半导体工业澎勃发展，已经没有人用线圈当内存了，不过，在许多情况下，人们还是把内存叫作“core”。所以注意了：这里的core不是核心，而是内存。不过结合实际来看，好像也有点“内核所占内存”的意思。 
