@@ -133,3 +133,4 @@ membind: 0 1 2 3
 
 - 本文来自于知乎专栏, 链接: https://zhuanlan.zhihu.com/p/33621500?utm_source=wechat_session&utm_medium=social&utm_oi=50718148919296
 - Xeon 2699 v4系列CPU的标准: https://ark.intel.com/content/www/us/en/ark/products/96899/intel-xeon-processor-e5-2699a-v4-55m-cache-2-40-ghz.html
+- Linux的NUMA机制: http://www.litrin.net/2014/06/18/linux%E7%9A%84numa%E6%9C%BA%E5%88%B6/
