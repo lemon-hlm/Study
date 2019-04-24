@@ -5,7 +5,7 @@
 
 * [1 FSB(Front Side Bus)](#1-fsbfront-side-bus)
 * [2 HT LINK](#2-ht-link)
-* [3 QPI LINK](#3-qpi-link)
+* [3 QPI LINK(Quick Path Interconnect)](#3-qpi-linkquick-path-interconnect)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -32,11 +32,18 @@ CPU到现在发展已经经过了40个年头，而牙膏厂也在今年推出了
 
 ![](./images/2019-04-24-10-31-54.png)
 
-# 3 QPI LINK
+# 3 QPI LINK(Quick Path Interconnect)
 
-QPI的全称是**快速通道互联**，其实QPI总线在早期已经用于安腾以及至强平台上，用于取代老旧的FSB。而下放到桌面级则是从第一代Nehalem处理器上。一直到今天我们用的8700K，全部是基于QPI总线来进行通信。和HT LINK一样，QPI总线一样是点对点通信，用于CPU，北桥，南桥之间的点对点连接。而它的速度也已经远远超越了FSB总线，以末代的1600MHz的FSB为例，它的传输速度为12.8GB/s，而初版的QPI总线就达到了25.6GB/s，相比上一代直接翻了一倍，而到了SNB上，内置CPU内存控制器的总线依旧是由QPI总线衍生而来，只不过由于是环形总线，不仅大大提升了速度，也保持了缓存的一致性。而和南桥之间的通信一直用的都是DMI总线。
+QPI的全称是**快速通道互联**，其实QPI总线在早期已经用于**安腾(Itanium**)以及**至强(Xeon**)平台上，用于取代老旧的**FSB**。而下放到**桌面级**则是从**第一代Nehalem处理器**上。一直到今天我们用的8700K，全部是基于QPI总线来进行通信。
+
+和**HT LINK**一样，QPI总线一样是**点对点通信**，用于**CPU**，**北桥**，**南桥**之间的**点对点连接**。而它的速度也已经远远超越了FSB总线，以末代的1600MHz的FSB为例，它的传输速度为**12.8GB/s**，而**初版的QPI总线**就达到了**25.6GB/s**，相比上一代直接翻了一倍，而到了**SNB**上，内置CPU**内存控制器的总线**依旧是由**QPI总线衍生**而来，只不过由于是环形总线，不仅大大提升了速度，也保持了缓存的一致性。而和**南桥之间的通信**一直用的都是**DMI总线**。
+
+
+
 
 # 参考
 
 - 本文来自知乎专栏, 链接: https://zhuanlan.zhihu.com/p/38984035?utm_source=wechat_session&utm_medium=social&utm_oi=50718148919296
 - QPI: https://zh.wikipedia.org/wiki/%E5%BF%AB%E9%80%9F%E9%80%9A%E9%81%93%E4%BA%92%E8%81%94
+- CPU的快速互联通道(QPI)详解: https://blog.csdn.net/Hipercomer/article/details/27580323
+- 注意看
