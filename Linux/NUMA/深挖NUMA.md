@@ -11,7 +11,7 @@
 		* [2.2.2 一个Socket少量Core(Socket内UMA, Socket间NUMA)](#222-一个socket少量coresocket内uma-socket间numa)
 		* [2.2.3 一个Socket多Core(Socket内NUMA, Socket间NUMA)](#223-一个socket多coresocket内numa-socket间numa)
 * [3 Linux](#3-linux)
-* [参考](#参考)
+* [4 参考](#4-参考)
 
 <!-- /code_chunk_output -->
 
@@ -99,13 +99,37 @@ node  0  1  2  3
 
 讲到这里似乎已经差不多了，但事实上还没完。如果你一直按照这个“**北桥去哪儿了**？”的思路理下来的话，就有了另一个问题，那就是之前的**北桥**还有一个功能就是**PCI/PCIe控制器**，当然**原来的南桥**，现在的**PCH**一样也整合了**PCIe控制器**。事实上，在**PCIe channel上**也是有**NUMA亲和性**的。
 
-比如：查看网卡enp0s20f0u5的NUMA，用到了netdev:<设备名称>这种方式。
+比如：查看网卡enp0s20f0u5的NUMA，用到了netdev:\<设备名称\>这种方式。
 
+```
+[root@local ~]# numactl --prefer netdev:enp0s20f0u5 --show
+policy: preferred
+preferred node: 0
+physcpubind: 0
+cpubind: 0
+nodebind: 0
+membind: 0 1 2 3
+```
 
+或者一个PCI address 为00:17的SATA控制器，用到了pci:\<PCI address\>
 
+```
+[root@local~]# numactl --prefer pci:00:17 --show
+policy: preferred
+preferred node: 0
+physcpubind: 0
+cpubind: 0
+nodebind: 0
+membind: 0 1 2 3
+```
 
+还有block/ip/file的方式查看NUMA affinity，这里也就不再累述了。
 
-# 参考
+综上，感觉上现在的服务器，特别是多socket的服务器架构更像是通过NUMA共享了内存；进而通过共享内存从而共享外设的多台主机。
+
+最后还是那句：那种一个业务就能跑满整台server的时代是再也回不来了！
+
+# 4 参考
 
 - 本文来自于知乎专栏, 链接: https://zhuanlan.zhihu.com/p/33621500?utm_source=wechat_session&utm_medium=social&utm_oi=50718148919296
 - Xeon 2699 v4系列CPU的标准: https://ark.intel.com/content/www/us/en/ark/products/96899/intel-xeon-processor-e5-2699a-v4-55m-cache-2-40-ghz.html
