@@ -1,0 +1,1 @@
+- 系列资料: https://www.cnblogs.com/CloudMan6/tag/OpenStack/
