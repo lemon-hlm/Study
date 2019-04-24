@@ -21,3 +21,5 @@
 - Intel开发者论坛: https://software.intel.com/zh-cn/forum
 
 - WikiChip(计算机体系结构与半导体很强的资源): https://en.wikichip.org/wiki/WikiChip
+
+- Intel至强处理器可扩展家族技术概述: https://software.intel.com/zh-cn/articles/intel-xeon-processor-scalable-family-technical-overview
