@@ -65,22 +65,28 @@
 
 回到Linux，内核mm/mmzone.c, include/linux/mmzone.h文件定义了NUMA的数据结构和操作方式。
 
-Linux Kernel中NUMA的调度位于kernel/sched/core.c函数int sysctl_numa_balancing
+Linux Kernel中**NUMA的调度**位于**kernel/sched/core.c**函数**int sysctl\_numa\_balancing**
 
 1. 在一个**启用了NUMA支持**的Linux中，Kernel**不会将**任务内存从一个NUMA node搬迁到另一个NUMA node。
 2. 一个进程一旦被启用，它所在的NUMA node就不会被迁移，为了尽可能的优化性能，在正常的调度之中，CPU的core也会尽可能的使用可以local访问的本地core，在进程的整个生命周期之中，NUMA node保持不变。
 3. 一旦当某个NUMA node的负载超出了另一个node一个阈值（默认25%），则认为需要在此node上减少负载，不同的NUMA结构和不同的负载状况，系统见给予一个延时任务的迁移——类似于漏杯算法。在这种情况下将会产生内存的remote访问。
-4. NUMA node之间有不同的拓扑结构，各个 node 之间的访问会有一个**距离**（node distances）的概念，如numactl -H命令的结果有这样的描述：
+4. NUMA node之间有不同的拓扑结构，各个 node 之间的访问会有一个**距离**（node distances）的概念，如**numactl \-H**命令的结果有这样的描述：
 
 ```
 node distances:
 node  0  1  2  3
-  0: 10 11 21  21
+  0: 10 11 21 21
   1: 11 10 21 21
   2: 21 21 10 11
   3: 21 21 11 10
 ```
 可以看出：0 node 到0 node之间距离为10，这肯定的最近的距离，不提。0-1之间的距离远小于2或3的距离。这种距离方便系统在较复杂的情况下选择最合适的NUMA设定。
+
+![](./images/2019-04-24-09-45-06.png)
+
+上图记录了某个Benchmark工具，在**开启/关闭NUMA**功能时**UPI带宽消耗**的情况。很明显的是，在**开启了NUMA支持**以后，**UPI的带宽消耗**有了**两个数量级以上的下降**，**性能**也有了显著的**提升**！
+
+通常情况下，用户可以通过numactl来进行NUMA访问策略的手工配置，cgroup中cpuset.mems也可以达到指定NUMA node的作用。以numactl命令为例，它有如下策略：
 
 
 
