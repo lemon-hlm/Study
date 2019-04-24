@@ -6,9 +6,9 @@
 * [1 简介](#1-简介)
 * [2 宽限期](#2-宽限期)
 * [3 订阅——发布机制](#3-订阅发布机制)
-	* [数据读取的完整性](#数据读取的完整性)
-* [小结](#小结)
-* [参考](#参考)
+* [4 数据读取的完整性](#4-数据读取的完整性)
+* [5 小结](#5-小结)
+* [6 参考](#6-参考)
 
 <!-- /code_chunk_output -->
 
@@ -112,17 +112,17 @@ void foo_update( foo* new_fp )
 
 这段代码中，我们期望的是6，7，8行的代码在第10行代码之前执行。但优化后的代码并不对执行顺序做出保证。在这种情形下，一个读线程很可能读到new\_fp，但new\_fp的成员赋值还没执行完成。当读线程执行dosomething(fp->a, fp->b , fp->c ) 的 时候，就有不确定的参数传入到dosomething，极有可能造成不期望的结果，甚至程序崩溃。可以通过优化屏障来解决该问题，RCU机制对优化屏障做了包装，提供了专用的API来解决该问题。这时候，第十行不再是直接的指针赋值，而应该改为 :
 
-```
+```cpp
 rcu_assign_pointer(gbl_foo,new_fp);
 ```
 
 rcu\_assign\_pointer的实现比较简单，如下：
 
-```
+```cpp
 <include/linux/rcupdate.h>
 ```
 
-```
+```cpp
 #define rcu_assign_pointer(p, v) \   
          __rcu_assign_pointer((p), (v), __rcu)  
   
@@ -137,7 +137,7 @@ rcu\_assign\_pointer的实现比较简单，如下：
 
 在DEC Alpha CPU机器上还有一种更强悍的优化，如下所示：
 
-```
+```cpp
 void foo_read(void)  
 {         
     rcu_read_lock();  
@@ -150,7 +150,7 @@ void foo_read(void)
 
 第六行的 fp->a,fp->b,fp->c会在第3行还没执行的时候就预先判断运行，当他和foo\_update同时运行的时候，可能导致传入dosomething的一部分属于旧的gbl\_foo，而另外的属于新的。这样导致运行结果的错误。为了避免该类问题，RCU还是提供了宏来解决该问题：
 
-```
+```cpp
 <include/linux/rcupdate.h>
 
 #define rcu_dereference(p) rcu_dereference_check(p, 0)   
@@ -195,7 +195,7 @@ static inline int rcu_read_lock_held(void)
 
 我们之前的第四行代码改为 foo *fp = rcu\_dereference(gbl\_foo);，就可以防止上述问题。
 
-## 数据读取的完整性
+# 4 数据读取的完整性
         
 还是通过例子来说明这个问题：
 
@@ -209,10 +209,10 @@ static inline int rcu_read_lock_held(void)
 
 如图我们希望删除B，这时候要做的就是将A的指针指向C，保持B的指针，然后删除程序将进入宽限期检测。由于B的内容并没有变更，读到B的线程仍然可以继续读取B的后续节点。B不能立即销毁，它必须等待宽限期结束后，才能进行相应销毁操作。由于A的节点已经指向了C，当宽限期开始之后所有的后续读操作通过A找到的是C，而B已经隐藏了，后续的读线程都不会读到它。这样就确保宽限期过后，删除B并不对系统造成影响。
 
-# 小结
+# 5 小结
 
 RCU的原理并不复杂，应用也很简单。但代码的实现确并不是那么容易，难点都集中在了宽限期的检测上，后续分析源代码的时候，我们可以看到一些极富技巧的实现方式。
 
-# 参考
+# 6 参考
 
 - https://blog.csdn.net/xabc3000/article/details/15335131

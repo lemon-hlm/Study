@@ -1,3 +1,16 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 什么是InfiniBand网络](#1-什么是infiniband网络)
+* [2 什么是InfiniBand架构](#2-什么是infiniband架构)
+* [3 InfiniBand速率发展介绍](#3-infiniband速率发展介绍)
+* [4 InfiniBand网络主要上层协议](#4-infiniband网络主要上层协议)
+* [5 InfiniBand管理软件](#5-infiniband管理软件)
+
+<!-- /code_chunk_output -->
+
 https://mp.weixin.qq.com/s/9FnEMR5klV7LqcihKU9G2w
 
 **IP网络协议**如**TCP/IP**，具有**转发丢失数据包**的特性，网络不良时要**不断地确认与重发**，基于这些协议的通信也会因此变慢，极大地影响了性能。与之相比，**IB**使用基于**信任的**、**流控制**的机制来**确保连接的完整性**，数据包极少丢失。

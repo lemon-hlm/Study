@@ -1,3 +1,23 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 IB技术的发展](#1-ib技术的发展)
+* [2 IB技术的优势](#2-ib技术的优势)
+* [3 IB基本概念](#3-ib基本概念)
+	* [3.1 IB的网络拓扑以及数据传输](#31-ib的网络拓扑以及数据传输)
+* [4 IB协议简介](#4-ib协议简介)
+	* [4.1 物理层](#41-物理层)
+	* [4.2 链路层](#42-链路层)
+	* [4.3 网络层](#43-网络层)
+	* [4.4 传输层](#44-传输层)
+	* [4.5 上层协议](#45-上层协议)
+* [5 IB基本应用场景](#5-ib基本应用场景)
+	* [5.1 Infiniband 在 HPC（High performance computing）领域的应用](#51-infiniband-在-hpchigh-performance-computing领域的应用)
+
+<!-- /code_chunk_output -->
+
 https://cloud.tencent.com/developer/news/384580
 
 https://www.ibm.com/developerworks/cn/aix/library/1105_luoming_infiniband/index.html
