@@ -6,6 +6,7 @@
 * [1 FSB(Front Side Bus)](#1-fsbfront-side-bus)
 * [2 HT LINK](#2-ht-link)
 * [3 QPI LINK(Quick Path Interconnect)](#3-qpi-linkquick-path-interconnect)
+* [4 Infinity Fabric](#4-infinity-fabric)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -38,6 +39,13 @@ QPI的全称是**快速通道互联**，其实QPI总线在早期已经用于**�
 
 和**HT LINK**一样，QPI总线一样是**点对点通信**，用于**CPU**，**北桥**，**南桥**之间的**点对点连接**。而它的速度也已经远远超越了FSB总线，以末代的1600MHz的FSB为例，它的传输速度为**12.8GB/s**，而**初版的QPI总线**就达到了**25.6GB/s**，相比上一代直接翻了一倍，而到了**SNB**上，内置CPU**内存控制器的总线**依旧是由**QPI总线衍生**而来，只不过由于是环形总线，不仅大大提升了速度，也保持了缓存的一致性。而和**南桥之间的通信**一直用的都是**DMI总线**。
 
+![Intel_Nehalem_arch.svg](./images/Intel_Nehalem_arch.svg)
+
+# 4 Infinity Fabric
+
+其实第一次听说这个新总线的时候，新闻上把它叫做GMI总线，而正式定名则是在AMD的ZEN处理器发布的PPT上，命名为Infinity Fabric，而我们更多的时候叫它CCX总线。其实Infinity Fabric并不是什么深奥的东西，它由HT总线衍生而来，但是相比HT总线技术对外开放，Infinity Fabric总线则是AMD的专利技术，你想用，先交授权费。Infinity Fabric可以说是AMD这个时代的基石，它的传速速率从30GB/s到512GB/s，并且不和HT总线兼容。Infinity Fabric分为SCF和SDF。SDF负责数据传输，而SCF则负责控制传输命令。SDF部分就是HT总线衍生的产物了。而Infinity Fabric和HT总线一样，也不仅仅限制于CPU上进行使用，包括CPU，GPU，APU这些都可以使用，只不过它们的SDF层是不一样的。不过在最新的APU上，CPU和GPU之间仍旧使用的PCI-E总线互联，并没有见到CCX总线，也许这一代APU仅仅只是AMD赶工的产物，希望下一代可以看到完全体的APU。
+
+![](./images/2019-04-24-11-04-10.png)
 
 
 
@@ -46,4 +54,4 @@ QPI的全称是**快速通道互联**，其实QPI总线在早期已经用于**�
 - 本文来自知乎专栏, 链接: https://zhuanlan.zhihu.com/p/38984035?utm_source=wechat_session&utm_medium=social&utm_oi=50718148919296
 - QPI: https://zh.wikipedia.org/wiki/%E5%BF%AB%E9%80%9F%E9%80%9A%E9%81%93%E4%BA%92%E8%81%94
 - CPU的快速互联通道(QPI)详解: https://blog.csdn.net/Hipercomer/article/details/27580323
-- 注意看
+- 注意看维基百科下面的资料源
