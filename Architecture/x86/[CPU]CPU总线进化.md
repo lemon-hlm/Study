@@ -52,6 +52,8 @@ QPI的全称是**快速通道互联**，其实QPI总线在早期已经用于**�
 
 # 5 UPI(Ultra Path Interconnect)
 
+Ultra Path Interconnect(超级通道互连)，数据传输率可达9.6GT/s、10.4GT/s，带宽更足，灵活性更强，每条消息可以发送多个请求。Intel还曾经用过“KTI”(Keizer Technology Interconnect)的名字。
+
 
 
 # 参考
