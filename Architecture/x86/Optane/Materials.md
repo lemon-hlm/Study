@@ -1,0 +1,2 @@
+- Intel Optane Technology: https://www.intel.cn/content/www/cn/zh/architecture-and-technology/optane-technology/optane-for-data-centers.html
+- 

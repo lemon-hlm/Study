@@ -9,6 +9,7 @@
 * [4 处理器编号的意义](#4-处理器编号的意义)
 * [5 桌面CPU性能配置天梯图](#5-桌面cpu性能配置天梯图)
 * [6 笔记本CPU性能配置天梯图](#6-笔记本cpu性能配置天梯图)
+* [7 Intel微架构](#7-intel微架构)
 
 <!-- /code_chunk_output -->
 
@@ -51,3 +52,7 @@ Intel和AMD的: http://www.mydrivers.com/zhuanti/tianti/cpu/index.html
 # 6 笔记本CPU性能配置天梯图
 
 http://www.mydrivers.com/zhuanti/tianti/cpum/index.html
+
+# 7 Intel微架构
+
+https://www.intel.cn/content/www/cn/zh/architecture-and-technology/microarchitecture/microarchitecture-overview-general.html
