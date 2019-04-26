@@ -33,6 +33,10 @@ Openstack 中会由多个的 Instance 共享同一个 Host，而不是独占。�
 
 vim /etc/nova/nova.conf
 
+```
+scheduler_driver = nova.scheduler.filter_scheduler.FilterScheduler
+```
+
 
 
 # 参考
