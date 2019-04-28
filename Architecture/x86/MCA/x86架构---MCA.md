@@ -210,11 +210,17 @@ BIT62：表示发生了二次的MCE，这个时候到底这个Bank表示的是�
 
 ![](./images/2019-04-28-20-12-19.png)
 
+上图实际上只展示了非64位CPU的MSR，还有一个64位CPU的MSR，这里就不再多说。
 
+
+
+需要注意，实际上上面的这些寄存器并不需要自己一个个去对比和解析，Intel提供了一个工具叫做**MCE Decoder**，可以用来**解析MCE**。
+
+另外在Intel的开发者手册中有专门的一个章节解析MCE错误：《CHAPTER 16 INTERPRETING MACHINE-CHECK ERROR CODES》。
 
 # 3 CMCI
 
-前面以及提到，CMCI是后期加入到MCA的一种机制，它将错误上报的阈值操作从原始的软件轮询变成了硬件中断触发。
+前面以及提到，CMCI是后期加入到MCA的一种机制，它将**错误上报的阈值操作**从原始的**软件轮询**变成了**硬件中断触发**。
 
 一个CPU是否支持CMCI需要查看IA32_MCG_CAP的BIT10，如果该位是1就表示支持。
 
@@ -223,6 +229,20 @@ BIT62：表示发生了二次的MCE，这个时候到底这个Bank表示的是�
 设置的时候首先写1到IA32_MCi_CTL2的BIT30，再读取这个值，如果值变成了1，说明CMCI使能了，否则就是CPU不支持CMCI；之后再写阈值到BIT0-14，如果读出来的值是0，表示不支持阈值，否则就是成功设置了阈值。
 
 CMCI是通过Local ACPI来实现的，具体的示意图如下：
+
+![](./images/2019-04-28-20-14-25.png)
+
+在Local ACPI Table中有专门处理CMCI的寄存器，称为LVT CMCI Register (FEE0 02F0H) ：
+
+![](./images/2019-04-28-20-14-38.png)
+
+BIT0-7：中断向量；
+
+BIT8-10：Delivery Mode，比如SMI，NMI等；
+
+BIT12：Delivery Status，0表示没有中断，1表示中断正在发生；
+
+BIT17：Interrupt Mask，0表示接收中断，1表示屏蔽中断；
 
 
 # 参考
