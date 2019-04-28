@@ -7,6 +7,7 @@
 * [2 Machine Check MSR](#2-machine-check-msr)
 	* [2.1 IA32\_MCG\_CAP MSR](#21-ia32_mcg_cap-msr)
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
+* [CMCI](#cmci)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -75,6 +76,19 @@ BIT27：1表示支持Local Machine Check Exception；
 - Bit 1: Error IP Valid. 表示被中断的指令是否与MCE错误直接相关。
 - Bit 2: Machine Check In Progress. 表示 machine check 正在进行中。
 - bit 3: 设置后说明生成本地machine\-check exception. 这表示当前的机器检查事件仅传递给此逻辑处理器。
+
+
+# CMCI
+
+前面以及提到，CMCI是后期加入到MCA的一种机制，它将错误上报的阈值操作从原始的软件轮询变成了硬件中断触发。
+
+一个CPU是否支持CMCI需要查看IA32_MCG_CAP的BIT10，如果该位是1就表示支持。
+
+另外CMCI默认是关闭的，需要通过IA32_MCi_CTL2的BIT30来打开，并设置BIT0-14的阈值，注意每个Bank都要设置。
+
+设置的时候首先写1到IA32_MCi_CTL2的BIT30，再读取这个值，如果值变成了1，说明CMCI使能了，否则就是CPU不支持CMCI；之后再写阈值到BIT0-14，如果读出来的值是0，表示不支持阈值，否则就是成功设置了阈值。
+
+CMCI是通过Local ACPI来实现的，具体的示意图如下：
 
 
 # 参考
