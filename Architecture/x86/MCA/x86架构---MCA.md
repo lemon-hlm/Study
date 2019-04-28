@@ -10,9 +10,9 @@
 * [2 Machine Check MSR](#2-machine-check-msr)
 	* [2.1 Machine\-Check Global Control MSRs](#21-machine-check-global-control-msrs)
 		* [2.1.1 IA32\_MCG\_CAP MSR](#211-ia32_mcg_cap-msr)
-	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
-	* [2.3 IA32\_MCG\_CTL MSR](#23-ia32_mcg_ctl-msr)
-	* [2.4 IA32\_MCG\_EXT\_CTL MSR](#24-ia32_mcg_ext_ctl-msr)
+		* [2.1.2 IA32\_MCG\_STATUS MSR](#212-ia32_mcg_status-msr)
+		* [2.1.3 IA32\_MCG\_CTL MSR](#213-ia32_mcg_ctl-msr)
+		* [2.1.4 IA32\_MCG\_EXT\_CTL MSR](#214-ia32_mcg_ext_ctl-msr)
 	* [2.5 错误报告寄存器组(Error\-Reporting Register Banks)](#25-错误报告寄存器组error-reporting-register-banks)
 		* [2.5.1 IA32\_MCi\_CTL MSRs](#251-ia32_mci_ctl-msrs)
 * [3 CMCI](#3-cmci)
@@ -86,13 +86,13 @@ BIT16-23：表示存在的Extended Machine Check State寄存器的个数；
 
 BIT24：1表示CPU支持Software Error Recovery；
 
-BIT25：1表示CPU支持增强版的MCA；
+BIT25：1表示CPU支持**增强版的MCA**；
 
 BIT26：1表示支持更多的错误记录（需要UEFI、ACPI的支持）；
 
 BIT27：1表示支持Local Machine Check Exception；
 
-## 2.2 IA32\_MCG\_STATUS MSR
+### 2.1.2 IA32\_MCG\_STATUS MSR
 
 该MSR记录了**MCE发生时CPU的状态**，主要的BIT位介绍如下：
 
@@ -103,13 +103,13 @@ BIT27：1表示支持Local Machine Check Exception；
 - Bit 2: Machine Check In Progress. 表示 machine check 正在进行中。
 - bit 3: 设置后说明生成本地machine\-check exception. 这表示当前的机器检查事件仅传递给此逻辑处理器。
 
-## 2.3 IA32\_MCG\_CTL MSR
+### 2.1.3 IA32\_MCG\_CTL MSR
 
 这个寄存器的存在依赖于IA32_MCG_CAP这个MSR的BIT8。
 
 这个寄存器主要用来Disable（写1）或者Enable（写全0）**MCA功能**。
 
-## 2.4 IA32\_MCG\_EXT\_CTL MSR
+### 2.1.4 IA32\_MCG\_EXT\_CTL MSR
 
 这个寄存器同样依赖于IA32\_MCA\_CAP这个MSR，这次依赖的是BIT9。
 
