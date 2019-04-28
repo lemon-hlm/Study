@@ -16,6 +16,10 @@
 		* [2.1.5 Enabling Local Machine Check](#215-enabling-local-machine-check)
 	* [2.2 错误报告寄存器组(Error\-Reporting Register Banks)](#22-错误报告寄存器组error-reporting-register-banks)
 		* [2.2.1 IA32\_MCi\_CTL MSRs](#221-ia32_mci_ctl-msrs)
+		* [2.2.2 IA32\_MCi\_STATUS MSRS](#222-ia32_mci_status-msrs)
+		* [2.2.3 IA32\_MCi\_ADDR MSRs](#223-ia32_mci_addr-msrs)
+		* [2.2.4 IA32\_MCi\_MISC MSRs](#224-ia32_mci_misc-msrs)
+		* [2.2.5 IA32\_MCi\_CTL2 MSRs](#225-ia32_mci_ctl2-msrs)
 * [3 CMCI](#3-cmci)
 * [参考](#参考)
 
@@ -130,7 +134,11 @@ LMCE的预期用途需要平台软件和系统软件的正确配置。 平台软
 
 ## 2.2 错误报告寄存器组(Error\-Reporting Register Banks)
 
-以上都是全局的MSR, 下面介绍每个Bank对应的MSR，
+以上都是全局的MSR.
+
+**每个错误报告寄存器库**可以包含IA32\_MCi\_CTL，IA32\_MCi\_STATUS，IA32\_MCi\_ADDR和IA32\_MCi\_MISC MSR。报告库的数量由IA32\_MCG\_CAP MSR（地址0179H）的位\[7：0]表示。第一个错误报告寄存器（IA32\_MC0\_CTL）**始终从地址400H开始**。
+
+有关Pentium 4，Intel Atom和Intel Xeon处理器中错误报告寄存器的地址，请参阅“英特尔®64和IA-32架构软件开发人员手册”第4卷第2章“特定于型号的寄存器（MSR）”。以及错误报告寄存器P6系列处理器的地址。
 
 这些寄存器的第一个是IA32\_MC0\_CTL，它的地址一般都是400H。
 
@@ -138,7 +146,69 @@ LMCE的预期用途需要平台软件和系统软件的正确配置。 平台软
 
 ### 2.2.1 IA32\_MCi\_CTL MSRs
 
+IA32\_MCi\_CTL MSR控制\#MC的信号，以发现由特定硬件单元（或硬件单元组）产生的错误。
+
 每个Bank的CTL的作用是用来控制在发生**哪些MCA**的时候来**触发\#MC**：
+
+![](./images/2019-04-28-20-05-55.png)
+
+这里的64个BIT位，设置某个BIT位就会使对应BIT位的**MCA类型在发生**时**触发\#MC**。
+
+### 2.2.2 IA32\_MCi\_STATUS MSRS
+
+这类MSR的作用就是显示MCE信息：
+
+![](./images/2019-04-28-20-08-42.png)
+
+注意只有当VAL这个BIT位（BIT63）为1时才表示发生了对应这个Bank的MCE。当MCE发生了，软件需要给这个VAL位写0来清零（如果有可能的话，因为对于不可纠正的MCE可能软件会 来不及写），不能往这位写1，会出现Exception。
+
+BIT0-15，BIT16-31：这个两个部分都表示MCE的错误类型，前者是通用的，后者是跟CPU有关的；
+
+BIT58：1表示IA32_MCi_ADDR这个MSR是有效的，反之无效；
+
+BIT59：1表示IA32_MCi_MISC这个MSR是有效的，反之无效；这两个BIT是因为不同MCE错误并不是都需要ADDR和MSIC这样的MSR；
+
+BIT60：这个位于IA32_MCi_CTL中的位是对应的，那边使能了，这里就是1；
+
+BIT61：表示MCE是不可纠正的；
+
+BIT62：表示发生了二次的MCE，这个时候到底这个Bank表示的是哪一次的MCE信息，需要根据一定的规则来确定：
+
+![](./images/2019-04-28-20-09-12.png)
+
+其它寄存器不介绍了, 详细看手册
+
+### 2.2.3 IA32\_MCi\_ADDR MSRs
+
+![](./images/2019-04-28-20-10-20.png)
+
+这个地址指向**内存中导致MCE的代码或者数据**。
+
+注意这个地址在不同的内存模型下可以是偏移地址，虚拟地址和物理地址中的一种，这个需要MISC这个MSR来确定，下面会讲到。
+
+这个MSR也可以手动清零，写1会出错。
+
+### 2.2.4 IA32\_MCi\_MISC MSRs
+
+这个寄存器的BIT位说明如下：
+
+![](./images/2019-04-28-20-11-23.png)
+
+这里的Address Mode说明如下：
+
+![](./images/2019-04-28-20-11-35.png)
+
+### 2.2.5 IA32\_MCi\_CTL2 MSRs
+
+这个寄存器就是为CMCI使用的，BIT位说明如下：
+
+![](./images/2019-04-28-20-12-02.png)
+
+一个是用于使能CMCI，另一个是用来设置CMCI的阈值。
+
+除了上述的MSR之外，在IA32_MCG_CAP这个MSR的说明中还提到过它的BIT16-23还提到了额外的MSR，它们称为Extended Machine Check State，这些MSR的描述如下：
+
+![](./images/2019-04-28-20-12-19.png)
 
 
 
