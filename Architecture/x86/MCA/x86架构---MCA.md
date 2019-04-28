@@ -4,6 +4,8 @@
 <!-- code_chunk_output -->
 
 * [1 概述](#1-概述)
+	* [1.1 不可纠正的MCE(uncorrected machine\-check error)](#11-不可纠正的mceuncorrected-machine-check-error)
+	* [1.2 可纠正的MCE(corrected machine\-check error)](#12-可纠正的mcecorrected-machine-check-error)
 * [2 Machine Check MSR](#2-machine-check-msr)
 	* [2.1 IA32\_MCG\_CAP MSR](#21-ia32_mcg_cap-msr)
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
@@ -22,13 +24,19 @@ Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Che
 
 这套系统通过**一定数量的MSR**（Model Specific Register）来实现，这些MSR分为两个部分，一部分用来**进行设置**，另一部分用来**描述发生的硬件错误**。
 
-当CPU检测到**不可纠正的MCE（Machine Check Error**）时，就会触发\#MC（**Machine Check Exception**, 中断号是十进制18），通常**软件**会**注册相关的函数**来处理\#MC，在这个函数中会通过读取MSR来收集MCE的错误信息，然后重启系统。当然由于发生的**MCE**可能是**非常致命**的，**CPU直接重启**了，没有办法完成MCE处理函数；甚至有可能在MCE处理函数中又触发了不可纠正的MCE，也会导致系统直接重启。
+## 1.1 不可纠正的MCE(uncorrected machine\-check error)
+
+当CPU检测到**不可纠正的MCE（Machine Check Error**）时，就会触发\#**MC**（**Machine Check Exception**, 中断号是十进制18），通常**软件**会**注册相关的函数**来处理\#MC，在这个函数中会通过读取MSR来收集MCE的错误信息，但是不被允许重启处理器。
+
+当然由于发生的**MCE**可能是**非常致命**的，**CPU直接重启**了，没有办法完成MCE处理函数；甚至有可能在MCE处理函数中又触发了不可纠正的MCE，也会导致系统直接重启。
 
 发现硬件错误时触发的异常(exception)，中断号是18，异常的类型是abort：
 
 ![](./images/2019-04-28-15-02-46.png)
 
-当然CPU还会检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈值**时，会触发**CMCI（Corrected Machine Check Error Interrupt**），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在**MCA之后才加入**的，算是对MCA的一个增强，在此之前**软件只能通过轮询可纠正MCE相关的MSR**才能实现相关的操作。
+## 1.2 可纠正的MCE(corrected machine\-check error)
+
+从CPUID的DisplayFamily\_DisplayModel为06H\_1AH开始, CPU还会检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈值**时，会触发**CMCI（Corrected Machine Check Error Interrupt**），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在**MCA之后才加入**的，算是对MCA的一个增强，在此之前**软件只能通过轮询可纠正MCE相关的MSR**才能实现相关的操作。
 
 # 2 Machine Check MSR
 
