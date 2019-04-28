@@ -3,7 +3,7 @@
 
 <!-- code_chunk_output -->
 
-
+* [参考](#参考)
 
 <!-- /code_chunk_output -->
 
@@ -131,3 +131,6 @@ CPUID Vendor Intel Family 6 Model 85
 [166492.496767] mce: [Hardware Error]: Run the above through 'mcelog --ascii'
 [166492.498942] Kernel panic - not syncing: Machine check from unknown source
 ```
+
+# 参考
+
