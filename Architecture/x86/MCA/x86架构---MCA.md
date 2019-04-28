@@ -9,7 +9,7 @@
 	* [1.3 额外功能](#13-额外功能)
 * [2 Machine Check MSR](#2-machine-check-msr)
 	* [2.1 Machine\-Check Global Control MSRs](#21-machine-check-global-control-msrs)
-	* [2.1 IA32\_MCG\_CAP MSR](#21-ia32_mcg_cap-msr)
+		* [2.1.1 IA32\_MCG\_CAP MSR](#211-ia32_mcg_cap-msr)
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
 	* [2.3 IA32\_MCG\_CTL MSR](#23-ia32_mcg_ctl-msr)
 	* [2.4 IA32\_MCG\_EXT\_CTL MSR](#24-ia32_mcg_ext_ctl-msr)
@@ -66,19 +66,19 @@ MCA通过若干Bank的MSR寄存器来表示各种类型的MCE。
 
 机器检查全局控制MSR包括IA32\_MCG\_CAP，IA32\_MCG\_STATUS，以及可选的IA32\_MCG\_CTL和IA32\_MCG\_EXT\_CTL。
 
-## 2.1 IA32\_MCG\_CAP MSR
+### 2.1.1 IA32\_MCG\_CAP MSR
 
-这个MSR描述了当前CPU处理MCA的能力，具体每个位的作用如下所示：
+这个MSR描述了**当前CPU处理MCA的能力**，机器检查体系结构的信息, 具体每个位的作用如下所示：
 
 ![](./images/2019-04-28-14-31-53.png)
 
-BIT0-7：表示的是CPU支持的**Bank的个数**；
+BIT0-7：表示的是特定CPU支持可用的**硬件单元错误报告库的个数(hardware unit error-reporting banks**)；
 
-BIT8：1表示IA32_MCG_CTL有效，如果是0的话表示无效，读取该IA32_MCG_CTL这个MSR可能发生Exception（至少在UEFI下是这样）；
+BIT8：1表示**IA32\_MCG\_CTL**有效，如果是**0的话表示无效**，读取该IA32\_MCG\_CTL这个MSR可能发生Exception（至少在UEFI下是这样）；
 
-BIT9：1表示IA32_MCG_EXT_CTL有效，反之无效，这个与BIT8的作用类似；
+BIT9：1表示IA32\_MCG\_EXT\_CTL有效，反之无效，这个与BIT8的作用类似；
 
-BIT10：1表示支持CMCI，但是CMCI是否能用还需要通过IA32_MCi_CTL2这个MSR的BIT30来使能；
+BIT10：1表示**支持CMCI**，但是CMCI是否能用还需要通过IA32\_MCi\_CTL2这个MSR的BIT30来使能；
 
 BIT11：1表示IA32_MCi_STATUS这个MSR的BIT56-55是保留的，BIT54-53是用来上报Threshold-based Error状态的；
 
