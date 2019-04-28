@@ -76,11 +76,11 @@ BIT0-7：表示的是特定CPU支持可用的**硬件单元错误报告库的个
 
 BIT8：1表示**IA32\_MCG\_CTL**有效，如果是**0的话表示无效**，读取该IA32\_MCG\_CTL这个MSR可能发生Exception（至少在UEFI下是这样）；
 
-BIT9：1表示IA32\_MCG\_EXT\_CTL有效，反之无效，这个与BIT8的作用类似；
+BIT9：1表示**IA32\_MCG\_EXT\_CTL**有效，反之无效，这个与BIT8的作用类似；
 
-BIT10：1表示**支持CMCI**，但是CMCI是否能用还需要通过IA32\_MCi\_CTL2这个MSR的BIT30来使能；
+BIT10：1表示**支持CMCI**，但是CMCI是否能用还需要通过**IA32\_MCi\_CTL2**这个MSR的**BIT30来使能**；
 
-BIT11：1表示IA32_MCi_STATUS这个MSR的BIT56-55是保留的，BIT54-53是用来上报Threshold-based Error状态的；
+BIT11：1表示IA32\_MCi\_STATUS这个MSR的BIT56\-55是保留的，BIT54-53是用来上报Threshold-based Error状态的；
 
 BIT16-23：表示存在的Extended Machine Check State寄存器的个数；
 
