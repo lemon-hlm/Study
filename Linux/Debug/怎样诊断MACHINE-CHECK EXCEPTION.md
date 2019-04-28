@@ -25,8 +25,6 @@ bd80000000100134的二进制如下:
 0000 0000 0001 0000 0000 0001 0011 0100
 ```
 
-
-
 Bit 63: VAL. 表示本寄存器中包含有效的错误码
 Bit 61: UC. 表示是无法纠正的MCE
 Bit 60: EN. 表示处于允许报告错误的状态
@@ -34,8 +32,19 @@ Bit 59: MISCV. 表示MCi_MISC寄存器中含有对该错误的补充信息
 Bit 58: ADDRV. 表示MCi_ADDR寄存器含有发生错误的内存地址
 Bit 56: 发出未校正的可恢复（UCR）错误信号
 Bit 55: UCR错误所需的恢复操作
+Bits\[16:31] 
+Bit[0: 15]: MCE错误码, 该错误码是所有CPU型号通用的，分为两类：simple error codes（简单错误码） 和 compound error codes（复合错误码），本例中0x0134表示Memory errors in the cache hierarchy(缓存层次结构中的内存错误)：
 
-Bit[0: 15]: MCE错误码, 该错误码是所有CPU型号通用的，分为两类：simple error codes（简单错误码） 和 compound error codes（复合错误码），本例中0x0134表示Internal timer error：
+- Simple Error Codes:
+
+![](./images/2019-04-28-12-38-31.png)
+
+- Compound Error Codes:
+
+![](./images/2019-04-28-12-38-58.png)
+
+
+
 
 ```
 [root@SH-IDC1-10-5-8-61 yanbaoyue]# mcelog
