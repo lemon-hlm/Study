@@ -21,8 +21,11 @@ IA32\_MCG\_STATUS MSR描述了发生Machine Check exception后处理器的当前
 bd80000000100134的二进制如下:
 
 ```
-1011110110000000000000000000000000000000000100000000000000000000
+1011 1101 1000 0000 0000 0000 0000 0000 
+0000 0000 0001 0000 0000 0001 0011 0100
 ```
+
+
 
 Bit 63: VAL. 表示本寄存器中包含有效的错误码
 Bit 61: UC. 表示是无法纠正的MCE
@@ -30,8 +33,9 @@ Bit 60: EN. 表示处于允许报告错误的状态
 Bit 59: MISCV. 表示MCi_MISC寄存器中含有对该错误的补充信息
 Bit 58: ADDRV. 表示MCi_ADDR寄存器含有发生错误的内存地址
 Bit 56: 发出未校正的可恢复（UCR）错误信号
-Bit 55:
+Bit 55: UCR错误所需的恢复操作
 
+Bit[0: 15]: MCE错误码, 该错误码是所有CPU型号通用的，分为两类：simple error codes（简单错误码） 和 compound error codes（复合错误码），本例中0x0134表示Internal timer error：
 
 ```
 [root@SH-IDC1-10-5-8-61 yanbaoyue]# mcelog
