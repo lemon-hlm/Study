@@ -226,15 +226,15 @@ BIT62：表示发生了二次的MCE，这个时候到底这个Bank表示的是�
 
 一个CPU**是否支持CMCI**需要查看**IA32\_MCG\_CAP**的BIT10，如果该位是1就表示支持。
 
-另外CMCI默认是关闭的，需要通过IA32_MCi_CTL2的BIT30来打开，并设置BIT0-14的阈值，注意每个Bank都要设置。
+另外**CMCI默认是关闭的**，需要通过IA32\_MCi\_CTL2的BIT30来打开，并设置BIT0-14的阈值，注意 **每个Bank都要设置！！！**。
 
-设置的时候首先写1到IA32_MCi_CTL2的BIT30，再读取这个值，如果值变成了1，说明CMCI使能了，否则就是CPU不支持CMCI；之后再写阈值到BIT0-14，如果读出来的值是0，表示不支持阈值，否则就是成功设置了阈值。
+设置的时候首先**写1**到**IA32\_MCi\_CTL2**的**BIT30**，再**读取**这个值，如果值变成了1，说明CMCI使能了，否则就是CPU不支持CMCI；之后再写阈值到BIT0-14，如果读出来的值是0，表示不支持阈值，否则就是成功设置了阈值。
 
 CMCI是通过Local ACPI来实现的，具体的示意图如下：
 
 ![](./images/2019-04-28-20-14-25.png)
 
-在Local ACPI Table中有专门处理CMCI的寄存器，称为LVT CMCI Register (FEE0 02F0H) ：
+在**Local ACPI Table**中有专门处理CMCI的寄存器，称为**LVT CMCI Register (FEE0 02F0H**)：
 
 ![](./images/2019-04-28-20-14-38.png)
 
@@ -245,6 +245,9 @@ BIT8-10：Delivery Mode，比如SMI，NMI等；
 BIT12：Delivery Status，0表示没有中断，1表示中断正在发生；
 
 BIT17：Interrupt Mask，0表示接收中断，1表示屏蔽中断；
+
+关于CMCI的初始化和CMCI处理函数的实现，手册上有部分的介绍，不过没有什么源代码可以借鉴，这个不展开了。
+
 
 
 # 参考
