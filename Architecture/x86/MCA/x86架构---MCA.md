@@ -17,7 +17,11 @@ Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Che
 
 这套系统通过**一定数量的MSR**（Model Specific Register）来实现，这些MSR分为两个部分，一部分用来**进行设置**，另一部分用来**描述发生的硬件错误**。
 
-当CPU检测到**不可纠正的MCE（Machine Check Error**）时，就会触发\#MC（**Machine Check Exception**），通常**软件**会**注册相关的函数**来处理\#MC，在这个函数中会通过读取MSR来收集MCE的错误信息，然后重启系统。当然由于发生的**MCE**可能是**非常致命**的，**CPU直接重启**了，没有办法完成MCE处理函数；甚至有可能在MCE处理函数中又触发了不可纠正的MCE，也会导致系统直接重启。
+当CPU检测到**不可纠正的MCE（Machine Check Error**）时，就会触发\#MC（**Machine Check Exception**, 中断号是十进制18），通常**软件**会**注册相关的函数**来处理\#MC，在这个函数中会通过读取MSR来收集MCE的错误信息，然后重启系统。当然由于发生的**MCE**可能是**非常致命**的，**CPU直接重启**了，没有办法完成MCE处理函数；甚至有可能在MCE处理函数中又触发了不可纠正的MCE，也会导致系统直接重启。
+
+发现硬件错误时触发的异常(exception)，中断号是18，异常的类型是abort：
+
+![](./images/2019-04-28-15-02-46.png)
 
 当然CPU还会检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈值**时，会触发**CMCI（Corrected Machine Check Error Interrupt**），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在MCA之后才加入的，算是对MCA的一个增强，在此之前软件只能通过轮询可纠正MCE相关的MSR才能实现相关的操作。
 
