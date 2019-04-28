@@ -9,8 +9,9 @@
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
 	* [2.3 IA32\_MCG\_CTL MSR](#23-ia32_mcg_ctl-msr)
 	* [2.4 IA32\_MCG\_EXT\_CTL MSR](#24-ia32_mcg_ext_ctl-msr)
-* [#](#)
-* [CMCI](#cmci)
+	* [2.5 错误报告寄存器Banks(Error\-Reporting Register Banks)](#25-错误报告寄存器bankserror-reporting-register-banks)
+		* [2.5.1 IA32\_MCi\_CTL MSRs](#251-ia32_mci_ctl-msrs)
+* [3 CMCI](#3-cmci)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -96,15 +97,21 @@ BIT27：1表示支持Local Machine Check Exception；
 
 目前有就BIT0有用，用来Disable（写1）或者Enable（写0）**LMCE**，这个LMCE的功能就是使**硬件**能够将**某些MCE**发送给**单个的逻辑处理器**。
 
-##
+## 2.5 错误报告寄存器Banks(Error\-Reporting Register Banks)
 
 以上都是全局的MSR, 下面介绍每个Bank对应的MSR，
 
-这些寄存器的第一个是IA32_MC0_CTL，它的地址一般都是400H。之后接着的是IA32_MC0_STATUS，IA32_MC0_ADDR，IA32_MC0_MISC，但是在之后并不是IA32_MC0_CTL2，而是IA32_MC1_CTL；对于IA32_MCi_CTL2来说，它的地址跟上面的这些不在一起，第一个IA32_MC0_CTL2是在280H，之后是IA32_MC1_CTL2在281H，以此类推。
+这些寄存器的第一个是IA32\_MC0\_CTL，它的地址一般都是400H。
+
+之后接着的是IA32\_MC0\_STATUS，IA32\_MC0\_ADDR，IA32\_MC0\_MISC，但是在之后并不是IA32\_MC0\_CTL2，而是IA32\_MC1\_CTL；对于IA32\_MCi\_CTL2来说，它的地址跟上面的这些不在一起，第一个IA32\_MC0\_CTL2是在280H，之后是IA32\_MC1\_CTL2在281H，以此类推。
+
+### 2.5.1 IA32\_MCi\_CTL MSRs
+
+每个Bank的CTL的作用是用来控制在发生**哪些MCA**的时候来**触发\#MC**：
 
 
 
-# CMCI
+# 3 CMCI
 
 前面以及提到，CMCI是后期加入到MCA的一种机制，它将错误上报的阈值操作从原始的软件轮询变成了硬件中断触发。
 
