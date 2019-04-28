@@ -7,6 +7,9 @@
 * [2 Machine Check MSR](#2-machine-check-msr)
 	* [2.1 IA32\_MCG\_CAP MSR](#21-ia32_mcg_cap-msr)
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
+	* [2.3 IA32\_MCG\_CTL MSR](#23-ia32_mcg_ctl-msr)
+	* [2.4 IA32\_MCG\_EXT\_CTL MSR](#24-ia32_mcg_ext_ctl-msr)
+* [#](#)
 * [CMCI](#cmci)
 * [参考](#参考)
 
@@ -76,6 +79,29 @@ BIT27：1表示支持Local Machine Check Exception；
 - Bit 1: Error IP Valid. 表示被中断的指令是否与MCE错误直接相关。
 - Bit 2: Machine Check In Progress. 表示 machine check 正在进行中。
 - bit 3: 设置后说明生成本地machine\-check exception. 这表示当前的机器检查事件仅传递给此逻辑处理器。
+
+## 2.3 IA32\_MCG\_CTL MSR
+
+这个寄存器的存在依赖于IA32_MCG_CAP这个MSR的BIT8。
+
+这个寄存器主要用来Disable（写1）或者Enable（写全0）**MCA功能**。
+
+## 2.4 IA32\_MCG\_EXT\_CTL MSR
+
+这个寄存器同样依赖于IA32\_MCA\_CAP这个MSR，这次依赖的是BIT9。
+
+该MSR的BIT位说明如下图所示：
+
+![](./images/2019-04-28-15-41-55.png)
+
+目前有就BIT0有用，用来Disable（写1）或者Enable（写0）**LMCE**，这个LMCE的功能就是使**硬件**能够将**某些MCE**发送给**单个的逻辑处理器**。
+
+##
+
+以上都是全局的MSR, 下面介绍每个Bank对应的MSR，
+
+这些寄存器的第一个是IA32_MC0_CTL，它的地址一般都是400H。之后接着的是IA32_MC0_STATUS，IA32_MC0_ADDR，IA32_MC0_MISC，但是在之后并不是IA32_MC0_CTL2，而是IA32_MC1_CTL；对于IA32_MCi_CTL2来说，它的地址跟上面的这些不在一起，第一个IA32_MC0_CTL2是在280H，之后是IA32_MC1_CTL2在281H，以此类推。
+
 
 
 # CMCI
