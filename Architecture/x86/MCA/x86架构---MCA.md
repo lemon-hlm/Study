@@ -23,7 +23,7 @@ Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Che
 
 ![](./images/2019-04-28-15-02-46.png)
 
-当然CPU还会检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈值**时，会触发**CMCI（Corrected Machine Check Error Interrupt**），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在MCA之后才加入的，算是对MCA的一个增强，在此之前软件只能通过轮询可纠正MCE相关的MSR才能实现相关的操作。
+当然CPU还会检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈值**时，会触发**CMCI（Corrected Machine Check Error Interrupt**），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在**MCA之后才加入**的，算是对MCA的一个增强，在此之前**软件只能通过轮询可纠正MCE相关的MSR**才能实现相关的操作。
 
 # 2 Machine Check MSR
 
