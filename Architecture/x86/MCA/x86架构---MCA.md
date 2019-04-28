@@ -13,7 +13,7 @@
 
 # 1 概述
 
-Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Check Architecture，它用来**检测硬件**（这里的Machine表示的就是硬件）错误，比如系统总线错误、ECC错误、奇偶校验错误、缓存错误、TLB错误等等。
+Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Check Architecture，它用来**检测硬件**（这里的Machine表示的就是硬件）错误，比如系统总线错误、ECC错误、奇偶校验错误、缓存错误、TLB错误等等。不仅硬件故障会引起MCE，不恰当的BIOS配置、firmware bug、软件bug也有可能引起MCE。
 
 这套系统通过**一定数量的MSR**（Model Specific Register）来实现，这些MSR分为两个部分，一部分用来**进行设置**，另一部分用来**描述发生的硬件错误**。
 
@@ -63,14 +63,18 @@ BIT27：1表示支持Local Machine Check Exception；
 
 ## 2.2 IA32\_MCG\_STATUS MSR
 
-该MSR记录了MCE发生时CPU的状态，主要的BIT位介绍如下：
+该MSR记录了**MCE发生时CPU的状态**，主要的BIT位介绍如下：
 
 ![](./images/2019-04-28-14-34-21.png)
 
-
+- Bit 0: Restart IP Valid. 表示程序的执行是否可以在被异常中断的指令处重新开始。
+- Bit 1: Error IP Valid. 表示被中断的指令是否与MCE错误直接相关。
+- Bit 2: Machine Check In Progress. 表示 machine check 正在进行中。
+- bit 3: 设置后说明生成本地machine\-check exception. 这表示当前的机器检查事件仅传递给此逻辑处理器。
 
 
 # 参考
 
 - https://blog.csdn.net/jiangwei0512/article/details/62456226
-- Intel手册15章(CHAPTER 15 MACHINE-CHECK ARCHITECTURE)、16章(CHAPTER 16 INTERPRETING MACHINE-CHECK ERROR CODES)
+- Intel手册卷3第15章(CHAPTER 15 MACHINE-CHECK ARCHITECTURE)、16章(CHAPTER 16 INTERPRETING MACHINE-CHECK ERROR CODES)
+- 怎么诊断MACE: http://linuxperf.com/?p=105
