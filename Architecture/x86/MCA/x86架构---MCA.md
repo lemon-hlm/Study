@@ -6,7 +6,7 @@
 * [1 概述](#1-概述)
 	* [1.1 不可纠正的MCE(uncorrected machine\-check error)](#11-不可纠正的mceuncorrected-machine-check-error)
 	* [1.2 可纠正的MCE(corrected machine\-check error)](#12-可纠正的mcecorrected-machine-check-error)
-	* [1.3](#13)
+	* [1.3 额外功能](#13-额外功能)
 * [2 Machine Check MSR](#2-machine-check-msr)
 	* [2.1 IA32\_MCG\_CAP MSR](#21-ia32_mcg_cap-msr)
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
@@ -43,9 +43,9 @@ CPU检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈�
 
 CMCI是在**MCA之后才加入**的，算是对MCA的一个增强，在此之前**软件只能通过轮询可纠正MCE相关的MSR**才能实现相关的操作。
 
-## 1.3 
+## 1.3 额外功能
 
-支持机器检查架构和CMCI的英特尔64处理器还可以支持额外的增强功能，即支持从某些未经修正的可恢复机器检查错误中恢复软件。
+支持**机器检查架构**和**CMCI**的英特尔64处理器还可以支持额外的增强功能，即支持从某些未经修正的可恢复机器检查错误中恢复软件。
 
 # 2 Machine Check MSR
 
