@@ -9,7 +9,7 @@
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
 	* [2.3 IA32\_MCG\_CTL MSR](#23-ia32_mcg_ctl-msr)
 	* [2.4 IA32\_MCG\_EXT\_CTL MSR](#24-ia32_mcg_ext_ctl-msr)
-	* [2.5 错误报告寄存器Banks(Error\-Reporting Register Banks)](#25-错误报告寄存器bankserror-reporting-register-banks)
+	* [2.5 错误报告寄存器组(Error\-Reporting Register Banks)](#25-错误报告寄存器组error-reporting-register-banks)
 		* [2.5.1 IA32\_MCi\_CTL MSRs](#251-ia32_mci_ctl-msrs)
 * [3 CMCI](#3-cmci)
 * [参考](#参考)
@@ -97,7 +97,7 @@ BIT27：1表示支持Local Machine Check Exception；
 
 目前有就BIT0有用，用来Disable（写1）或者Enable（写0）**LMCE**，这个LMCE的功能就是使**硬件**能够将**某些MCE**发送给**单个的逻辑处理器**。
 
-## 2.5 错误报告寄存器Banks(Error\-Reporting Register Banks)
+## 2.5 错误报告寄存器组(Error\-Reporting Register Banks)
 
 以上都是全局的MSR, 下面介绍每个Bank对应的MSR，
 
