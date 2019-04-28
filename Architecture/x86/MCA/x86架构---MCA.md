@@ -13,8 +13,9 @@
 		* [2.1.2 IA32\_MCG\_STATUS MSR](#212-ia32_mcg_status-msr)
 		* [2.1.3 IA32\_MCG\_CTL MSR](#213-ia32_mcg_ctl-msr)
 		* [2.1.4 IA32\_MCG\_EXT\_CTL MSR](#214-ia32_mcg_ext_ctl-msr)
-	* [2.5 错误报告寄存器组(Error\-Reporting Register Banks)](#25-错误报告寄存器组error-reporting-register-banks)
-		* [2.5.1 IA32\_MCi\_CTL MSRs](#251-ia32_mci_ctl-msrs)
+		* [2.1.5 Enabling Local Machine Check](#215-enabling-local-machine-check)
+	* [2.2 错误报告寄存器组(Error\-Reporting Register Banks)](#22-错误报告寄存器组error-reporting-register-banks)
+		* [2.2.1 IA32\_MCi\_CTL MSRs](#221-ia32_mci_ctl-msrs)
 * [3 CMCI](#3-cmci)
 * [参考](#参考)
 
@@ -119,7 +120,15 @@ BIT27：1表示支持Local Machine Check Exception；
 
 目前有就BIT0有用，用来Disable（写1）或者Enable（写0）**LMCE**，这个LMCE的功能就是使**硬件**能够将**某些MCE**发送给**单个的逻辑处理器**。
 
-## 2.5 错误报告寄存器组(Error\-Reporting Register Banks)
+### 2.1.5 Enabling Local Machine Check
+
+LMCE的预期用途需要平台软件和系统软件的正确配置。 平台软件可以通过设置IA32\_FEATURE\_CONTROL MSR（MSR地址3AH）中的位20（LMCE\_ON）来打开LMCE。
+
+系统软件必须确保在尝试设置IA32\_MCG_EXT_CTL.LMCE_EN（位0）之前设置IA32_FEATURE_CONTROL.Lock（位0）和IA32_FEATURE_CONTROL.LMCE_ON（位20）。 
+
+当系统软件**启用LMCE**时，**硬件**将确定**是否只能将特定错误**传递给**单个逻辑处理器**。 软件不应假设硬件可以选择作为LMCE提供的错误类型。
+
+## 2.2 错误报告寄存器组(Error\-Reporting Register Banks)
 
 以上都是全局的MSR, 下面介绍每个Bank对应的MSR，
 
@@ -127,7 +136,7 @@ BIT27：1表示支持Local Machine Check Exception；
 
 之后接着的是IA32\_MC0\_STATUS，IA32\_MC0\_ADDR，IA32\_MC0\_MISC，但是在之后并不是IA32\_MC0\_CTL2，而是IA32\_MC1\_CTL；对于IA32\_MCi\_CTL2来说，它的地址跟上面的这些不在一起，第一个IA32\_MC0\_CTL2是在280H，之后是IA32\_MC1\_CTL2在281H，以此类推。
 
-### 2.5.1 IA32\_MCi\_CTL MSRs
+### 2.2.1 IA32\_MCi\_CTL MSRs
 
 每个Bank的CTL的作用是用来控制在发生**哪些MCA**的时候来**触发\#MC**：
 
