@@ -8,6 +8,7 @@
 	* [1.2 可纠正的MCE(corrected machine\-check error)](#12-可纠正的mcecorrected-machine-check-error)
 	* [1.3 额外功能](#13-额外功能)
 * [2 Machine Check MSR](#2-machine-check-msr)
+	* [2.1 Machine\-Check Global Control MSRs](#21-machine-check-global-control-msrs)
 	* [2.1 IA32\_MCG\_CAP MSR](#21-ia32_mcg_cap-msr)
 	* [2.2 IA32\_MCG\_STATUS MSR](#22-ia32_mcg_status-msr)
 	* [2.3 IA32\_MCG\_CTL MSR](#23-ia32_mcg_ctl-msr)
@@ -45,7 +46,7 @@ CMCI是在**MCA之后才加入**的，算是对MCA的一个增强，在此之前
 
 ## 1.3 额外功能
 
-支持**机器检查架构**和**CMCI**的英特尔64处理器还可以支持额外的增强功能，即支持从某些未经修正的可恢复机器检查错误中恢复软件。
+支持**机器检查架构**和**CMCI**的**英特尔64处理器**还可以支持**额外的增强功能**，即支持从**某些不可纠正**的**可恢复机器检查错误**中进行**软件恢复**。
 
 # 2 Machine Check MSR
 
@@ -60,6 +61,10 @@ i表示的是各个组的Index。这里的组有一个称呼是Error Reporting R
 MCA通过若干Bank的MSR寄存器来表示各种类型的MCE。
 
 下面简单介绍一下这些寄存器。
+
+## 2.1 Machine\-Check Global Control MSRs
+
+机器检查全局控制MSR包括IA32\_MCG\_CAP，IA32\_MCG\_STATUS，以及可选的IA32\_MCG\_CTL和IA32\_MCG\_EXT\_CTL。
 
 ## 2.1 IA32\_MCG\_CAP MSR
 
