@@ -10,18 +10,13 @@
 
 # 1 概述
 
-Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Check Architecture，它用来检测硬件（这里的Machine表示的就是硬件）错误，比如系统总线错误、ECC错误等等。
+Intel从奔腾4开始的CPU中增加了一种机制，称为MCA——Machine Check Architecture，它用来**检测硬件**（这里的Machine表示的就是硬件）错误，比如系统总线错误、ECC错误、奇偶校验错误、缓存错误、TLB错误等等。
 
-这套系统通过一定数量的MSR（Model Specific Register）来实现，这些MSR分为两个部分，一部分用来进行设置，另一部分用来描述发生的硬件错误。
+这套系统通过**一定数量的MSR**（Model Specific Register）来实现，这些MSR分为两个部分，一部分用来**进行设置**，另一部分用来**描述发生的硬件错误**。
 
-当CPU检测到不可纠正的MCE（Machine Check Error）时，就会触发#MC（Machine Check Exception），通常软件会注册相关的函数来处理#MC，在这个函数中会通过读取MSR来收集MCE的错误信息，然后重启系统。当然由于发生的MCE可能是非常致命的，CPU直接重启了，没有办法完成MCE处理函数；甚至有可能在MCE处理函数中又触发了不可纠正的MCE，也会导致系统直接重启。
+当CPU检测到**不可纠正的MCE（Machine Check Error**）时，就会触发\#MC（**Machine Check Exception**），通常**软件**会**注册相关的函数**来处理\#MC，在这个函数中会通过读取MSR来收集MCE的错误信息，然后重启系统。当然由于发生的**MCE**可能是**非常致命**的，**CPU直接重启**了，没有办法完成MCE处理函数；甚至有可能在MCE处理函数中又触发了不可纠正的MCE，也会导致系统直接重启。
 
-当然CPU还会检测到可纠正的MCE，当可纠正的MCE数量超过一定的阈值时，会触发CMCI（Corrected Machine Check Error Interrupt），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在MCA之后才加入的，算是对MCA的一个增强，在此之前软件只能通过轮询可纠正MCE相关的MSR才能实现相关的操作。
-
-
-Intel在Pentium 4、Xenon和P6系列处理器中实现了机器检查（Machinecheck）架构，提供能够检测和报告硬件（机器）的错误机制，如系统总线错误、ECC错误、奇偶校验错误、缓存错误、TLB错误等。它包括一直MSR（Model-Specific Registers）寄存器，用来设置机器检查和额外的bank MSR记录错误。
-
-当机器检查到不可纠正的machine\-check错误时，就触发一个machine\-check异常。machine\-check架构不允许在出现MCE后处理器重启，但MCE处理程序可以从MSR寄存器收集相关信息。
+当然CPU还会检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈值**时，会触发**CMCI（Corrected Machine Check Error Interrupt**），此时软件可以捕捉到该中断并进行相应的处理。CMCI是在MCA之后才加入的，算是对MCA的一个增强，在此之前软件只能通过轮询可纠正MCE相关的MSR才能实现相关的操作。
 
 
 IA32\_MCG\_STATUS MSR描述了发生Machine Check exception后处理器的当前状态.
