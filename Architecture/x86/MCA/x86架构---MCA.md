@@ -51,7 +51,7 @@ CPU检测到**可纠正的MCE**，当可纠正的MCE数量**超过一定的阈�
 
 CMCI是在**MCA之后才加入**的，算是对MCA的一个增强，在此之前**软件只能通过轮询可纠正MCE相关的MSR**才能实现相关的操作。
 
-Corrected machine-check error interrupt (CMCI) 是MCA的增强特性。在原来的芯片里面，都是使用一种叫做threshold-based error reporting的机制来处理corrected error. 但是threshold-based error reporting需要系统软件周期性的轮询检测硬件的corrected MC errors，造成CPU的浪费。 CMCI 提供了一种机制，当corrected error发生侧次数到达阀值的时候，就会发送一个信号给本地的CPU来通知系统软件。当然，系统软件可以通过IA32_MCi_CTL2 MSRs来控制该特性的开关
+Corrected machine-check error interrupt (CMCI) 是MCA的增强特性。在原来的芯片里面，都是使用一种叫做threshold-based error reporting的机制来处理corrected error. 但是threshold-based error reporting需要系统软件周期性的轮询检测硬件的corrected MC errors，造成CPU的浪费。 CMCI 提供了一种机制，当corrected error发生侧次数到达阀值的时候，就会发送一个信号给本地的CPU来通知系统软件。当然，系统软件可以通过IA32\_MCi\_CTL2 MSRs来控制该特性的开关
 
 ## 1.3 额外功能
 
