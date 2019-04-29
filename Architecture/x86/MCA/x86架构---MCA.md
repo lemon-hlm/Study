@@ -21,6 +21,8 @@
 		* [2.2.4 IA32\_MCi\_MISC MSRs](#224-ia32_mci_misc-msrs)
 		* [2.2.5 IA32\_MCi\_CTL2 MSRs](#225-ia32_mci_ctl2-msrs)
 * [3 CMCI](#3-cmci)
+* [4 MCA的初始化](#4-mca的初始化)
+* [5 MSR的读写](#5-msr的读写)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -248,10 +250,172 @@ BIT17：Interrupt Mask，0表示接收中断，1表示屏蔽中断；
 
 关于CMCI的初始化和CMCI处理函数的实现，手册上有部分的介绍，不过没有什么源代码可以借鉴，这个不展开了。
 
+# 4 MCA的初始化
 
+手册上有一个伪代码可供参考
+
+```
+IF CPU supports MCE
+THEN
+	IF CPU supports MCA
+	THEN
+		IF (IA32_MCG_CAP.MCG_CTL_P = 1)
+		(* IA32_MCG_CTL register is present *)
+		THEN
+			IA32_MCG_CTL ← FFFFFFFFFFFFFFFFH;
+			(* enables all MCA features *)
+		FI
+		IF (IA32_MCG_CAP.MCG_LMCE_P = 1 and IA32_FEATURE_CONTROL.LOCK = 1 and IA32_FEATURE_CONTROL.LMCE_ON= 1)
+		(* IA32_MCG_EXT_CTL register is present and platform has enabled LMCE to permit system software to use LMCE *)
+		THEN
+			IA32_MCG_EXT_CTL ← IA32_MCG_EXT_CTL | 01H;
+			(* System software enables LMCE capability for hardware to signal MCE to a single logical processor*)
+		FI
+		(* Determine number of error-reporting banks supported *)
+		COUNT← IA32_MCG_CAP.Count;
+		MAX_BANK_NUMBER ← COUNT - 1;
+		IF (Processor Family is 6H and Processor EXTMODEL:MODEL is less than 1AH)
+		THEN
+			(* Enable logging of all errors except for MC0_CTL register *)
+			FOR error-reporting banks (1 through MAX_BANK_NUMBER)
+				DO
+					IA32_MCi_CTL ← 0FFFFFFFFFFFFFFFFH;
+				OD
+		ELSE
+			(* Enable logging of all errors including MC0_CTL register *)
+			FOR error-reporting banks (0 through MAX_BANK_NUMBER)
+				DO
+					IA32_MCi_CTL ← 0FFFFFFFFFFFFFFFFH;
+				OD
+		FI
+		(* BIOS clears all errors only on power-on reset *)
+		IF (BIOS detects Power-on reset)
+		THEN
+			FOR error-reporting banks (0 through MAX_BANK_NUMBER)
+				DO
+					IA32_MCi_STATUS ← 0;
+				OD
+		ELSE
+			FOR error-reporting banks (0 through MAX_BANK_NUMBER)
+				DO
+					(Optional for BIOS and OS) Log valid errors
+					(OS only) IA32_MCi_STATUS ← 0;
+				OD
+		FI
+	FI
+	Setup the Machine Check Exception (#MC) handler for vector 18 in IDT
+	Set the MCE bit (bit 6) in CR4 register to enable Machine-Check Exceptions
+FI
+```
+
+# 5 MSR的读写
+
+x86平台读写MSR有专门的指令，分别是rdmsr和wrmsr。下面是MSR读写的一个基本实现：
+
+```cpp
+/**
+  Returns a 64-bit Machine Specific Register(MSR).
+  Reads and returns the 64-bit MSR specified by Index. No parameter checking is
+  performed on Index, and some Index values may cause CPU exceptions. The
+  caller must either guarantee that Index is valid, or the caller must set up
+  exception handlers to catch the exceptions. This function is only available
+  on IA-32 and X64.
+  @param  Index The 32-bit MSR index to read.
+  @return The value of the MSR identified by Index.
+**/
+UINT64
+EFIAPI
+AsmReadMsr64 (
+  IN      UINT32                    Index
+  )
+{
+  UINT32 LowData;
+  UINT32 HighData;
+  
+  __asm__ __volatile__ (
+    "rdmsr"
+    : "=a" (LowData),   // %0
+      "=d" (HighData)   // %1
+    : "c"  (Index)      // %2
+    );
+    
+  return (((UINT64)HighData) << 32) | LowData;
+}
+ 
+/**
+  Writes a 64-bit value to a Machine Specific Register(MSR), and returns the
+  value.
+  Writes the 64-bit value specified by Value to the MSR specified by Index. The
+  64-bit value written to the MSR is returned. No parameter checking is
+  performed on Index or Value, and some of these may cause CPU exceptions. The
+  caller must either guarantee that Index and Value are valid, or the caller
+  must establish proper exception handlers. This function is only available on
+  IA-32 and X64.
+  @param  Index The 32-bit MSR index to write.
+  @param  Value The 64-bit value to write to the MSR.
+  @return Value
+**/
+UINT64
+EFIAPI
+AsmWriteMsr64 (
+  IN      UINT32                    Index,
+  IN      UINT64                    Value
+  )
+{
+  UINT32 LowData;
+  UINT32 HighData;
+ 
+  LowData  = (UINT32)(Value);
+  HighData = (UINT32)(Value >> 32);
+  
+  __asm__ __volatile__ (
+    "wrmsr"
+    :
+    : "c" (Index),
+      "a" (LowData),
+      "d" (HighData)
+    );
+    
+  return Value;
+}
+```
+
+上面是GCC版本的，还有汇编版本的：
+
+```assembly
+;-------------------------------------------------------
+; UINT64
+; EFIAPI
+; AsmReadMsr64 (
+;   IN UINT64  Index
+;   );
+;-------------------------------------------------------
+AsmReadMsr64    PROC
+    mov     ecx, [esp + 4]
+    rdmsr
+    ret
+AsmReadMsr64    ENDP
+ 
+;-------------------------------------------------------
+; UINT64
+; EFIAPI
+; AsmWriteMsr64 (
+;   IN UINT32  Index,
+;   IN UINT64  Value
+;   );
+;--------------------------------------------------------
+AsmWriteMsr64   PROC
+    mov     edx, [esp + 12]
+    mov     eax, [esp + 8]
+    mov     ecx, [esp + 4]
+    wrmsr
+    ret
+AsmWriteMsr64   ENDP
+```
 
 # 参考
 
-- https://blog.csdn.net/jiangwei0512/article/details/62456226
+- x86架构——MCA: https://blog.csdn.net/jiangwei0512/article/details/62456226
 - Intel手册卷3第15章(CHAPTER 15 MACHINE-CHECK ARCHITECTURE)、16章(CHAPTER 16 INTERPRETING MACHINE-CHECK ERROR CODES)
 - 怎么诊断MACE: http://linuxperf.com/?p=105
+- MCA机制：硬件错误检测架构: https://blog.csdn.net/chengm8/article/details/53003134
