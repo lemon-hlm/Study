@@ -27,7 +27,11 @@ RedhatEnterprise Linux7 已经默认使用firewalld 作为防火墙，其使用�
 
 # 2 什么是FirewallD
 
-FirewallD即**Dynamic Firewall Manager of Linux systems**，Linux系统的动态防火墙管理器。
+FirewallD即**Dynamic Firewall Manager of Linux systems**，Linux系统的**动态防火墙管理器**。是redhat7系统中对于netfilter内核模块的管理工具.
+
+iptables service 管理防火墙规则的模式（静态）：用户将新的防火墙规则添加进 /etc/sysconfig/iptables 配置文件当中，再执行命令 /etc/init.d/iptables reload 使变更的规则生效。在这整个过程的背后，iptables service 首先对旧的防火墙规则进行了清空，然后重新完整地加载所有新的防火墙规则，如果加载了防火墙的模块，需要在重新加载后进行手动加载防火墙的模块；
+firewalld 管理防火墙规则的模式（动态）:任何规则的变更都不需要对整个防火墙规则列表进行重新加载，只需要将变更部分保存并更新到运行中的 iptables 即可。
+还有命令行和图形界面配置工具，它仅仅是替代了 iptables service 部分，其底层还是使用 iptables 作为防火墙规则管理入口。
 
 **FirewallD**是一个服务，用于**配置网络连接**，从而那些内外部网络的数据包可以允许穿过网络或阻止穿过网络。
 
