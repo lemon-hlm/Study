@@ -5,6 +5,7 @@
 
 * [1 概述](#1-概述)
 * [2 什么是FirewallD](#2-什么是firewalld)
+* [3](#3)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -57,6 +58,12 @@ Firewalld 提供了支持**网络/防火墙区域(zone**)定义**网络链接**�
 
 
 查看防火墙几种服务的运行状态：
+
+# 3 
+
+iptables是另一种服务，它可以决定是否允许、删除或返回IP数据包。iptables服务管理IPv4数据包，而ip6tables则管理IPv6数据包。此服务管理了一堆规则表，其中每个表分别用于维护不同的目的，比如过滤表（filter table）为防火墙规则，NAT表供新连接查询使用，mangle表用于数据包的转换等。
+
+更进一步，每个表还具有规则链，规则链可以是内建的或是用户自定义的，它表示适用于一个数据包的规则集合，从而决定数据包应该执行哪些目标动作，比如允许ALLOWED、阻塞BLOCKED或返回RETURNED。iptables服务在RHEL/CentOS 6/5、Fedora、ArchLinux、Ubuntu等Linux发行版中是系统默认的服务。
 
 # 参考
 
