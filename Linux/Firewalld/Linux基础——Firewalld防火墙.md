@@ -29,9 +29,9 @@ RedhatEnterprise Linux7 已经默认使用firewalld 作为防火墙，其使用�
 
 FirewallD即**Dynamic Firewall Manager of Linux systems**，Linux系统的**动态防火墙管理器**。是redhat7系统中对于netfilter内核模块的管理工具.
 
-iptables service 管理防火墙规则的模式（静态）: 用户将新的防火墙规则添加进 /etc/sysconfig/iptables 配置文件当中，再执行命令 /etc/init.d/iptables reload 使变更的规则生效。在这整个过程的背后，iptables service 首先对旧的防火墙规则进行了清空，然后重新完整地加载所有新的防火墙规则，如果加载了防火墙的模块，需要在重新加载后进行手动加载防火墙的模块；
+**iptables** service 管理防火墙规则的模式（**静态**）: 用户将新的防火墙规则添加进 /**etc/sysconfig/iptables** 配置文件当中，再执行命令 /etc/init.d/**iptables reload** 使变更的规则生效。在这整个过程的背后，iptables service 首先**对旧的防火墙规则进行了清空**，然后**重新完整地加载**所有新的防火墙规则，如果加载了防火墙的模块，需要在重新加载后进行手动加载防火墙的模块；
 
-firewalld 管理防火墙规则的模式（动态）: 任何规则的变更都不需要对整个防火墙规则列表进行重新加载，只需要将变更部分保存并更新到运行中的 iptables 即可。还有命令行和图形界面配置工具，它仅仅是替代了 iptables service 部分，其底层还是使用 iptables 作为防火墙规则管理入口。
+**firewalld** 管理防火墙规则的模式（**动态**）: 任何规则的变更都**不需要**对整个防火墙规则列表进行**重新加载**，只需要将**变更部分**保存并更新到运行中的 **iptables** 即可。还有命令行和图形界面配置工具，它仅仅是替代了 iptables service 部分，其底层还是使用 iptables 作为防火墙规则管理入口。
 
 firewalld 使用 python 语言开发，在新版本中已经计划使用 c\+\+ 重写 daemon 部分(见下图)。
 
@@ -44,8 +44,8 @@ firewalld 使用 python 语言开发，在新版本中已经计划使用 c\+\+ �
 
 对应于上面两种类型的配置，FirewallD相应的有两个目录：
 
-- 针对运行时类型配置的目录/usr/lib/firewall；
-- 以及针对永久类型配置的目录/etc/firewall.
+- 针对**运行时**类型配置的目录/**usr/lib/firewall**；
+- 以及针对**永久类型**配置的目录/**etc/firewall**.
 
 在RHEL/CentOS 7或Fedora 18的默认服务可以看到。
 
