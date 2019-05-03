@@ -11,6 +11,11 @@
 * [6 理解网络区](#6-理解网络区)
 	* [6.1 zone使用原则](#61-zone使用原则)
 * [7 命令行工具 firewall-cmd](#7-命令行工具-firewall-cmd)
+	* [7.1 firewall的状态](#71-firewall的状态)
+	* [7.2 动作中的查看操作](#72-动作中的查看操作)
+	* [7.3 更改区域操作：](#73-更改区域操作)
+	* [7.4 新建\-\-add或删除\-\-remove规则：](#74-新建-add或删除-remove规则)
+* [8 Rich规则](#8-rich规则)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -337,8 +342,65 @@ Firewalld 的原则：
 firewall-cmd [--zone=zone] 动作 [--permanent] 
 ```
 
-
 注：如果不指定\-\-zone选项，则为当前所在的默认区域，\-\-permanent选项为是否将改动写入到区域配置文件中
+
+## 7.1 firewall的状态
+
+- \-\-state \#\#查看防火墙的状态
+
+- \-\-reload \#\#重新加载防火墙，中断用户的连接，将临时配置清掉，加载配置文件中的永久配置
+
+- \-\-complete\-reload \#\#重新加载防火墙，不中断用户的连接（防火墙出严重故障时使用）
+
+- \-\-panic\-on \#\#紧急模式，强制关闭所有网络连接,\-\-panic\-off是关闭紧急模式
+
+## 7.2 动作中的查看操作
+
+- \-\-get\-icmptypes \#\#查看支持的所有ICMP类型
+
+- \-\-get\-zones \#\#查看所有区域
+
+- \-\-get\-default\-zone \#\#查看当前的默认区域
+
+- \-\-get\-active\-zones \#\#查看当前正在使用的区域
+
+- \-\-get\-services \#\#查看当前区域支持的服务
+
+- \-\-list\-services \#\#查看当前区域开放的服务列表
+
+- \-\-list\-all \#\#查看此区域内的所有配置，类似与iptables \-L \-n
+
+## 7.3 更改区域操作：
+
+\-\-set\-default\-zone=work \#\#更改默认的区域
+
+## 7.4 新建\-\-add或删除\-\-remove规则：
+
+- \-\-add\-interface=eth0 \#\#将网络接口添加到默认的区域内
+- \-\-add\-port=12222/tcp \-\-permanent \#\#添加端口到区域开放列表中
+- \-\-add\-port=5000\-10000/tcp \-\-permanent \#\#将端口范围添加到开放列表中；
+- \-\-add\-service=ftp \-\-permanent \#\#添加服务到区域开放列表中（注意服务的名称需要与此区域支持的服务列表中的名称一致）
+- \-\-add\-source=192.168.1.1 \#\#添加源地址的流量到指定区域
+- \-\-remove\-source=192.168.1.1 \#\#删除源地址的流量到指定区域
+- \-\-change\-interface=eth1 \#\#改变指定的接口到其他区域
+- \-\-remove\-service=http \#\#在home区域内将http服务删除在开放列表中删除
+- \-\-add\-masquerade \#\#开启SNAT（源地址转换）
+- \-\-query\-masquerade \#\#查询SNAT的状态
+- \-\-remove\-interface=eth0 \#\#将网络接口在默认的区域内删除
+- \-\-query\-interface=eth0 \#\#确定该网卡接口是否存在于此区域 
+- \-\-add\-forward\-port=port=513:proto=tcp:toport=22:toaddr=192.168.100.101 ##端口转发
+
+# 8 Rich规则
+
+当基本firewalld语法规则不能满足要求时，可以使用以下更复杂的规则
+.rich-rules 富规则，功能强,表达性语言,查看帮助：man 5 firewalld.richlanguage
+.rich规则比基本的firewalld语法实现更强的功能，不仅实现允许/拒绝，还可以实现日志syslog和auditd，也可以实现端口转发，伪装和限制速率
+rich规则实施顺序有以下四点
+a.该区域的端口转发，伪造规则
+b.该区域的日志规则
+c.该区域的允许规则
+d.该区域的拒绝规则
+每个匹配的规则都生效，所有规则都不匹配，该区域默认规则生效；
 
 应用示例：
 
