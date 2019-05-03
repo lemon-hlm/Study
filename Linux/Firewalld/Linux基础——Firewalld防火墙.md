@@ -5,7 +5,13 @@
 
 * [1 概述](#1-概述)
 * [2 什么是FirewallD](#2-什么是firewalld)
-* [3](#3)
+* [3 什么是iptables](#3-什么是iptables)
+* [4 FirewallD服务的基本操作](#4-firewalld服务的基本操作)
+* [systemctl disable firewalld](#systemctl-disable-firewalld)
+* [systemctl enable firewalld](#systemctl-enable-firewalld)
+* [systemctl mask firewalld](#systemctl-mask-firewalld)
+* [systemctl unmask firewalld](#systemctl-unmask-firewalld)
+* [yum install firewalld firewall-config](#yum-install-firewalld-firewall-config)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -54,16 +60,70 @@ firewalld 使用 python 语言开发，在新版本中已经计划使用 c\+\+ �
 
 ![](./images/2019-04-30-22-37-15.png)
 
-Firewalld 提供了支持**网络/防火墙区域(zone**)定义**网络链接**以及**接口安全等级**的**防火墙管理工具**。拥有运行时配置和永久配置选项。它也支持允许服务或者应用程序直接添加防火墙规则的接口。以前的 system-config-firewall 防火墙模型是静态的，每次修改都要求防火墙完全重启。这个过程包括内核 netfilter 防火墙模块的卸载和新配置所需模块的装载等。相反，firewalldaemon 动态管理防火墙，不需要重启整个防火墙便可应用更改。因而也就没有必要重载所有内核防火墙模块了。
+Firewalld 提供了支持**网络/防火墙区域(zone**)定义**网络链接**以及**接口安全等级**的**防火墙管理工具**。拥有运行时配置和永久配置选项。它也支持允许服务或者应用程序直接添加防火墙规则的接口。以前的 system\-config\-firewall 防火墙模型是**静态**的，每次修改都要求**防火墙完全重启**。这个过程包括**内核 netfilter 防火墙模块**的**卸载**和新配置所需模块的**装载**等。相反，firewalldaemon 动态管理防火墙，不需要重启整个防火墙便可应用更改。因而也就没有必要重载所有内核防火墙模块了。
 
 
 查看防火墙几种服务的运行状态：
 
-# 3 
+# 3 什么是iptables
 
 iptables是另一种服务，它可以决定是否允许、删除或返回IP数据包。iptables服务管理IPv4数据包，而ip6tables则管理IPv6数据包。此服务管理了一堆规则表，其中每个表分别用于维护不同的目的，比如过滤表（filter table）为防火墙规则，NAT表供新连接查询使用，mangle表用于数据包的转换等。
 
 更进一步，每个表还具有规则链，规则链可以是内建的或是用户自定义的，它表示适用于一个数据包的规则集合，从而决定数据包应该执行哪些目标动作，比如允许ALLOWED、阻塞BLOCKED或返回RETURNED。iptables服务在RHEL/CentOS 6/5、Fedora、ArchLinux、Ubuntu等Linux发行版中是系统默认的服务。
+
+# 4 FirewallD服务的基本操作
+
+对于CentOS/RHEL 7或Fedora 18以上版本的系统，要管理FirewallD服务，使用如下命令。
+
+启动FirewallD服务
+
+```
+# systemctl firewalld start
+```
+
+停止FirewallD服务
+
+```
+# systemctl firewalld stop
+```
+
+
+检查FirewallD服务的状态
+
+```
+# systemctl status firewalld
+```
+
+检查FirewallD服务的状态
+
+```
+# firewall-cmd --state
+```
+
+可能会返回running，表示正在运行。
+
+还可以禁用FirewallD服务，关闭那些规则。
+
+禁用FirewallD服务
+
+# systemctl disable firewalld
+启用FirewallD服务
+
+# systemctl enable firewalld
+屏蔽FirewallD服务
+
+# systemctl mask firewalld
+还可以通过创建一个firewall.service到/dev/null的符号连接来屏蔽防火墙服务。
+
+反屏蔽FirewallD服务
+
+# systemctl unmask firewalld
+这是反屏蔽FirewallD服务，它会移除屏蔽FirewallD服务时创建的符号链接，故能重新启用服务。
+
+检查是否已安装防火墙
+
+# yum install firewalld firewall-config
+
 
 # 参考
 
