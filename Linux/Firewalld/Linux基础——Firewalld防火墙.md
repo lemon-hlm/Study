@@ -17,6 +17,7 @@
 	* [7.4 新建\-\-add或删除\-\-remove规则：](#74-新建-add或删除-remove规则)
 	* [7.5 应用示例](#75-应用示例)
 * [8 处理运行时区域](#8-处理运行时区域)
+* [9 处理永久区域](#9-处理永久区域)
 * [8 Rich规则](#8-rich规则)
 * [参考](#参考)
 
@@ -623,6 +624,203 @@ firewall-cmd [--zone=区域]  --remove-service=服务
 此举禁用区域中的某种服务。如果未指定区域，将使用默认区域。
 
 例:禁止默认区域中的 http 服务:
+
+![](./images/2019-05-03-16-41-34.png)
+
+3、查询区域中是否启用了特定服务
+
+```
+firewall-cmd [--zone=区域] --query-service=服务
+```
+
+![](./images/2019-05-03-16-42-00.png)
+
+Yes 表示服务启用，no 表示服务关掉了。
+
+4、启用区域端口和协议组合
+
+```
+firewall-cmd [--zone=区域] --add-port=portid[-portid]/protocol [--timeout=seconds]
+```
+
+此操作将启用端口和协议的组合。端口可以是一个单独的端口或者是一个端口范围 - 。协议可以是 tcp 或 udp。
+
+![](./images/2019-05-03-16-42-24.png)
+
+5、禁用端口和协议组合
+
+```
+firewall-cmd [--zone=区域] --remove-port=portid[-portid]/protocol
+```
+
+![](./images/2019-05-03-16-42-46.png)
+
+6、查询区域中是否启用了端口和协议组合
+
+```
+firewall-cmd [--zone=区域] --query-port=portid[-portid]/protocol
+```
+
+![](./images/2019-05-03-16-43-08.png)
+
+7、启用区域中的 IP 伪装功能
+
+```
+firewall-cmd [--zone=区域]  --add-masquerade
+```
+此操作启用区域的伪装功能。私有网络的地址将被隐藏并映射到一个公有 IP。这是地址转换的一种形式，常用于路由。由于内核的限制，伪装功能仅可用于IPv4。
+
+8、禁用区域中的 IP 伪装
+
+```
+firewall-cmd [--zone=区域]  --remove-masquerade
+```
+9、查询区域的伪装状态
+
+```
+firewall-cmd [--zone=区域]  --query-masquerade
+```
+注意：启用伪装功能的主机同时也需要开启转发服务：
+
+```
+# echo 1 > /proc/sys/net/ipv4/ip_forward
+```
+或
+
+```
+#vi   /etc/sysctl.conf    添加如下内容
+
+net.ipv4.ip_forward  =   1
+```
+
+保存退出并执行\#sysctl  -p使修改生效
+
+10、启用区域的 ICMP 阻塞功能
+
+```
+firewall-cmd [--zone=区域] --add-icmp-block=icmp 类型
+```
+例：
+
+```
+firewal-cmd   --add-icmp-block=echo-request
+```
+
+![](./images/2019-05-03-16-44-51.png)
+
+此操作将启用选中的 Internet 控制报文协议（ICMP）报文进行阻塞。 ICMP 报文可以是请求信息或者创建的应答报文，以及错误应答。
+
+11、禁止区域的 ICMP 阻塞功能
+
+```
+firewall-cmd [--zone=区域]  --remove-icmp-block=icmp 类型
+```
+12、查询区域的 ICMP 阻塞功能
+
+```
+firewall-cmd[--zone=区域] --query-icmp-block=icmp 类型
+```
+13、在区域中启用端口转发或映射
+
+```
+firewall-cmd  [--zone=区域] --add-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][ :toaddres s=address [/mask]]
+```
+
+端口可以映射到另一台主机的同一端口，也可以是同一主机或另一主机的不同端口。端口号可以是一个单独的端口或者是端口范围 - 。协议可以为 tcp 或 udp。目标端口可以是端口号或者是端口范围 - 。目标地址可以是 IPv4 地址。受内核限制，端口转发功能仅可用于 IPv4。
+
+意思是凡是来从 external进来的 22端口的数据包全部转发到 211.106.65.50
+
+```
+firewall-cmd --zone=external --add-forward-port=port=22:proto=tcp:toaddress=211.106.65.50
+
+```
+14、禁止区域的端口转发或者端口映射
+
+```
+firewall-cmd [--zone=] --remove-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]][ :toad dress=address [/mask]]
+```
+15、查询区域的端口转发或者端口映射
+
+```
+firewall-cmd [--zone=] --query-forward-port=port=portid[-portid]:proto=protocol[:toport=portid[-portid]] [ :toaddress=address[/mask]]
+```
+
+# 9 处理永久区域
+
+永久选项不直接影响运行时的状态。这些选项仅在重载或者重启服务时可用。为了使用运行时和永久设置，需要分别设置两者。选项--permanent 需要是永久设置的第一个参数。
+1、获取永久选项所支持的服务
+
+firewall-cmd --permanent --get-services
+
+2、获取永久选项所支持的 ICMP类型列表
+
+firewall-cmd --permanent --get-icmptypes
+
+3、获取支持的永久区域
+
+firewall-cmd --permanent --get-zones
+
+4、配置防火墙在 public 区域打开 http 协议，并保存，以致重启有效
+
+firewall-cmd --permanent --zone=public --add-service=http 查看永久模式下 public区域是否打开http 服务。firewall-cmd --permanent --zone=public --query-service=http
+
+5、防火墙开放 8080 端口在 public 区域
+
+firewall-cmd--permanent --zone=public --add-port=8080/tcp
+
+6、命令行配置富规则：
+
+查看富规则：# firewall-cmd --list-rich-rules
+
+创建富规则：
+
+firewall-cmd--add-rich-rule 'rule family=ipv4 source address=10.35.89.0/24 service name=ftplog prefix="ftp" level=info accept' --permanent
+
+firewall-cmd --add-rich-rule 'rule family=ipv4 sourceaddress=10.35.89.0/24 port port=80 protocol=tcp log prefix="80"level=info accept' --permanent
+
+firewall-cmd --add-rich-rule rule family="ipv4" sourceaddress="192.168.10.30" forward-port port="808"protocol="tcp" to-port="80" to-addr="10.10.10.2"
+
+富规则中使用伪装功能可以更精确详细的限制：
+
+firewall-cmd--add-rich-rule 'rule family=ipv4 source address=10.10.10.2/24 masquerade'
+
+仅允许部分 IP 访问本机服务配置
+
+firewall-cmd --permanent --zone=public --add-rich-rule="rulefamily="ipv4" source address="192.168.0.0/24" servicename="http" accept"
+
+禁止远程 IP 访问ssh
+
+firewall-cmd--permanent --zone=public --add-rich-rule=’rule family=ipv4
+
+sourceaddress=192.168.0.0/24 service name=sshreject’
+
+7、删除rich 规则
+
+firewall-cmd--permanent --zone=public --remove-rich-rule=’rule family=ipv4
+
+sourceaddress=192.168.0.0/24 service name=sshreject’
+
+8、仅允许部分 IP 访问本机端口配置
+
+firewall-cmd --permanent --zone=public--add-rich-rule="rule family="ipv4" sourceaddress="192.168.0.0/24"port protocol="tcp"port="8080" accept"
+
+9、创建rich 规则，可以指定日志的前缀和输出级别
+
+firewall-cmd --permanent --zone=public --add-rich-rule="rulefamily="ipv4" source address="192.168.0.4/24"port port=8080protocol="tcp" log prefix=proxy level=warning accept"
+
+可以通过查看/var/log/messages 日志文件
+
+10、端口转发。实验环境下，desktop访问server的5423端口，将访问server的80端口。
+
+Server上的操作：（172.25.0.10是desktop的IP地址）
+
+![](./images/2019-05-03-16-48-40.png)
+
+11、172.25.1.0/24 网段内的客户端不能访问主机的 SSH 
+
+![](./images/2019-05-03-16-48-50.png)
+
+
 
 # 8 Rich规则
 
