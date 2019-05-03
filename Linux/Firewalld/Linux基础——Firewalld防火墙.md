@@ -467,8 +467,125 @@ firewall-cmd  --get-icmptypes
 
 解释：特性可以是定义的防火墙策略，如：服务、端口和协议的组合、端口/数据报转发、伪装、ICMP 拦截或自定义规则等
 
+```
+firewall-cmd  --list-all-zones
+```
+
 ![](./images/2019-05-03-15-45-47.png)
 
+上面的命令将会列出每种区域如 block、dmz、drop、external、home、internal、public、trusted
+
+以及 work。如果区域还有其它详细规则（rich-rules）、启用的服务或者端口，这些区域信息也会分别被罗列出来
+
+7、输出区域全部启用的特性。如果省略区域，将显示默认区域的信息。
+
+```
+firewall-cmd [--zone=] --list-all
+```
+
+![](./images/2019-05-03-16-21-37.png)
+
+输出指定区域启动的特性
+
+![](./images/2019-05-03-16-22-00.png)
+
+8、查看默认区域
+
+![](./images/2019-05-03-16-22-22.png)
+
+public 区域是默认区域。
+
+在文件/etc/firewalld/firewalld.conf 中定义成 DefaultZone=public。
+
+9、设置默认区域
+
+```
+firewall-cmd --set-default-zone=区域名
+```
+
+![](./images/2019-05-03-16-22-52.png)
+
+流入默认区域中配置的接口的新访问请求将被置入新的默认区域。当前活动的连接将不受影响。
+
+10、获取活动的区域
+
+![](./images/2019-05-03-16-23-47.png)
+
+11、根据接口获取区域即需要查看哪个区域和这个接口绑定即查看某个接口是属于哪个zone的：
+
+```
+firewall-cmd --get-zone-of-interface=接口名
+```
+
+![](./images/2019-05-03-16-24-30.png)
+
+12、将接口（网卡）增加到区域
+
+
+```
+firewall-cmd [--zone=] --add-interface=接口名
+```
+
+![](./images/2019-05-03-16-25-16.png)
+
+如果接口不属于区域，接口将被增加到区域。如果区域被省略了，将使用默认区域。接口在重新加载后将重新应用。
+
+13、修改接口所属区域
+
+```
+firewall-cmd [--zone=] --change-interface=接口名
+```
+
+![](./images/2019-05-03-16-25-42.png)
+
+这个选项与 \-\-add\-interface 选项相似，但是当接口已经存在于另一个区域的时候，该接口将被添加到新的区域。
+
+14、从区域中删除一个接口
+
+```
+firewall-cmd [--zone=] --remove-interface=接口名
+```
+
+![](./images/2019-05-03-16-26-20.png)
+
+注：如果某个接口不属于任何 Zone，那么这个接口的所有数据包使用默认的Zone 的规则
+
+15、查询区域中是否包含某接口
+
+```
+firewall-cmd [--zone=] --query-interface=接口名
+```
+
+![](./images/2019-05-03-16-26-54.png)
+
+如果区域被省略了，将使用默认区域
+
+16、列举区域中启用的服务
+
+firewall-cmd [ --zone= ] --list-services
+
+![](./images/2019-05-03-16-27-08.png)
+
+如果区域被省略了，将使用默认区域查看home 区域中启用服务
+
+![](./images/2019-05-03-16-27-21.png)
+
+17、启用应急模式阻断所有网络连接，以防出现紧急状况
+
+![](./images/2019-05-03-16-27-33.png)
+
+18、禁用应急模式、
+
+Firewall-cmd  –panic-off
+
+19、查询应急模式
+
+```
+firewall-cmd  --query-panic
+```
+
+
+其他相关的配置项可以查看firewall-cmd的手册页：#man firewall-cmd
 
 # 8 Rich规则
 
