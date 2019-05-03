@@ -18,8 +18,11 @@
 	* [7.5 应用示例](#75-应用示例)
 * [8 处理运行时区域](#8-处理运行时区域)
 * [9 处理永久区域](#9-处理永久区域)
-* [8 Rich规则](#8-rich规则)
-* [参考](#参考)
+* [10 Rich规则](#10-rich规则)
+* [11 理解直接接口](#11-理解直接接口)
+* [12 改用iptables服务](#12-改用iptables服务)
+* [13 启动图形化防火墙设置工具](#13-启动图形化防火墙设置工具)
+* [14 参考](#14-参考)
 
 <!-- /code_chunk_output -->
 
@@ -750,63 +753,81 @@ firewall-cmd [--zone=] --query-forward-port=port=portid[-portid]:proto=protocol[
 永久选项不直接影响运行时的状态。这些选项仅在重载或者重启服务时可用。为了使用运行时和永久设置，需要分别设置两者。选项--permanent 需要是永久设置的第一个参数。
 1、获取永久选项所支持的服务
 
+```
 firewall-cmd --permanent --get-services
-
+```
 2、获取永久选项所支持的 ICMP类型列表
 
+```
 firewall-cmd --permanent --get-icmptypes
-
+```
 3、获取支持的永久区域
 
+```
 firewall-cmd --permanent --get-zones
-
+```
 4、配置防火墙在 public 区域打开 http 协议，并保存，以致重启有效
 
-firewall-cmd --permanent --zone=public --add-service=http 查看永久模式下 public区域是否打开http 服务。firewall-cmd --permanent --zone=public --query-service=http
+```
+firewall-cmd --permanent --zone=public --add-service=http 
+```
+查看永久模式下 public区域是否打开http 服务。
 
+```
+firewall-cmd --permanent --zone=public --query-service=http
+```
 5、防火墙开放 8080 端口在 public 区域
 
-firewall-cmd--permanent --zone=public --add-port=8080/tcp
-
+```
+firewall-cmd --permanent --zone=public --add-port=8080/tcp
+```
 6、命令行配置富规则：
 
-查看富规则：# firewall-cmd --list-rich-rules
+查看富规则：
+
+```
+# firewall-cmd --list-rich-rules
+```
 
 创建富规则：
 
+```
 firewall-cmd--add-rich-rule 'rule family=ipv4 source address=10.35.89.0/24 service name=ftplog prefix="ftp" level=info accept' --permanent
 
 firewall-cmd --add-rich-rule 'rule family=ipv4 sourceaddress=10.35.89.0/24 port port=80 protocol=tcp log prefix="80"level=info accept' --permanent
 
 firewall-cmd --add-rich-rule rule family="ipv4" sourceaddress="192.168.10.30" forward-port port="808"protocol="tcp" to-port="80" to-addr="10.10.10.2"
-
+```
 富规则中使用伪装功能可以更精确详细的限制：
 
-firewall-cmd--add-rich-rule 'rule family=ipv4 source address=10.10.10.2/24 masquerade'
-
+```
+firewall-cmd --add-rich-rule 'rule family=ipv4 source address=10.10.10.2/24 masquerade'
+```
 仅允许部分 IP 访问本机服务配置
 
+```
 firewall-cmd --permanent --zone=public --add-rich-rule="rulefamily="ipv4" source address="192.168.0.0/24" servicename="http" accept"
-
+```
 禁止远程 IP 访问ssh
 
-firewall-cmd--permanent --zone=public --add-rich-rule=’rule family=ipv4
-
-sourceaddress=192.168.0.0/24 service name=sshreject’
-
+```
+firewall-cmd--permanent --zone=public --add-rich-rule=’rule family=ipv4 sourceaddress=192.168.0.0/24 service name=sshreject’
+```
 7、删除rich 规则
 
-firewall-cmd--permanent --zone=public --remove-rich-rule=’rule family=ipv4
-
-sourceaddress=192.168.0.0/24 service name=sshreject’
-
+```
+firewall-cmd --permanent --zone=public --remove-rich-rule=’rule family=ipv4 sourceaddress=192.168.0.0/24 service name=sshreject’
+```
 8、仅允许部分 IP 访问本机端口配置
 
+```
 firewall-cmd --permanent --zone=public--add-rich-rule="rule family="ipv4" sourceaddress="192.168.0.0/24"port protocol="tcp"port="8080" accept"
-
+```
 9、创建rich 规则，可以指定日志的前缀和输出级别
 
+```
 firewall-cmd --permanent --zone=public --add-rich-rule="rulefamily="ipv4" source address="192.168.0.4/24"port port=8080protocol="tcp" log prefix=proxy level=warning accept"
+```
 
 可以通过查看/var/log/messages 日志文件
 
@@ -820,9 +841,48 @@ Server上的操作：（172.25.0.10是desktop的IP地址）
 
 ![](./images/2019-05-03-16-48-50.png)
 
+12、也可通过配置以下 XML 文件，进行对防火墙的配置修改
 
+```
+#cat /etc/firewalld/zones/public.xml
 
-# 8 Rich规则
+<?xmlversion="1.0" encoding="utf-8"?>
+<zone>
+    <short>Public</short>
+    <description>Foruse in public areas. You do not trust the other computers on networks to not harmyour computer. Only selected incoming connections areaccepted.</description>
+    <servicename="dhcpv6-client"/>
+    <servicename="ssh"/>
+    <rulefamily="ipv4">
+        <sourceaddress="192.168.0.4/24"/>
+        <servicename="http"/>
+        <accept/>
+    </rule>
+</zone>
+```
+
+netfilter 防火墙总是容易受到规则顺序的影响，因为一条规则在链中没有固定的位置。在一条规则之前添加或者删除规则都会改变此规则的位置。在静态防火墙模型中，改变防火墙就是重建一个干净和完善的防火墙设置，默认链通常也没有安全的方式添加或删除规则而不影响其他规则。
+
+动态防火墙有附加的防火墙功能链。这些特殊的链按照已定义的顺序进行调用，因而向链中添加规则将不会干扰先前调用的拒绝和丢弃规则。从而利于创建更为合理完善的防火墙配置。下面是一些由守护进程创建的规则，过滤列表中启用了在公共区域对ssh , mdns 和ipp\-client的支持：
+
+![](./images/2019-05-03-16-49-27.png)
+
+图形化配置工具
+
+firewall  daemon 主要的配置工具是 firewall-config。它支持防火墙的所有特性。管理员也可以用它来改变系统或用户策略。
+
+命令行客户端
+
+firewall-cmd 是命令行下提供大部分图形工具配置特性的工具。
+
+注：要想了解更多 firewall 防火墙更多知识可以查看 firewall的相关手册页:
+
+man  -k  firewalld
+
+若要查看rich\-rule 手册页
+
+man  firewalld.richlanguage
+
+# 10 Rich规则
 
 当基本firewalld语法规则不能满足要求时，可以使用以下更复杂的规则
 
@@ -883,8 +943,45 @@ firewall-cmd --permanent --add-rich-rule=‘rule family=ipv4 source address=192.
 firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=192.168.100.0/24 forward-port port=80 protocol=tcp to-port=8080 to-addr=192.168.100.100'
 ```
 
+# 11 理解直接接口
 
-# 参考
+FirewallD包含了一个名为直接接口（direct interface）的概念，意思是可以直接通过iptables、ip6tables和ebtables的规则。直接接口适用于应用程序，不适用于用户。如果不熟悉iptables，那么使用直接接口是很危险的，因为可能会导致防火墙被入侵。
+
+FirewallD保持对所增加规则项的追踪，所以能质询FirewallD，发现由使用直接端口模式的程序造成的更改。要使用直接端口，增加–direct选项到firewall-cmd命令来使用。
+
+# 12 改用iptables服务
+
+在CentOS/RHEL 7系统中，要用iptables和ip6tables服务代替FirewallD服务，需要以root身份运行以下命令，先禁用FirewallD：
+
+```
+# systemctl disable firewalld
+# systemctl stop firewalld
+```
+
+然后安装iptables-services程序包，以root身份输入以下命令：
+
+```
+# yum install iptables-services
+```
+
+iptables-services程序包包含了iptables和ip6tables服务。然后，以root身份运行iptables和ip6tables命令：
+
+```
+# systemctl start iptables
+# systemctl start ip6tables
+# systemctl enable iptables
+# systemctl enable ip6tables
+```
+
+# 13 启动图形化防火墙设置工具
+
+用命令行启动图形化防火墙配置工具，则以root用户身份输入以下命令：
+
+```
+# firewall-config
+```
+
+# 14 参考
 
 - Linux基础——Firewalld防火墙: https://cloud.tencent.com/developer/article/1152579
 - CentOS 7防火墙服务FirewallD指南: https://www.linuxidc.com/Linux/2016-10/136431.htm
