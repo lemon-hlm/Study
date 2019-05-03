@@ -15,6 +15,7 @@
 	* [7.2 动作中的查看操作](#72-动作中的查看操作)
 	* [7.3 更改区域操作：](#73-更改区域操作)
 	* [7.4 新建\-\-add或删除\-\-remove规则：](#74-新建-add或删除-remove规则)
+	* [7.5 应用示例](#75-应用示例)
 * [8 Rich规则](#8-rich规则)
 * [参考](#参考)
 
@@ -390,19 +391,7 @@ firewall-cmd [--zone=zone] 动作 [--permanent]
 - \-\-query\-interface=eth0 \#\#确定该网卡接口是否存在于此区域 
 - \-\-add\-forward\-port=port=513:proto=tcp:toport=22:toaddr=192.168.100.101 ##端口转发
 
-# 8 Rich规则
-
-当基本firewalld语法规则不能满足要求时，可以使用以下更复杂的规则
-.rich-rules 富规则，功能强,表达性语言,查看帮助：man 5 firewalld.richlanguage
-.rich规则比基本的firewalld语法实现更强的功能，不仅实现允许/拒绝，还可以实现日志syslog和auditd，也可以实现端口转发，伪装和限制速率
-rich规则实施顺序有以下四点
-a.该区域的端口转发，伪造规则
-b.该区域的日志规则
-c.该区域的允许规则
-d.该区域的拒绝规则
-每个匹配的规则都生效，所有规则都不匹配，该区域默认规则生效；
-
-应用示例：
+## 7.5 应用示例
 
 1、获取 firewalld 状态
 
@@ -480,6 +469,67 @@ firewall-cmd  --get-icmptypes
 
 ![](./images/2019-05-03-15-45-47.png)
 
+
+# 8 Rich规则
+
+当基本firewalld语法规则不能满足要求时，可以使用以下更复杂的规则
+
+\.rich\-rules 富规则，功能强,表达性语言,查看帮助：man 5 firewalld.richlanguage
+
+\.rich规则比基本的firewalld语法实现更强的功能，不仅实现允许/拒绝，还可以实现**日志syslog**和auditd，也可以实现端口转发，伪装和限制速率
+
+rich规则实施顺序有以下四点
+
+a. 该区域的端口转发，伪造规则
+
+b. 该区域的日志规则
+
+c. 该区域的允许规则
+
+d. 该区域的拒绝规则
+
+每个匹配的规则都生效，所有规则都不匹配，该区域默认规则生效；
+
+Rich规则语法：
+
+Rich规则选项：
+```
+--add-rich-rule=’rule’ ##新建rich规则
+--remove-rich-rule=’rule’ ##删除rich规则
+--query-rich-rule=’rule’ ##查看单条rich规则
+--list-rich-rules ##查看rich规则列表
+```
+
+
+Rich规则示例：
+```
+#拒绝从192.168.0.11的所有流量
+firewall-cmd --permanent --zone=cla***oom --add-rich-rule=‘rule family=ipv4 source address=192.168.0.11/32 reject‘
+```
+
+```
+#限制每分钟只有两个连接到ftp服务
+firewall-cmd --add-rich-rule=’rule service name=ftp limitvalue=2/m accept’
+```
+
+```
+#抛弃esp协议的所有数据包
+firewall-cmd --permanent --add-rich-rule=‘rule protocol value=esp drop‘
+```
+```
+#接受所有192.168.1.0/24子网端口范置7900-7905的TCP流量
+firewall-cmd --permanent --zone=vnc --add-rich-rule=‘rule family=ipv4 source address=192.168.1.0/24 port port=7900-7905 protocol=tcp accept‘
+```
+
+```
+##开启SNAT
+firewall-cmd --permanent --add-rich-rule=‘rule family=ipv4 source address=192.168.0.0/24 masquerade‘
+```
+
+```
+##使用rule规则实现端口转发，to-addr选项如果不指定默认转发到本机
+firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=192.168.100.0/24 forward-port port=80 protocol=tcp to-port=8080 to-addr=192.168.100.100'
+```
 
 
 # 参考
