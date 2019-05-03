@@ -7,11 +7,8 @@
 * [2 什么是FirewallD](#2-什么是firewalld)
 * [3 什么是iptables](#3-什么是iptables)
 * [4 FirewallD服务的基本操作](#4-firewalld服务的基本操作)
-* [systemctl disable firewalld](#systemctl-disable-firewalld)
-* [systemctl enable firewalld](#systemctl-enable-firewalld)
-* [systemctl mask firewalld](#systemctl-mask-firewalld)
-* [systemctl unmask firewalld](#systemctl-unmask-firewalld)
-* [yum install firewalld firewall-config](#yum-install-firewalld-firewall-config)
+* [5 iptables服务的基本操作](#5-iptables服务的基本操作)
+* [6 理解网络区](#6-理解网络区)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -106,23 +103,135 @@ iptables是另一种服务，它可以决定是否允许、删除或返回IP数�
 
 禁用FirewallD服务
 
+```
 # systemctl disable firewalld
+```
+
 启用FirewallD服务
 
+```
 # systemctl enable firewalld
+```
+
 屏蔽FirewallD服务
 
+```
 # systemctl mask firewalld
+```
+
 还可以通过创建一个firewall.service到/dev/null的符号连接来屏蔽防火墙服务。
 
 反屏蔽FirewallD服务
 
+```
 # systemctl unmask firewalld
+```
+
 这是反屏蔽FirewallD服务，它会移除屏蔽FirewallD服务时创建的符号链接，故能重新启用服务。
 
 检查是否已安装防火墙
 
+```
 # yum install firewalld firewall-config
+```
+
+# 5 iptables服务的基本操作
+
+在RHEL/CentOS 6/5/4系统和Fedora 12-18系统中，iptables是默认的防火墙，如果服务不存在，可以这样安装：
+
+```
+# yum install iptables-services
+```
+
+然后就可以对iptables服务进行启动、停止、重启等操作了。
+
+启动iptables服务
+
+```
+# systemctl start iptables
+```
+
+或
+
+```
+# service iptables start
+```
+
+停止iptables服务
+
+```
+# systemctl stop iptables
+```
+
+或
+```
+# service iptables stop
+```
+
+禁用iptables服务
+
+```
+# systemctl disable iptables
+```
+
+或
+```
+# service iptables save
+# service iptables stop
+```
+
+启用iptables服务
+```
+# systemctl enable iptables
+```
+
+或
+
+```
+# service iptables start
+```
+
+检查iptables服务的状态
+
+```
+# systemctl status iptables
+```
+或
+
+```
+# service iptables status
+```
+
+在Ubuntu及其它Linux发行版中，ufw是用于管理iptables防火墙服务的工具。ufw提供了一个简易的界面让用户可以很方便的处理iptables防火墙服务。
+
+启用ufw iptables防火墙服务
+
+```
+$ sudo ufw enable
+```
+
+禁用ufw iptables防火墙服务
+
+```
+$ sudo ufw disable
+```
+
+检查ufw iptables防火墙服务的状态
+
+```
+$ sudo ufw status 
+```
+
+但是，如果想列出iptables包含的所有规则链列表，应使用如下命令：
+
+```
+$ iptables -L -n -v
+```
+
+# 6 理解网络区
+
+在CentOS/RHEL 7系统中，基于用户对网络中设备和通信所给与的信任程度，防火墙可用于将网络划分成不同的区域，区域类型如下：
+
 
 
 # 参考
