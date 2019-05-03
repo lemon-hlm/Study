@@ -314,11 +314,11 @@ Firewalld 的原则：
 
 你可以使用任何一种 firewalld 配置工具来配置或者增加区域，以及修改配置。
 
-工具有例如firewall\-config这样的图形界面工具， firewall\-cmd 这样的命令行工具，或者你也可以在配置文件目录中创建或者拷贝区域文件，/**usr/lib/firewalld/zones** 被用于**默认和备用配置**，/**etc/firewalld/zones**被用于**用户创建和自定义**配置文件。
+工具有例如firewall\-config这样的图形界面工具， firewall\-cmd 这样的命令行工具，或者你也可以在配置文件目录中创建或者拷贝**区域文件**，/**usr/lib/firewalld/zones** 被用于**默认和备用配置**，/**etc/firewalld/zones**被用于**用户创建和自定义**配置文件。
 
 文件：
 
-- /usr/lib/firewalld/services/ ：firewalld服务默认在此目录下定义了70\+种服务供我们使用，格式：服务名.xml；
+- /usr/lib/firewalld/services/ ：firewalld**服务默认**在此目录下定义了70\+种服务供我们使用，格式：服务名.xml；
 - /etc/firewalld/zones/ : 默认区域配置文件，配置文件中指定了编写完成的规则（规则中的服务名必须与上述文件名一致）；
 
 分为多个文件的优点 :
