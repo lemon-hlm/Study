@@ -16,6 +16,7 @@
 	* [7.3 更改区域操作：](#73-更改区域操作)
 	* [7.4 新建\-\-add或删除\-\-remove规则：](#74-新建-add或删除-remove规则)
 	* [7.5 应用示例](#75-应用示例)
+* [8 处理运行时区域](#8-处理运行时区域)
 * [8 Rich规则](#8-rich规则)
 * [参考](#参考)
 
@@ -562,8 +563,9 @@ firewall-cmd [--zone=] --query-interface=接口名
 
 16、列举区域中启用的服务
 
+```
 firewall-cmd [ --zone= ] --list-services
-
+```
 ![](./images/2019-05-03-16-27-08.png)
 
 如果区域被省略了，将使用默认区域查看home 区域中启用服务
@@ -576,16 +578,51 @@ firewall-cmd [ --zone= ] --list-services
 
 18、禁用应急模式、
 
-Firewall-cmd  –panic-off
-
+```
+firewall-cmd  –panic-off
+```
 19、查询应急模式
 
 ```
 firewall-cmd  --query-panic
 ```
 
+其他相关的配置项可以查看firewall-cmd的手册页：
 
-其他相关的配置项可以查看firewall-cmd的手册页：#man firewall-cmd
+```
+#man firewall-cmd
+```
+
+# 8 处理运行时区域
+
+**运行时**模式下对区域进行的**修改不是永久有效**的。重新加载或者重启后修改将失效。
+
+1、启用区域中的一种服务即给某个区域开启某个服务
+
+```
+firewall-cmd [--zone=区域]  --add-service=服务  [--timeout=秒数]
+```
+
+此操作启用区域中的一种服务。如果未指定区域，将使用默认区域。如果设定了超时时间，服务将只启用特定秒数。
+
+![](./images/2019-05-03-16-36-58.png)
+
+使区域中的 ipp\-client服务生效 60 秒:
+
+启用默认区域中的 http 服务:
+
+```
+firewall-cmd --add-service=http
+```
+
+2、禁用区域中的某种服务即关闭某个服务
+
+```
+firewall-cmd [--zone=区域]  --remove-service=服务
+```
+此举禁用区域中的某种服务。如果未指定区域，将使用默认区域。
+
+例:禁止默认区域中的 http 服务:
 
 # 8 Rich规则
 
