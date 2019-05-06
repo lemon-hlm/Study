@@ -1,3 +1,16 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 创建存储池](#1-创建存储池)
+* [2 配置Openstack的ceph客户端](#2-配置openstack的ceph客户端)
+	* [2.1 安装ceph客户端软件](#21-安装ceph客户端软件)
+	* [2.2 ceph配置文件](#22-ceph配置文件)
+
+<!-- /code_chunk_output -->
+
+
 http://docs.ceph.org.cn/rbd/rbd-openstack/
 
 通过 libvirt 你可以把 Ceph 块设备用于 OpenStack ，它配置了 QEMU 到 librbd 的接口。 Ceph 把块设备映像条带化为对象并分布到集群中，这意味着大容量的 Ceph 块设备映像其性能会比独立服务器更好。
