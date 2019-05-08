@@ -32,10 +32,28 @@ storage_availability_zone = nova
 default_availability_zone = nova
 ```
 
+解决这个问题的办法自然就是将预期的 Cinder backend 也划分至 AZ:ovs 中：
 
+```
+# cinder.conf
+[DEFAULT]
+...
+storage_availability_zone = ovs
+default_availability_zone = ovs
+```
+
+此后创建该 Backend 的 Volumes 也需要显式的指定 AZ 参数：
+
+```
+openstack volume create --type ovs_backend --availability-zone ovs ...
+```
+
+如此这般，保证了 Nova 和 Cinder 处于同一个 AZ，卷挂载自然就没有问题了。
 
 
 # 参考
 
 - https://blog.csdn.net/jmilk/article/details/89917583
 - https://segmentfault.com/a/1190000011033324
+- cinder可用域问题分析: https://wenku.baidu.com/view/b221e07eb5daa58da0116c175f0e7cd184251802.html
+- https://www.mirantis.com/blog/the-first-and-final-word-on-openstack-availability-zones/
