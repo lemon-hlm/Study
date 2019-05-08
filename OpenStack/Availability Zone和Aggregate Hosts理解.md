@@ -3,13 +3,44 @@
 
 <!-- code_chunk_output -->
 
-* [1 availability zone](#1-availability-zone)
-* [2 Aggregate Hosts](#2-aggregate-hosts)
+* [0 概述](#0-概述)
+* [1 Region](#1-region)
+* [2 availability zone](#2-availability-zone)
+* [3 Aggregate Hosts](#3-aggregate-hosts)
+* [4 Availability Zones和Host Aggregate的关系图](#4-availability-zones和host-aggregate的关系图)
+* [5 例子](#5-例子)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
 
-# 1 availability zone
+# 0 概述
+
+OpenStack是Amazon AWS的开源实现，直白点就是山寨产品吧，对于主机的分布也不例外的copy了Amazon EC2
+
+首先记住一点，Region, Availability Zone和Aggregate host这三者是从大范围到小范围的关系，即前者包含了后者。
+
+Region的概念即美国区，欧洲区，亚洲区，是最大范围的一个划分，如果你的主要用户都在美国，那么用户在部署VM的时候选择美国区，以提高用户的访问速度和较好的SLA。阿里云也可以选择是杭州节点还是青岛节点，一个道理。
+
+
+Availability 
+
+Zone是针对一个区来说的，将区分成更小的范围，如果你将VM都部署在一个Region的其中一个AZ上，那么当该AZ出现故障（比较糟糕的，完全断电
+或者火灾之类的），那么你的instances就都挂掉了。所以一般将应用的多个VM实例分别部署在Region的多个AZ上，提高AZ的容灾性和可用
+性。当然对于一个Region只在一个机房的情况下一个AZ可以是一个或几个相邻的机架，这个定义由管理员可以指定（nova.conf），如果没有指定
+的话在Folsom版本中所有的service默认都在nova这个Zone中。在OpenStack的Nova中是可以让用户指定VM是在哪个AZ启动
+的，这样nova-scheduler就会针对这个AZ做虚拟机部署的调度。该特性面向用户，用户可以指定AZ部署虚拟机。
+
+Aggregate Host 
+
+Aggregate则是针对一个AZ来说的，主要是针对有共同特性的主机host做一个aggregate，如共享存储和网络，或可信计算硬件等。比较常用的做法是和nova-scheduler结合，比如说nova-scheduler会将同一flavor或image的VM放置在一个aggregate中。该特性只面向管理员（nova.conf），可以由管理员指定相关的调度策略，而用户不可见。
+
+附上OpenStack官方的概念介绍：http://docs.openstack.org/trunk/openstack-ops/content/scaling.html
+
+# 1 Region
+
+Region更像是一个地理上的概念，每个region有自己独立的endpoint，regions之间完全隔离，但是多个regions之间共享同一个keystone和dashboard，region的设计更多侧重地理位置的概念，用户可以选择离自己更近的region来部署自己的服务。
+
+# 2 availability zone
 
 az是在**region范围内**的再次切分，只是**工程上的独立**，例如可以把一个机架上的机器划分在一个az中，划分az是为了提高**容灾性**和提供**廉价的隔离服务**。选择不同的region主要考虑哪个region靠近你的用户群体，比如用户在美国，自然会选择离美国近的region；选择不同的az是为了防止所有的instance一起挂掉，下图描述了二者之间的关系。
 
@@ -27,9 +58,13 @@ az在openstack中其实是nova\-scheduler来实现的，当新建虚拟机，调
 
 指定instance clocktower将在availability zone\-chicago被创建，至于那些compute node属于哪一个az，是在nova.conf中通过参数node\_availability\_zone=xxx来配置的。
 
-# 2 Aggregate Hosts
+Availability Zones 通常是对 computes 节点上的资源在小的区域内进行逻辑上的分组和隔离。例如在同一个数据中心，我们可以将 Availability Zones 规划到不同的机房，或者在同一机房的几个相邻的机架，从而保障如果某个 Availability Zone 的节点发生故障（如供电系统或网络），而不影响其他的 Availability Zones 上节点运行的虚拟机，通过这种划分来提高 OpenStack 的可用性。目前 OpenStack 默认的安装是把所有的 computes 节点划分到 nova 的 Availability Zone 上，但我们可以通过对 nova.conf 文件的配置来定义不同的 Availability zones。
 
- Availability zones are a customer-facing capability, host aggregates are meant to be used by administrators to separate hardware by particular properties, and are not seen by customers.
+# 3 Aggregate Hosts
+
+host aggregate是管理员用来根据**硬件资源**的**某一属性！！！** 来对硬件进行划分的功能，**只对管理员可见**，主要用来给nova\-scheduler通过某一属性来进行instance的调度。其主要功能就是实现根据某一属性来划分物理机，比如按照地理位置，使用固态硬盘的机器，内存超过32G的机器，根据这些指标来构成一个host group。
+
+Availability zones are a customer-facing capability, host aggregates are meant to be used by administrators to separate hardware by particular properties, and are not seen by customers.
 
 az是一个面向终端客户的概念和能力，而host aggregate是管理员用来根据硬件资源的某一属性来对硬件进行划分的功能，只对管理员可见。
 
@@ -47,6 +82,23 @@ Host aggregates, on the other hand, serve as an intelligent way for schedulers t
 
 综上所述：az是用户可见的，用户手动的来指定vm运行在哪些host上；Host aggregate是一种更智能的方式，是调度器可见的，影响调度策略的一个表达式。
 
+# 4 Availability Zones和Host Aggregate的关系图
+
+![](./images/2019-05-08-11-10-15.png)
+
+# 5 例子
+
+配置
+
+/etc/nova/nova.conf
+
+```
+[filter_scheduler]
+available_filters = nova.scheduler.filters.all_filters
+enabled_filters =
+```
+
 # 参考
 
-http://blog.chinaunix.net/uid-20940095-id-3875022.html
+- http://blog.chinaunix.net/uid-20940095-id-3875022.html
+- https://blog.csdn.net/isclouder/article/details/79878346
