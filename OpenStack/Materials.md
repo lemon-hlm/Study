@@ -5,3 +5,5 @@
 - 源码分析: https://blog.csdn.net/Jmilk/article/details/52213999
 
 - 超分: http://www.codexiu.cn/openstack/blog/32746/
+
+- 探索Openstack: https://www.cnblogs.com/sammyliu/p/4219974.html
