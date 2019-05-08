@@ -95,7 +95,97 @@ Host aggregates, on the other hand, serve as an intelligent way for schedulers t
 ```
 [filter_scheduler]
 available_filters = nova.scheduler.filters.all_filters
-enabled_filters =
+enabled_filters = AggregateInstanceExtraSpecsFilter
+```
+
+openstack官方使用host aggregate的例子
+
+This example configures the Compute service to enable users to request nodes that have solid-state drives (SSDs). You create a fast-io host aggregate in the nova availability zone and you add the ssd=true key-value pair to the aggregate. Then, you add the node1, and node2 compute nodes to it.
+
+```
+$ nova aggregate-create fast-io nova
++----+---------+-------------------+-------+----------+
+| Id | Name    | Availability Zone | Hosts | Metadata |
++----+---------+-------------------+-------+----------+
+| 1  | fast-io | nova              |       |          |
++----+---------+-------------------+-------+----------+
+$ nova aggregate-set-metadata 1 ssd=true
++----+---------+-------------------+-------+-------------------+
+| Id | Name    | Availability Zone | Hosts | Metadata          |
++----+---------+-------------------+-------+-------------------+
+| 1  | fast-io | nova              | []    | {u'ssd': u'true'} |
++----+---------+-------------------+-------+-------------------+
+$ nova aggregate-add-host 1 node1
++----+---------+-------------------+------------+-------------------+
+| Id | Name    | Availability Zone | Hosts      | Metadata          |
++----+---------+-------------------+------------+-------------------+
+| 1  | fast-io | nova              | [u'node1'] | {u'ssd': u'true'} |
++----+---------+-------------------+------------+-------------------+
+$ nova aggregate-add-host 1 node2
++----+---------+-------------------+----------------------+-------------------+
+| Id | Name    | Availability Zone | Hosts                | Metadata          |
++----+---------+-------------------+----------------------+-------------------+
+| 1  | fast-io | nova              | [u'node1', u'node2'] | {u'ssd': u'true'} |
++----+---------+-------------------+----------------------+-------------------+
+```
+
+
+Use the nova flavor-create command to create the ssd.large flavor called with an ID of 6, 8 GB of RAM, 80 GB root disk, and four vCPUs.
+
+```
+$ nova flavor-create ssd.large 6 8192 80 4
++----+-----------+-----------+------+-----------+------+-------+-------------+-----------+
+| ID | Name      | Memory_MB | Disk | Ephemeral | Swap | VCPUs | RXTX_Factor | Is_Public |
++----+-----------+-----------+------+-----------+------+-------+-------------+-----------+
+| 6  | ssd.large | 8192      | 80   | 0         |      | 4     | 1.0         | True      |
++----+-----------+-----------+------+-----------+------+-------+-------------+-----------+
+```
+
+
+Once the flavor is created, specify one or more key-value pairs that match the key-value pairs on the host aggregates with scope aggregate_instance_extra_specs. In this case, that is the aggregate_instance_extra_specs:ssd=true key-value pair. Setting a key-value pair on a flavor is done using the nova flavor-key command.
+
+```
+$ nova flavor-key ssd.large set aggregate_instance_extra_specs:ssd=true
+```
+
+Once it is set, you should see the extra_specs property of the ssd.large flavor populated with a key of ssd and a corresponding value of true.
+
+```
+$ nova flavor-show ssd.large
++----------------------------+--------------------------------------------------+
+| Property                   | Value                                            |
++----------------------------+--------------------------------------------------+
+| OS-FLV-DISABLED:disabled   | False                                            |
+| OS-FLV-EXT-DATA:ephemeral  | 0                                                |
+| disk                       | 80                                               |
+| extra_specs                | {u'aggregate_instance_extra_specs:ssd': u'true'} |
+| id                         | 6                                                |
+| name                       | ssd.large                                        |
+| os-flavor-access:is_public | True                                             |
+| ram                        | 8192                                             |
+| rxtx_factor                | 1.0                                              |
+| swap                       |                                                  |
+| vcpus                      | 4                                                |
++----------------------------+--------------------------------------------------+
+```
+
+Now, when a user requests an instance with the ssd.large flavor, the scheduler only considers hosts with the ssd=true key-value pair. In this example, these are node1 and node2.
+
+nova实现 host aggregate的命令
+
+```
+# nova -h |grep aggregate
+    aggregate-add-host          Add the host to the specified aggregate.
+    aggregate-create            Create a new aggregate with the specified
+    aggregate-delete            Delete the aggregate.
+    aggregate-details           DEPRECATED, use aggregate-show instead.
+    aggregate-list              Print a list of all aggregates.
+    aggregate-remove-host       Remove the specified host from the specified
+                                aggregate.
+    aggregate-set-metadata      Update the metadata associated with the
+                                aggregate.
+    aggregate-show              Show details of the specified aggregate.
+    aggregate-update            Update the aggregate's name and optionally
 ```
 
 # 参考
