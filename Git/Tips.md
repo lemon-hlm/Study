@@ -171,3 +171,5 @@ git config --global --unset user.name
 (2)编辑配置文件：
 
 git config --global --edit
+
+# 16 
