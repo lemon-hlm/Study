@@ -501,7 +501,9 @@ test == 1 or run == always
 hostname in [1,2,3,4]
 ```
 
-ansible除了上文的==, or, in来进行判断外，**ansible**还支持通过**管道调用**ansible**自定义的test plugin**进行判断, 上文中的result | failed or result.stdout | version_compare(docker_py_version_min, '<')用到了version_compare和failed两个test plugin，这两个test plugin本质是ansible指定目录下两个python函数，用来解析字符串判断版本版本是否匹配，执行命令是否成功。它们的源码位于ansible.plugins.test.core, ansible。所有test plugin位于ansible.plugins.test，ansible支持自定义test plugin。
+ansible除了上文的==, or, in来进行判断外，**ansible**还支持通过**管道调用**ansible**自定义的test plugin**进行判断, 上文中的result | failed or result.stdout | version_compare(docker_py_version_min, '<')用到了**version\_compare**和**failed**两个**test plugin**，这两个test plugin本质是**ansible指定目录下两个python函数**，用来**解析字符串判断版本版本是否匹配**，执行命令是否成功。
+
+它们的源码位于**ansible.plugins.test.core**, ansible。所有test plugin位于ansible.plugins.test，ansible支持自定义test plugin。
 
 
 
