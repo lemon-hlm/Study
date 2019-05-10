@@ -22,6 +22,8 @@
 		* [4.2.4 handlers](#424-handlers)
 	* [4.3 使用role和include更好的组织playbook](#43-使用role和include更好的组织playbook)
 		* [4.3.1 role](#431-role)
+		* [4.3.2 include](#432-include)
+* [5 kolla\-ansible中常见的ansible语法](#5-kolla-ansible中常见的ansible语法)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -372,7 +374,7 @@ tasks:
 
 按照这样的目录格式组织完成后，我们就得到了一个**webserber role**。
 
-**tasks**中可以有很多task，被执行的**入口**是**main.yml**
+**tasks**中可以有很多task，被执行的**入口**是**main.yml！！！**
 
 ```
 # 官网的一个role目录结构的例子
@@ -396,11 +398,102 @@ roles/
      templates/
 ```
 
-role的使用方法，可以参考下面的例子，下面的playbook作用是：对所有的webservers机器，执行common，weservers，foo_app_instance对应的task，执行最后一个role时，传递了dir和app_port两个参数。
+**role的使用方法**，可以参考下面的例子，下面的playbook作用是：对**所有的webservers**机器，执行common，weservers，foo\_app\_instance对应的task，执行最后一个role时，传递了dir和app_port两个参数。
 
 ```
+---
+- hosts: webservers
+  roles:
+     - common
+     - webservers
+     - { role: foo_app_instance, dir: '/opt/a', app_port: 5000 }
+```
+
+### 4.3.2 include
+
+可以考虑这样两个问题：
+
+1. 上文我们定义webserver role作用是在指定服务器上安装并确保apache服务运行，那么如果我们**想要升级**，**关闭或者卸载apache服务**呢，该怎么办，再定义新的role，webserver\-upgrade看起来似乎太蠢笨了。能不能像面向对象那样，**一个对象支持不同的操作**？
+2. 上文中的webserver服务安装比较简单，所以我们的playbook也比较简单，但是有时候会遇到比较麻烦的需求，比如说**安装openstack的neutron服务**，它需要**先检查设置**，**再生成配置文件**，**同步数据库**，等步骤，这项功能如果都写成一个playbook，这个playbook是不是太大了，很难维护。可不可以把**检查**，**配置**，**同步**等功能做成**不同的playbook**，然后从一个主playbook中看情况调用？
+
+include功能可以解决这样的问题，一个include的例子如下
 
 ```
+tasks/
+   bootstrap.yml
+   ceph.yml
+   config.yml
+   check.yml
+   deploy.yml
+   upgrade.yml
+   precheck.yml
+   register.yml
+   main.yml
+
+main.yml
+---
+- include: "{{ action }}.yml"
+
+deploy.yml
+---
+- include: ceph.yml
+  when:
+    - enable_ceph | bool and nova_backend == "rbd"
+    - inventory_hostname in groups['ceph-mon'] or
+      略
+
+- include: register.yml
+  when: inventory_hostname in groups['nova-api']
+
+- include: config.yml
+
+- include: bootstrap.yml
+  when: inventory_hostname in groups['nova-api'] or
+        inventory_hostname in groups['compute']
+
+略
+```
+
+当**nova role**被赋给一台服务器后，如果用户指定的**action是deploy**，**ansible**会引入**deploy.yml**，如果是**upgrade**,则引入**upgrade.yml**。这样根据用户参数的不同，**include不同的playbook**，从而实现**一个role支持多种功能**。
+
+deploy playbook又由**多个不同的playbook组成**，根据用户的配置的参数，有不同的组合方式，很灵活。
+
+我的理解是，在**role**的**task**中，**一个play**就好像一个**内部函数**，**一个playbook**是由一个由**多个play组成的公有函数**，被其他**playbook**根据**include参数组合调用**。
+
+# 5 kolla\-ansible中常见的ansible语法
+
+kolla-ansible中的play都比上面的例子复杂很多，它很多时候都不直接调用module，而是加了很多判断，循环，错误处理之类的逻辑，一个例子：
+
+```ansible
+ansible.roles.prechecks.tasks.package_checks.yml
+---
+- name: Checking docker SDK version
+  command: "/usr/bin/python -c \"import docker; print docker.__version__\""
+  register: result
+  changed_when: false
+  when: inventory_hostname in groups['baremetal']
+  failed_when: result | failed or
+               result.stdout | version_compare(docker_py_version_min, '<')
+```
+
+这个playbook的功能是：
+
+1. 开始**执行book**中的**第一个play**：Checking docker SDK version
+2. 判断**目标主机inventory\_hostname**是否属于**主机清单中的baremetal组**
+3. 如果属于，到这台主机上执行command module，参数是"/usr/bin/python -c "import docker; print docker.\_\_version\_\_""
+4. 将执行的结果赋值给result变量
+5. 因为这个模块不会更改目标主机上的任何设置，所以change_when是false，无论执行结果如何，都不会去改变这个当然任务的changed属性
+6. 将result变量传递给failed函数，判断命令是否执行成功
+7. 如果命令执行成功，将result中的输出结果，传递给version_compare函数，判断版本是否符合要求
+8. 因为这个模块不会更改目标主机上的任何设置，所以change_when永远是false
+9. 如果failed_when判断结果为失败，则设置任务状态为失败，停止执行此playbook
+
+下面分别介绍几种kolla\-ansible中常用的ansible语法。
+
+1.条件语句
+when，faild_when, change_when 后面可以接入一个条件语句，条件语句的值是true或者false，条件语句示例如下：
+
+
 
 # 参考
 
