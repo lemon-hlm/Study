@@ -18,7 +18,8 @@
 	* [4.2 playbook中的元素](#42-playbook中的元素)
 		* [4.2.1 hosts and remote\_user](#421-hosts-and-remote_user)
 		* [4.2.2 tasks](#422-tasks)
-		* [4.2.3](#423)
+		* [4.2.3 vars](#423-vars)
+		* [4.2.4 handlers](#424-handlers)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -308,7 +309,7 @@ play中的**hosts**代表这个play要在**哪些主机**上执行，这里可�
 
 **remote\_user**代表要以指定的**用户身份**来执行此play。
 
-remote\_user可以细化到task层。
+remote\_user可以细化到**task层**。
 
 ```
 ---
@@ -322,9 +323,35 @@ remote\_user可以细化到task层。
 
 ### 4.2.2 tasks
 
-task是要在目标机器上执行的一个最小任务，一个play可以包含多个task，所有的task顺序执行。
+task是要在目标机器上执行的一个最小任务，一个play可以包含**多个task**，所有的task顺序执行。
 
-### 4.2.3 va
+### 4.2.3 vars
+
+在play中可以定义一些参数，如上文webservers中定义的http\_port和max\_clients，这两个参数会作用到这个play中的task上，最终template模块会使用这两个参数的值来生成目标配置文件。
+
+### 4.2.4 handlers
+
+当**某个task**对主机造成了改变时，可以**触发notify**操作，notify会唤起对应的handler处理该变化。
+
+比如说上面的例子中，如果template module重写/etc/httpd.conf文件后，该文件内容发生了变化，就会触发task中notify部分定义的handler重启apache服务，如果文件内容未发生变化，则不触发handler。
+也可以通过listen来触发想要的handler，示例如下：
+
+```
+handlers:
+    - name: restart memcached
+      service: name=memcached state=restarted
+      listen: "restart web services"
+    - name: restart apache
+      service: name=apache state=restarted
+      listen: "restart web services"
+
+tasks:
+    - name: restart everything
+      command: echo "this task will restart the web services"
+      notify: "restart web services"
+```
+
+
 
 # 参考
 
