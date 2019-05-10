@@ -10,6 +10,13 @@
 	* [2.2 Module（模块）](#22-module模块)
 		* [2.2.1 一个例子: ping](#221-一个例子-ping)
 		* [2.2.2 自定义模块](#222-自定义模块)
+		* [2.2.3 action moudle](#223-action-moudle)
+		* [2.2.4 模块学习](#224-模块学习)
+* [3 ansible\-playbook](#3-ansible-playbook)
+* [4 Playbook(剧本)](#4-playbook剧本)
+	* [4.1 一个简单的playbook](#41-一个简单的playbook)
+	* [4.2 playbook中的元素](#42-playbook中的元素)
+		* [4.2.1 hosts and remote\_user](#421-hosts-and-remote_user)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -230,6 +237,80 @@ openstack的**kolla\-ansbile**项目的**ansible/library目录**下面存放着k
 ansible-doc -M /usr/share/kolla-ansible/ansible/library -v merge_configs
 ```
 
+### 2.2.3 action moudle
+
+如上文所述，ansible moudle**最终执行的位置是目标机器**，所以module脚本的执行**依赖于目标机器上安装了对应的库**，如果目标机器上没有安装对应的库，脚本变不能执行成功。这种情况下，如果我们不打算去改动目标机器，可以使用**action moudle**，action moudle是一种用来在**管理机器上执行**，但是可以最终**作用到目标机器上的module**。
+
+例如，OpenStack/kolla-ansible项目部署容器时，几乎对**每一台机器**都要**生成自己对应的配置文件**，如果这个步骤在**目标机器**上执行，那么需要在每个**目标机器**上都按照配置文件对应的**依赖python库**。
+
+为了减少依赖，kolla\-ansible定义了**action module**，在**部署节点生成配置文件**，然后通过**cp module**将生成的文件**拷贝到目标节点**，这样就不必在每个被部署节点都安装yml，**oslo\_config等python库**，目标机器只需要支持scp即可。
+
+kolla\-ansible的**action module**存放的位置是**ansible/action\_plugins**.
+
+### 2.2.4 模块学习
+
+不建议深入去学，太多了，用到的时候一个个去查就好了
+
+- 这篇文章介绍了ansible常用模块的用法：http://blog.csdn.net/iloveyin/article/details/46982023
+- ansible官网提供了所有module的用法：http://docs.ansible.com/ansible/latest/modules_by_category.html
+- ansible 所有module源码存放路径：/usr/lib/python2.7/site-packages/ansible/modules/
+
+# 3 ansible\-playbook
+
+待补充
+
+# 4 Playbook(剧本)
+
+前文提到的**ansible命令**，都是一些**类似shell命令**的功能，如果要做一些比较**复杂的操作**，比如说：部署一个**java应用**到**10台服务器**上，一个模块显然是无法完成的，需要**安装模块**，**配置模块**，**文件传输模块**，**服务状态管理模块等**模块**联合工作**才能完成。
+
+把这些**模块的组合使用**，按**特定格式记录到一个文件**上，并且使**该文件具备可复用性**，这就是**ansible的playbook**。
+
+如果说**ansible模块**类似于**shell命令**，那**playbook**类似于**shell脚本**的功能。
+
+这里举一个使用playbook集群的例子，kolla\-ansible deploy 实际上就是调用了：
+
+```
+ansible-playbook -i /usr/share/kolla-ansible/ansible/inventory/all-in-one -e @/etc/kolla/globals.yml -e @/etc/kolla/passwords.yml -e CONFIG_DIR=/etc/kolla  -e action=deploy /usr/share/kolla-ansible/ansible/site.yml
+```
+
+## 4.1 一个简单的playbook
+
+```
+---
+- hosts: webservers
+  vars:
+    http_port: 80
+    max_clients: 200
+  remote_user: root
+  tasks:
+  - name: ensure apache is at the latest version
+    yum: name=httpd state=latest
+  - name: write the apache config file
+    template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+    notify:
+    - restart apache
+  - name: ensure apache is running (and enable it at boot)
+    service: name=httpd state=started enabled=yes
+  handlers:
+    - name: restart apache
+      service: name=httpd state=restarted
+```
+
+这个playbook来自ansible官网，包含了一个play，功能是在所有webservers节点上安装配置apache服务，如果配置文件被重写，重启apache服务，在任务的最后，确保服务在启动状态。
+
+## 4.2 playbook中的元素
+
+### 4.2.1 hosts and remote\_user
+
+play中的hosts代表这个play要在哪些主机上执行，这里可以使一个或者多个主机，也可以是一个或者多个主机组。remote_user代表要以指定的用户身份来执行此play。remote_user可以细化到task层。
+
+---
+- hosts: webservers
+  remote_user: root
+  tasks:
+    - name: test connection
+      ping:
+      remote_user: yourname
 
 
 # 参考
