@@ -8,6 +8,9 @@
 * [3 Linux配置](#3-linux配置)
 	* [3.1 安装samba](#31-安装samba)
 	* [3.2 共享文件夹](#32-共享文件夹)
+	* [3.3 配置samba.conf](#33-配置sambaconf)
+	* [3.4 添加samba账户](#34-添加samba账户)
+* [4 在mac上连接](#4-在mac上连接)
 
 <!-- /code_chunk_output -->
 
@@ -39,4 +42,46 @@ sudo chmod 777 /home/USER_NAME/shared_directory
 ```
 
 USER\_NAME就是你的用户名。
+
+我是将根目录直接全部share了
+
+## 3.3 配置samba.conf
+
+可以直接修改/etc/samba/smb.conf，在文件末尾添加：
+
+```
+[share]
+      path = /home/USER_NAME/shared_directory
+      available = yes
+      browseable = yes
+      public = yes
+      writable = yes
+```
+
+我的配置是
+
+```
+[share]
+	path = /
+	available = yes
+	browseable = yes
+	public = yes
+	writable = yes
+    valid users = root
+    create mask = 0777
+    directory mask = 0777
+```
+
+## 3.4 添加samba账户
+
+```
+sudo touch /etc/samba/smbpasswd
+sudo smbpasswd -a USER_NAME
+```
+
+我是用了root用户
+
+# 4 在mac上连接
+
+打开Finder（或在桌面），CMD + k，可以得到以下页面：
 
