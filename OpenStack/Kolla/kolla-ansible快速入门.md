@@ -28,7 +28,11 @@
 	* [5.2 迭代](#52-迭代)
 	* [5.3 failed\_when](#53-failed_when)
 	* [5.4 changed\_when](#54-changed_when)
-* [参考](#参考)
+	* [5.5 run\_once](#55-run_once)
+	* [5.6 serial](#56-serial)
+	* [5.7 until](#57-until)
+	* [5.8 wait_for](#58-wait_for)
+* [6 参考](#6-参考)
 
 <!-- /code_chunk_output -->
 
@@ -540,10 +544,88 @@ with\_itmes 是ansible的迭代语句，作用类似python的 for item in {}, �
 
 当我们控制一些远程主机执行某些任务时，当任务在远程主机上成功执行，状态发生更改时，会返回changed状态响应，状态未发生更改时，会返回OK状态响应，当任务被跳过时，会返回skipped状态响应。我们可以通过changed_when来手动更改changed响应状态。
 
-5. run_once
-当对一个主机组赋予进行操作时，有部分操作并不需要在每个主机上都执行，比如说nova服务安装时，需要初始化nova数据库，这个操作只需要在一个节点上执行一次就可以了，这种情况可以使用run_once标记，被标记的任务不会在多个节点上重复执行。
-delegate_to可以配合run_once使用，可以在playbook中指定数据库任务要执行的主机，下面的例子中，指定要执行数据库创建的主机是groups['nova-api'][0]
+## 5.5 run\_once
 
-# 参考
+当对一个主机组赋予进行操作时，有部分操作并不需要在每个主机上都执行，比如说nova服务安装时，需要初始化nova数据库，这个操作只需要在一个节点上执行一次就可以了，这种情况可以使用run_once标记，被标记的任务不会在多个节点上重复执行。
+
+delegate_to可以配合run_once使用，可以在playbook中指定数据库任务要执行的主机，下面的例子中，指定要执行数据库创建的主机是groups['nova\-api'][0]
+
+```
+- name: Creating Nova databases
+  kolla_toolbox:
+    module_name: mysql_db
+    module_args:
+      login_host: "{{ database_address }}"
+      login_port: "{{ database_port }}"
+      login_user: "{{ database_user }}"
+      login_password: "{{ database_password }}"
+      name: "{{ item }}"
+  register: database
+  run_once: True
+  delegate_to: "{{ groups['nova-api'][0] }}"
+  with_items:
+    - "{{ nova_database_name }}"
+    - "{{ nova_database_name }}_cell0"
+    - "{{ nova_api_database_name }}"
+```
+
+delegate_to指定的机器可以当前任务的机器没有任何关系，比如，在部署nova服务时，可以delegate_to的目标不限于nova机器，可以到delegate_to ansible控制节点或者存储机器上执行任务。例如：
+
+hosts: app_servers
+tasks:
+name: gather facts from db servers
+setup:
+delegate_to: "{{item}}"
+delegate_facts: True
+with_items: "{{groups[‘dbservers‘}}"
+该例子会收集dbservers的facts并分配给这些机器, 而不会去收集app_servers的facts
+
+## 5.6 serial
+
+一般情况下, ansible会同时在所有服务器上执行用户定义的操作, 但是用户可以通过serial参数来定义同时可以在多少太机器上执行操作.
+
+name: test play
+hosts: webservers
+serial: 3
+webservers组中的3台机器完全完成play后, 其他3台机器才会开始执行
+
+## 5.7 until
+
+这种循环由三个指令完成：
+
+until是一个条件表达式，如果满足条件循环结束
+retry是重试的次数
+delay是延迟时间
+示例如下：
+
+action: shell /usr/bin/foo
+register: result
+until: result.stdout.find("all systems go") != -1
+retries: 5
+delay:
+
+## 5.8 wait_for
+
+wait_for 可以让ansible等待一段时间，直到条件满足，再继续向下执行，这个模块主要用来等待之前的操作完成，比如服务启动成功，锁释放。
+
+下面是一个kolla-ansible判断murano-api服务是否启动成功的例子：
+在murano-api[0]节点上, 尝试和api_interface_address:murano_api_port建立链接，如果成功建立连接，结束等待。如果1秒（connect_timeout）内未建立成功，放弃，休眠1秒（参数sleep，未配置，默认值）后重试，如果60秒（timeout）内没有成功创建链接，任务失败。
+
+- name: Waiting for Murano API service to be ready on first node
+  wait_for:
+    host: "{{ api_interface_address }}"
+    port: "{{ murano_api_port }}"
+    connect_timeout: 1
+    timeout: 60
+  run_once: True
+  delegate_to: "{{ groups['murano-api'][0] }}"
+
+# 6 参考
 
 - https://www.cnblogs.com/zhangyufei/p/7645804.html
+- ansible入门书：https://ansible-book.gitbooks.io/ansible-first-book/content/begin/basic_module/module_list_details.html
+- ansible循环用法：http://www.cnblogs.com/PythonOrg/p/6593910.html
+- 自定义过滤器:http://rfyiamcool.blog.51cto.com/1030776/1440686/
+- 异步和轮询：http://www.mamicode.com/info-detail-1202005.html
+- ansible 语法：http://blog.csdn.net/ggz631047367/article/details/50359127
+- ansible官网：http://docs.ansible.com/ansible/latest/
