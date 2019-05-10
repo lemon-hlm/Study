@@ -25,6 +25,9 @@
 		* [4.3.2 include](#432-include)
 * [5 kolla\-ansible中常见的ansible语法](#5-kolla-ansible中常见的ansible语法)
 	* [5.1 条件语句](#51-条件语句)
+	* [5.2 迭代](#52-迭代)
+	* [5.3 failed\_when](#53-failed_when)
+	* [5.4 changed\_when](#54-changed_when)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -507,8 +510,39 @@ ansible除了上文的==, or, in来进行判断外，**ansible**还支持通过*
 
 所有test plugin位于ansible.plugins.test，ansible支持自定义test plugin。
 
-## 
+## 5.2 迭代
 
+with\_itmes 是ansible的迭代语句，作用类似python的 for item in {}, 用法示例：
+
+```
+- name: test list
+  command: echo {{ item }}
+  with_items: [ 0, 2, 4, 6, 8, 10 ]
+  when: item > 56
+
+- name: Setting sysctl values
+  sysctl: name={{ item.name }} value={{ item.value }} sysctl_set=yes
+  with_items:
+    - { name: "net.bridge.bridge-nf-call-iptables", value: 1}
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1}
+    - { name: "net.ipv4.conf.all.rp_filter", value: 0}
+    - { name: "net.ipv4.conf.default.rp_filter", value: 0}
+  when:
+    - set_sysctl | bool
+    - inventory_hostname in groups['compute']
+```
+
+## 5.3 failed\_when
+
+一种错误处理机制，一般用来检测执行的结果，如果执行失败，终止任务，和条件语句搭配使用
+
+## 5.4 changed\_when
+
+当我们控制一些远程主机执行某些任务时，当任务在远程主机上成功执行，状态发生更改时，会返回changed状态响应，状态未发生更改时，会返回OK状态响应，当任务被跳过时，会返回skipped状态响应。我们可以通过changed_when来手动更改changed响应状态。
+
+5. run_once
+当对一个主机组赋予进行操作时，有部分操作并不需要在每个主机上都执行，比如说nova服务安装时，需要初始化nova数据库，这个操作只需要在一个节点上执行一次就可以了，这种情况可以使用run_once标记，被标记的任务不会在多个节点上重复执行。
+delegate_to可以配合run_once使用，可以在playbook中指定数据库任务要执行的主机，下面的例子中，指定要执行数据库创建的主机是groups['nova-api'][0]
 
 # 参考
 
