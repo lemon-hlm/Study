@@ -24,6 +24,7 @@
 		* [4.3.1 role](#431-role)
 		* [4.3.2 include](#432-include)
 * [5 kolla\-ansible中常见的ansible语法](#5-kolla-ansible中常见的ansible语法)
+	* [5.1 条件语句](#51-条件语句)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -480,18 +481,27 @@ ansible.roles.prechecks.tasks.package_checks.yml
 
 1. 开始**执行book**中的**第一个play**：Checking docker SDK version
 2. 判断**目标主机inventory\_hostname**是否属于**主机清单中的baremetal组**
-3. 如果属于，到这台主机上执行command module，参数是"/usr/bin/python -c "import docker; print docker.\_\_version\_\_""
-4. 将执行的结果赋值给result变量
-5. 因为这个模块不会更改目标主机上的任何设置，所以change_when是false，无论执行结果如何，都不会去改变这个当然任务的changed属性
-6. 将result变量传递给failed函数，判断命令是否执行成功
-7. 如果命令执行成功，将result中的输出结果，传递给version_compare函数，判断版本是否符合要求
-8. 因为这个模块不会更改目标主机上的任何设置，所以change_when永远是false
+3. 如果**属于**，到这台主机上执行**command module**，**参数**是"/usr/bin/python -c "import docker; print docker.\_\_version\_\_""
+4. 将**执行的结果**赋值给**result变量**(register)
+5. 因为**这个模块不会更改目标主机上的任何设置**，所以**change\_when是false**，无论执行结果如何，都不会去改变这个当然任务的changed属性
+6. 将**result变量**传递给**failed函数**，判断命令是否执行成功
+7. 如果命令执行成功，将result中的输出结果，传递给version\_compare函数，判断版本是否符合要求
+8. 因为这个模块不会更改目标主机上的任何设置，所以change\_when永远是false
 9. 如果failed_when判断结果为失败，则设置任务状态为失败，停止执行此playbook
 
 下面分别介绍几种kolla\-ansible中常用的ansible语法。
 
-1.条件语句
-when，faild_when, change_when 后面可以接入一个条件语句，条件语句的值是true或者false，条件语句示例如下：
+## 5.1 条件语句
+
+when，faild\_when, change_when 后面可以接入一个条件语句，条件语句的值是true或者false，条件语句示例如下：
+
+```
+ansible_os_family == "Debian" 
+test == 1 or run == always
+hostname in [1,2,3,4]
+```
+
+ansible除了上文的==, or, in来进行判断外，**ansible**还支持通过**管道调用**ansible**自定义的test plugin**进行判断, 上文中的result | failed or result.stdout | version_compare(docker_py_version_min, '<')用到了version_compare和failed两个test plugin，这两个test plugin本质是ansible指定目录下两个python函数，用来解析字符串判断版本版本是否匹配，执行命令是否成功。它们的源码位于ansible.plugins.test.core, ansible。所有test plugin位于ansible.plugins.test，ansible支持自定义test plugin。
 
 
 
