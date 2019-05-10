@@ -5,6 +5,12 @@
 
 * [1 概述](#1-概述)
 * [2 kolla\-ansible命令](#2-kolla-ansible命令)
+* [2 ansible](#2-ansible)
+	* [2.1 Host Inventory（主机清单）](#21-host-inventory主机清单)
+	* [2.2 Module（模块）](#22-module模块)
+		* [2.2.1 一个例子: ping](#221-一个例子-ping)
+		* [2.2.2 自定义模块](#222-自定义模块)
+* [参考](#参考)
 
 <!-- /code_chunk_output -->
 
@@ -82,4 +88,150 @@ CMD="ansible-playbook -i $INVENTORY $CONFIG_OPTS $EXTRA_OPTS $PLAYBOOK $VERBOSIT
 process_cmd
 ```
 
-可以看到, 执行当我们执行kolla\-ansible deploy时，kolla-ansible命令帮我们调用了对应的ansible\-playbook执行，除此之外，没有其他工作。所以对于kolla-ansible项目，主要学习ansible语法即可。
+可以看到, 执行当我们执行kolla\-ansible deploy时，kolla-ansible命令帮我们调用了对应的ansible\-playbook执行，除此之外，没有其他工作。所以对于kolla\-ansible项目，主要学习ansible语法即可。
+
+# 2 ansible
+
+一个简单的ansible命令示例如下：
+
+```
+# ansible -i /root/myhosts ha01 -m setup
+```
+
+这个命令的作用是，对/root/hosts文件中的所有属于ha01分类的主机，执行setup模块收集该主机的信息，它包括两种元素，主机清单和模块，下面分别介绍这两种元素。
+
+## 2.1 Host Inventory（主机清单）
+
+host inventory 是一个文件，存放了所有被ansible管理的主机，可以在调用anabile命令时，通过\-i参数指定。
+
+1. 下面是一个最简单的hosts file的例子，包含1个主机ip和两个主机名：
+```
+193.192.168.1.50
+ha01
+ha02
+```
+
+可以执行以下命令检查ha01是否能够连通
+
+```
+# ansible -i $filename ha01 -m ping
+
+ha01 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+```
+
+2. 我们可以把主机分类，示例如下
+
+```
+deploy-node
+
+[ha]
+ha01
+ha02
+
+[compute]
+compute01
+compute02
+compute03
+```
+
+
+如果主机数量比较多，也可以用正则表达，示例如下：
+
+```
+deploy-node
+
+[ha]
+ha[01:02]
+
+[openstack-compute]
+compute[01:50]
+
+[openstack-controller]
+controller[01:03]
+
+[databases]
+db-[a:f].example.com
+```
+
+所有的controller和compute，都是openstack的节点，所以我们可以再定义一个类别openstack\-common，把他们里面的主机都包括进去
+
+```
+[openstack-common:children]
+openstack-controller
+openstack-compute
+
+[common:children]
+openstack-common
+databases
+ha
+```
+
+当我们有了如上的inventory 文件后，可以执行如下命令，检验是不是所有机器都能够被ansible管理
+
+```
+ansible -i $file common -m ping
+```
+
+## 2.2 Module（模块）
+
+ansible封装了很多**python脚本**作为**module**提供给使用者，如：yum、copy、template，command，etc. 
+
+当我们给特定主机执行某个module时，**ansible**会把**这个module**对应的**python脚本**，**拷贝到目标主机上执行**。可以使用ansible\-doc \-l来查看ansible支持的所有module。
+
+使用ansible \-v 模块名 来查看该模块的详细信息。
+
+### 2.2.1 一个例子: ping
+
+上文的例子，**使用了\-m ping参数**，意思是对这些主机，执行**ping模块**，ping 模块是一个**python脚本**，作用是用来判断：目标机器是否能够通过ssh连通并且已经安装了python。
+
+```python
+# ping module主要源码
+description:
+   - A trivial test module, this module always returns C(pong) on successful
+     contact. It does not make sense in playbooks, but it is useful from
+     C(/usr/bin/ansible) to verify the ability to login and that a usable python is configured.
+   - This is NOT ICMP ping, this is just a trivial test module.
+options: {}
+
+from ansible.module_utils.basic import AnsibleModule
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            data=dict(required=False, default=None),
+        ),
+        supports_check_mode=True
+    )
+    #什么都不做，构建一个json直接返回
+    result = dict(ping='pong')
+    if module.params['data']:
+        if module.params['data'] == 'crash':
+            raise Exception("boom")
+        result['ping'] = module.params['data']
+    module.exit_json(**result)
+
+if __name__ == '__main__':
+    main()
+```
+
+### 2.2.2 自定义模块
+
+example：[Ansible模块开发-自定义模块](https://zhuanlan.zhihu.com/p/27512427)
+
+如果默认模块不能满足需求，可以自定义模块放到ansible指定的目录，默认的ansible配置文件是/etc/ansible/ansible.cfg，library配置项是自定义模块的目录。
+
+openstack的**kolla\-ansbile**项目的**ansible/library目录**下面存放着kolla**自定义的module**,这个目录下每一个文件都是一个自定义moudle。可以使用如下的命令来查看自定义module的使用方法：
+
+```
+ansible-doc -M /usr/share/kolla-ansible/ansible/library -v merge_configs
+```
+
+
+
+# 参考
+
+- https://www.cnblogs.com/zhangyufei/p/7645804.html
