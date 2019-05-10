@@ -20,6 +20,8 @@
 		* [4.2.2 tasks](#422-tasks)
 		* [4.2.3 vars](#423-vars)
 		* [4.2.4 handlers](#424-handlers)
+	* [4.3 使用role和include更好的组织playbook](#43-使用role和include更好的组织playbook)
+		* [4.3.1 role](#431-role)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -333,7 +335,9 @@ task是要在目标机器上执行的一个最小任务，一个play可以包含
 
 当**某个task**对主机造成了改变时，可以**触发notify**操作，notify会唤起对应的handler处理该变化。
 
-比如说上面的例子中，如果template module重写/etc/httpd.conf文件后，该文件内容发生了变化，就会触发task中notify部分定义的handler重启apache服务，如果文件内容未发生变化，则不触发handler。
+比如说上面的例子中，如果**template module重写/etc/httpd.conf文件**后，该文件内容发生了变化，就会触发task中notify部分定义的handler重启apache服务，如果**文件内容未发生变化**，则**不触发handler**。
+
+
 也可以通过listen来触发想要的handler，示例如下：
 
 ```
@@ -351,7 +355,52 @@ tasks:
       notify: "restart web services"
 ```
 
+## 4.3 使用role和include更好的组织playbook
 
+### 4.3.1 role
+
+上文给出的**webserver playbook**中，**task**和**hanler**的部分是最通用的，vars部分其次，hosts参数最次。
+
+其他人拿到这个playbook想到使用，一般**不需要修改task**，但是**host**和**vars**部分，就需要修改成自己需要的值。
+
+所以ansible这里引入了**role的概念**，把**host**从**playbook中移出**，把**剩下的内容**按照下面示例的**样式**，拆成几部分，
+
+- **handler**存放到**handlers目录**中，
+- **task**存放到**task目录**中去，
+- **默认变量**存放到**default**中，
+- 使用到的**文件'httpd.j2**'存放到**templates目录**下
+
+按照这样的目录格式组织完成后，我们就得到了一个**webserber role**。
+
+**tasks**中可以有很多task，被执行的**入口**是**main.yml**
+
+```
+# 官网的一个role目录结构的例子
+site.yml
+webservers.yml
+fooservers.yml
+roles/
+   common/
+     tasks/
+         main.yml
+     handlers/
+     files/
+     templates/
+     defaults/
+     meta/
+   webservers/
+     tasks/
+         main.yml
+     defaults/
+     meta/
+     templates/
+```
+
+role的使用方法，可以参考下面的例子，下面的playbook作用是：对所有的webservers机器，执行common，weservers，foo_app_instance对应的task，执行最后一个role时，传递了dir和app_port两个参数。
+
+```
+
+```
 
 # 参考
 
