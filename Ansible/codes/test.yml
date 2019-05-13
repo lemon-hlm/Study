@@ -1,5 +1,5 @@
 ---
-- name: Test
+- name: Test1
   hosts: deployment
   gather_facts: F
   tasks:
@@ -10,3 +10,4 @@
   - name: show debug info
     debug: msg="host is {{ item }}"
     with_items:  groups['compute']
+
