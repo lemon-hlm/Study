@@ -1,4 +1,33 @@
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [compute_name.yml](#compute_nameyml)
+* [date.yml](#dateyml)
+* [test.yml](#testyml)
+
+<!-- /code_chunk_output -->
+
+# compute_name.yml
+
+```
+[root@controller124 tools]# ansible-playbook -i ../../multinode test.yml
+
+PLAY [Test] *************************************************************************************************************************
+
+TASK [Get compute node name] ********************************************************************************************************
+ok: [localhost] => (item=compute1) => {
+    "msg": "compute1"
+}
+ok: [localhost] => (item=controller124) => {
+    "msg": "controller124"
+}
+
+PLAY RECAP **************************************************************************************************************************
+localhost                  : ok=1    changed=0    unreachable=0    failed=0
+```
+
 # date.yml
 
 ```
