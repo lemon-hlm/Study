@@ -1,0 +1,12 @@
+---
+- name: Test
+  hosts: deployment
+  gather_facts: F
+  tasks:
+  - name: show shell info
+    shell: echo "{{ item }}"
+    with_items:  groups['compute']
+    register: echo
+  - name: show debug info
+    debug: msg="host is {{ item }}"
+    with_items:  groups['compute']
