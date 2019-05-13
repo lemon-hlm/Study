@@ -7,6 +7,7 @@ controller124
 [compute]
 #controller124
 compute1
+controller124
 
 [gpu_p4]
 compute1

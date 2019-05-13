@@ -1,5 +1,5 @@
 ---
-- name: Test1
+- name: Test
   hosts: deployment
   gather_facts: F
   tasks:
@@ -10,12 +10,31 @@
   - name: show debug info
     debug: msg="host is {{ item }}"
     with_items:  groups['compute']
-  # show all the hosts in the inventory
   - debug:
-    msg: "{{ item }}"
+      msg: "{{ item }}"
     loop: "{{ groups['all'] }}"
 
-  # show all the hosts in the current play
+ # show all the hosts in the current play
   - debug:
-    msg: "{{ item }}"
+      msg: "{{ item }}"
     loop: "{{ ansible_play_batch }}"
+
+- name: Test
+  hosts: compute
+  gather_facts: F
+  tasks:
+  - name: show shell info
+    shell: echo "{{ item }}"
+    with_items:  groups['compute']
+    register: echo
+  - name: show debug info
+    debug: msg="host is {{ item }}"
+    with_items:  groups['compute']
+  - debug:
+      msg: "{{ item }}"
+    loop: "{{ groups['all'] }}"
+
+ # show all the hosts in the current play
+  - debug:
+      msg: "{{ item }}"
+    loop: "{{ ansible_play_batch }}"    

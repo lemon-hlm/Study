@@ -34,9 +34,11 @@ compute1                   : ok=2    changed=1    unreachable=0    failed=0
 ```
 
 # test.yml
+
 ```
 # ansible-playbook -i ../../multinode test.yml
 
+# hosts: deployment
 PLAY [Test] *************************************************************************************************************************
 
 TASK [show shell info] **************************************************************************************************************
@@ -47,6 +49,77 @@ ok: [localhost] => (item=groups['compute']) => {
     "msg": "host is groups['compute']"
 }
 
+TASK [debug] ************************************************************************************************************************
+ok: [localhost] => (item=compute1) => {
+    "msg": "compute1"
+}
+ok: [localhost] => (item=controller124) => {
+    "msg": "controller124"
+}
+ok: [localhost] => (item=localhost) => {
+    "msg": "localhost"
+}
+
+TASK [debug] ************************************************************************************************************************
+ok: [localhost] => (item=localhost) => {
+    "msg": "localhost"
+}
+
 PLAY RECAP **************************************************************************************************************************
-localhost                  : ok=2    changed=1    unreachable=0    failed=0
+localhost                  : ok=4    changed=1    unreachable=0    failed=0
+```
+
+```
+# hosts: compute
+PLAY [Test] *************************************************************************************************************************
+
+TASK [show shell info] **************************************************************************************************************
+changed: [controller124] => (item=groups['compute'])
+changed: [compute1] => (item=groups['compute'])
+
+TASK [show debug info] **************************************************************************************************************
+ok: [compute1] => (item=groups['compute']) => {
+    "msg": "host is groups['compute']"
+}
+ok: [controller124] => (item=groups['compute']) => {
+    "msg": "host is groups['compute']"
+}
+
+TASK [debug] ************************************************************************************************************************
+ok: [compute1] => (item=compute1) => {
+    "msg": "compute1"
+}
+ok: [compute1] => (item=controller124) => {
+    "msg": "controller124"
+}
+ok: [compute1] => (item=localhost) => {
+    "msg": "localhost"
+}
+ok: [controller124] => (item=compute1) => {
+    "msg": "compute1"
+}
+ok: [controller124] => (item=controller124) => {
+    "msg": "controller124"
+}
+ok: [controller124] => (item=localhost) => {
+    "msg": "localhost"
+}
+
+TASK [debug] ************************************************************************************************************************
+ok: [compute1] => (item=compute1) => {
+    "msg": "compute1"
+}
+ok: [compute1] => (item=controller124) => {
+    "msg": "controller124"
+}
+ok: [controller124] => (item=compute1) => {
+    "msg": "compute1"
+}
+ok: [controller124] => (item=controller124) => {
+    "msg": "controller124"
+}
+
+PLAY RECAP **************************************************************************************************************************
+compute1                   : ok=4    changed=1    unreachable=0    failed=0
+controller124              : ok=4    changed=1    unreachable=0    failed=0
 ```
