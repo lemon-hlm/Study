@@ -16,3 +16,4 @@ Linux虚拟化技术: http://tinylab.org/tiny-salon-phase-ii-virtualization-tech
 
 维基百科: https://zh.wikipedia.org/wiki/%E8%99%9B%E6%93%AC%E5%8C%96
 
+- Intel虚拟化技术: https://www.intel.com/content/www/us/en/virtualization/virtualization-technology/intel-virtualization-technology.html
