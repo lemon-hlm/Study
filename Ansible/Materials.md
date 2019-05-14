@@ -1,0 +1,3 @@
+- Ansible中文权威指南: https://ansible-tran.readthedocs.io/en/latest/index.html
+- Ansible快速入门: https://ansible-book.gitbooks.io/ansible-first-book/content/
+- Ansible入门: http://getansible.com/
