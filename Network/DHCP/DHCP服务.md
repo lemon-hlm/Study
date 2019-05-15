@@ -11,6 +11,7 @@
 	* [3.1 设置DHCP服务器静态IP和主机名](#31-设置dhcp服务器静态ip和主机名)
 	* [3.2 安装DHCP软件包](#32-安装dhcp软件包)
 	* [3.3 配置DHCP主配置文件](#33-配置dhcp主配置文件)
+* [4 客户端的配置](#4-客户端的配置)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -136,37 +137,52 @@ dhcp-4.1.1-38.P1.el6.centos.i686
 # 编辑主文件（可从模板文件导入）
 [root@server ~]# vim /etc/dhcp/dhcpd.conf 
 #设置局部待分配网段
-subnet 192.168.1.0 netmask 255.255.255.0  {                                     
-
-range 192.168.1.20 192.168.1.200;                                                         #设地址池
-
-option domain-name-servers 192.168.1.253,114.114.114.114;                #设要分配的DNS服务器地址
-
-option domain-name "tarena.com";                                                           # 设局域网域名
-
-option routers 192.168.1.254;                                                                   # 设置要分配的网关地址
-
-option broadcast-address 192.168.1.255;                                                  # 设置广播地址
-
-default-lease-time 600;                                                                               #默认地址租约时间（秒）
-
-max-lease-time 7200;                                                                                  #最长地址租约时间（秒）
-
+subnet 192.168.1.0 netmask 255.255.255.0  { 
+#设地址池
+range 192.168.1.20 192.168.1.200;
+#设要分配的DNS服务器地址
+option domain-name-servers 192.168.1.253,114.114.114.114; 
+# 设局域网域名
+option domain-name "tarena.com";
+# 设置要分配的网关地址
+option routers 192.168.1.254; 
+# 设置广播地址
+option broadcast-address 192.168.1.255; 
+#默认地址租约时间（秒）
+default-lease-time 600;
+#最长地址租约时间（秒）
+max-lease-time 7200;
 }
-
-host win7  {                                                                                    #win7只是个名称而已设保留地址（固定分配ip）
-
-hardware ethernet 08:00:07:26:c0:a5;                                            #设要绑定的mac
-
-fixed-address 192.168.1.7;                                                                #设绑定ip地址
-
+#win7只是个名称而已设保留地址（固定分配ip）
+host win7 {
+#设要绑定的mac
+hardware ethernet 08:00:07:26:c0:a5;
+#设绑定ip地址
+fixed-address 192.168.1.7;
 }
 
 # 启动服务
-[root@server ~]# service dhcpd restart      
+[root@server ~]# service dhcpd restart     
+
+# 设为开机启动
+[root@server ~]# chkconfig dhcpd on          
+# 查看开机
+[root@server ~]# chkconfig --list
 ```
+
+........
+
+# 4 客户端的配置
+
+其实客户端也没啥配置的，只要设置成dhcp方式来获取ip就可以了。设置好后，我们重启网络就可以从刚刚配置好的dhcp服务器上来获取ip了, 就这么简单。
+
+现在我们在客户端上来观察下其相关参数都是否符合配置：
+
+
 
 
 # 参考
 
 https://blog.51cto.com/woyaoxuelinux/1890611
+
+- DHCP服务器之DHCP配置: http://network.51cto.com/art/201009/223883.htm
