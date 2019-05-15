@@ -25,3 +25,11 @@ cat system.tar | docker import - redhat:6.5
 ```
 
 # 3 运行镜像
+
+```
+docker images
+```
+
+```
+docker 
+```
