@@ -10,6 +10,7 @@
 * [3 配置DHCP服务器端](#3-配置dhcp服务器端)
 	* [3.1 设置DHCP服务器静态IP和主机名](#31-设置dhcp服务器静态ip和主机名)
 	* [3.2 安装DHCP软件包](#32-安装dhcp软件包)
+	* [3.3 配置DHCP主配置文件](#33-配置dhcp主配置文件)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -124,6 +125,45 @@ search tarena.com
 # 确认安装
 [root@server ~]# rpm -q dhcp确认安装
 dhcp-4.1.1-38.P1.el6.centos.i686
+```
+
+## 3.3 配置DHCP主配置文件
+
+```
+# 先备份配置文件
+[root@server ~]# cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.bak   
+
+# 编辑主文件（可从模板文件导入）
+[root@server ~]# vim /etc/dhcp/dhcpd.conf 
+#设置局部待分配网段
+subnet 192.168.1.0 netmask 255.255.255.0  {                                     
+
+range 192.168.1.20 192.168.1.200;                                                         #设地址池
+
+option domain-name-servers 192.168.1.253,114.114.114.114;                #设要分配的DNS服务器地址
+
+option domain-name "tarena.com";                                                           # 设局域网域名
+
+option routers 192.168.1.254;                                                                   # 设置要分配的网关地址
+
+option broadcast-address 192.168.1.255;                                                  # 设置广播地址
+
+default-lease-time 600;                                                                               #默认地址租约时间（秒）
+
+max-lease-time 7200;                                                                                  #最长地址租约时间（秒）
+
+}
+
+host win7  {                                                                                    #win7只是个名称而已设保留地址（固定分配ip）
+
+hardware ethernet 08:00:07:26:c0:a5;                                            #设要绑定的mac
+
+fixed-address 192.168.1.7;                                                                #设绑定ip地址
+
+}
+
+# 启动服务
+[root@server ~]# service dhcpd restart      
 ```
 
 
