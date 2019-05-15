@@ -31,5 +31,5 @@ docker images
 ```
 
 ```
-docker 
+docker run -it XXX /bin/bash
 ```
