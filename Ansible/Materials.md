@@ -3,3 +3,4 @@
 - Ansible入门: http://getansible.com/
 - Ansible Docs(这个最新最全): https://docs.ansible.com/
 - Ansible系列: http://www.cnblogs.com/f-ck-need-u/p/7576137.html#ansible
+- ansible 轻松入门系列: https://www.zsythink.net/archives/tag/ansible/
