@@ -2,3 +2,4 @@
 - Ansible快速入门: https://ansible-book.gitbooks.io/ansible-first-book/content/
 - Ansible入门: http://getansible.com/
 - Ansible Docs(这个最新最全): https://docs.ansible.com/
+- Ansible系列: http://www.cnblogs.com/f-ck-need-u/p/7576137.html#ansible
