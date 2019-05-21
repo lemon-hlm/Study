@@ -110,13 +110,21 @@ irqbypass              13503  1 kvm
 
 #### 2.2.1.2 msr寄存器确认
 
+或者通过读取msr寄存器方式
+
 flags中有 vmx 只是说明CPU支持VT\-x，如果要使用它，还需要打开CPU的VT\-x功能。 
 
-Intel的VT-x功能是通过IA32\_FEATURE\_CONTROL寄存器控制的，我们可以使用rdmsr命令读取寄存器 IA32_FEATURE_CONTROL (address 0x3a)来判断是否开启了VT-x功能。若读出值为３和５表示打开了VT-x功能。
+Intel的**VT\-x**功能是通过**IA32\_FEATURE\_CONTROL寄存器**控制的，我们可以使用rdmsr命令读取寄存器 **IA32\_FEATURE\_CONTROL** (address **0x3a**)来判断是否开启了VT\-x功能。若读出值为**３**和**５**表示打开了VT\-x功能。
 
 使用rdmsr命令前，先要加载msr驱动。 
-如果没有rdmsr命令，那么需要安装msr-tools包。
 
+如果没有rdmsr命令，那么需要安装msr\-tools包。
+
+```
+[root@gerrylee ~]# modprobe msr
+[root@gerrylee ~]# rdmsr 0x3a
+5
+```
 
 ### 2.2.2 内存虚拟化
 
