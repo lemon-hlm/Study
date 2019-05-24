@@ -7,3 +7,5 @@
 出版时间：2019-02
 
 书中的源码和配置文件, 从 https://github.com/smilejay/kvm-book 获取
+
+作者 任永杰 个人博客: http://smilejay.com/
