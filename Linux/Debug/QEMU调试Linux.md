@@ -52,7 +52,7 @@ Kernel hacking  --->
         [*]   Provide GDB scripts for kernel debugging
 ```
 
-编译后，**bzImage**这个是**被压缩了的**，**不带调试信息的**内核，供qemu虚拟机使用（arch/x86/boot/bzImage），**vmlinux**里面带了**调试信息**，没有压缩，供**gdb使用**。
+编译后，**bzImage**这个是**被压缩了的**，**不带调试信息的**内核，供qemu虚拟机使用（**arch/x86/boot/bzImage**），**vmlinux(当前目录**)里面带了**调试信息**，没有压缩，供**gdb使用**。
 
 当编译结束后，可以将vmlinux和bzImage文件copy到一个干净的目录下。
 
@@ -136,7 +136,7 @@ $ qemu-system-x86_64 -s -S -m 512 -kernel arch/x86/boot/bzImage -initrd initramf
 - \-s是-gdb tcp::1234缩写，监听1234端口，在GDB中可以通过target remote localhost:1234连接；
 - \-S表示 QEMU 虚拟机会冻结 CPU 直到远程的 GDB 输入相应控制命令，所以运行后看不到任何输出；
 - \-kernel指定编译好的调试版内核；
-- \-initrd指定制作的initramfs，这个文件可以从   /boot/initrd.img\-3.13.0\-43\-generic  拷贝而来，关于它是什么东西呢？ 可以参考这个： http://www.linuxfly.org/post/94/ ，或者是这个 http://blog.csdn.net/chrisniu1984/article/details/3907874;
+- \-initrd指定制作的initramfs，这个文件可以从 /boot/initrd.img\-3.13.0\-43\-generic  拷贝而来，关于它是什么东西呢？ 可以参考这个： http://www.linuxfly.org/post/94/ ，或者是这个 http://blog.csdn.net/chrisniu1984/article/details/3907874;
 - \-nographic取消图形输出窗口，使QEMU成简单的命令行程序；
 - \-append "console=ttyS0"将输出重定向到console，将会显示在标准输出stdio。
 
