@@ -3,7 +3,7 @@
 
 <!-- code_chunk_output -->
 
-* [1 Systemctl基础](#1-systemctl基础)
+* [1 Systemd和Systemctl基础](#1-systemd和systemctl基础)
 	* [1.1 版本](#11-版本)
 	* [1.2 二进制文件和库文件](#12-二进制文件和库文件)
 	* [1.3 systemd是否运行](#13-systemd是否运行)
@@ -15,6 +15,18 @@
 	* [1.9 列出所有失败单元](#19-列出所有失败单元)
 	* [1.10 检查某个单元（如 cron.service）是否启用](#110-检查某个单元如-cronservice是否启用)
 	* [1.11 检查某个单元或服务是否运行](#111-检查某个单元或服务是否运行)
+* [2 使用Systemctl控制并管理服务](#2-使用systemctl控制并管理服务)
+	* [2.1 列出所有服务（包括启用的和禁用的）](#21-列出所有服务包括启用的和禁用的)
+	* [2.2 启动、重启、停止、重载服务以及检查服务](#22-启动-重启-停止-重载服务以及检查服务)
+	* [2.3 如何激活服务并在启动时启用或禁用服务（即系统启动时自动启动服务）](#23-如何激活服务并在启动时启用或禁用服务即系统启动时自动启动服务)
+	* [2.4 如何屏蔽（让它不能启动）或显示服务](#24-如何屏蔽让它不能启动或显示服务)
+	* [2.5 使用systemctl命令杀死服务](#25-使用systemctl命令杀死服务)
+* [3 使用Systemctl控制并管理挂载点](#3-使用systemctl控制并管理挂载点)
+	* [3.1 列出所有系统挂载点](#31-列出所有系统挂载点)
+	* [3.2 挂载、卸载、重新挂载、重载系统挂载点并检查系统中挂载点状态](#32-挂载-卸载-重新挂载-重载系统挂载点并检查系统中挂载点状态)
+	* [3.3 在启动时激活、启用或禁用挂载点（系统启动时自动挂载）](#33-在启动时激活-启用或禁用挂载点系统启动时自动挂载)
+	* [3.4 在Linux中屏蔽（让它不能启用）或可见挂载点](#34-在linux中屏蔽让它不能启用或可见挂载点)
+* [4 使用Systemctl控制并管理套接口](#4-使用systemctl控制并管理套接口)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -24,7 +36,7 @@ Systemd是一个系统管理守护进程、工具和库的集合，用于取代S
 
 在Linux生态系统中，Systemd被部署到了大多数的标准Linux发行版中，只有为数不多的几个发行版尚未部署。Systemd通常是所有其它守护进程的父进程，但并非总是如此。
 
-# 1 Systemctl基础
+# 1 Systemd和Systemctl基础
 
 ## 1.1 版本
 
@@ -177,8 +189,107 @@ enabled
 ## 1.11 检查某个单元或服务是否运行
 
 ```
+[root@gerrylee project]# systemctl is-enabled crond.service
+enabled
+[root@gerrylee project]# systemctl status firewalld.service
+● firewalld.service - firewalld - dynamic firewall daemon
+   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; disabled; vendor preset: enabled)
+   Active: inactive (dead)
+     Docs: man:firewalld(1)
+```
+
+# 2 使用Systemctl控制并管理服务
+
+## 2.1 列出所有服务（包括启用的和禁用的）
 
 ```
+[root@gerrylee project]# systemctl list-unit-files --type=service
+UNIT FILE                                     STATE
+abrt-oops.service                             enabled
+abrt-pstoreoops.service                       disabled
+abrt-vmcore.service                           enabled
+abrt-xorg.service                             enabled
+abrtd.service                                 enabled
+accounts-daemon.service                       enabled
+alsa-restore.service                          static
+alsa-state.service                            static
+anaconda-direct.service                       static
+anaconda-nm-config.service                    static
+...
+```
+
+## 2.2 启动、重启、停止、重载服务以及检查服务
+
+```
+systemctl start httpd.service
+systemctl restart httpd.service
+systemctl stop httpd.service
+systemctl reload httpd.service
+systemctl status httpd.service
+```
+
+## 2.3 如何激活服务并在启动时启用或禁用服务（即系统启动时自动启动服务）
+
+```
+systemctl is-active httpd.service
+systemctl enable httpd.service
+systemctl disable httpd.service
+```
+
+## 2.4 如何屏蔽（让它不能启动）或显示服务
+
+```
+# systemctl mask httpd.service
+ln -s '/dev/null' '/etc/systemd/system/httpd.service'
+
+# systemctl unmask httpd.service
+rm '/etc/systemd/system/httpd.service'
+```
+
+## 2.5 使用systemctl命令杀死服务
+
+```
+systemctl kill httpd
+```
+
+# 3 使用Systemctl控制并管理挂载点
+
+## 3.1 列出所有系统挂载点
+
+```
+systemctl list-unit-files --type=mount
+```
+
+## 3.2 挂载、卸载、重新挂载、重载系统挂载点并检查系统中挂载点状态
+
+```
+systemctl start tmp.mount
+systemctl stop tmp.mount
+systemctl restart tmp.mount
+systemctl reload tmp.mount
+systemctl status tmp.mount
+```
+
+## 3.3 在启动时激活、启用或禁用挂载点（系统启动时自动挂载）
+
+```
+systemctl is-active tmp.mount
+systemctl enable tmp.mount
+systemctl disable  tmp.mount
+```
+
+## 3.4 在Linux中屏蔽（让它不能启用）或可见挂载点
+
+```
+# systemctl mask tmp.mount
+ln -s '/dev/null' '/etc/systemd/system/tmp.mount'
+
+# systemctl unmask tmp.mount
+rm '/etc/systemd/system/tmp.mount'
+```
+
+# 4 使用Systemctl控制并管理套接口
+
 
 # 参考
 
