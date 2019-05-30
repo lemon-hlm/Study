@@ -122,7 +122,7 @@ $ qemu-system-x86_64 -s -S -m 512 -kernel arch/x86/boot/bzImage -initrd initramf
 - \-kernel指定编译好的调试版内核；
 - \-initrd指定制作的initramfs，这个文件可以从 /boot/initrd.img\-3.13.0\-43\-generic  拷贝而来，关于它是什么东西呢？ 可以参考这个： http://www.linuxfly.org/post/94/ ，或者是这个 http://blog.csdn.net/chrisniu1984/article/details/3907874;
 - \-nographic取消图形输出窗口，使QEMU成简单的命令行程序；
-- \-append "console=ttyS0"将输出重定向到console，将会显示在标准输出stdio。
+- \-append "console=ttyS0"将输出重定向到console，将会显示在标准输出stdio。\-append 后面跟的是**虚拟机的cmdline**
 
 **内核安装**的vmlinuz-2.6.32-504.el6.x86_64是bzImage格式（需要使用arch/x86/boot/bzImage文件），而内核编译完，内核源码\{KERNEL}根目录下的vmlinux是ELF格式。
 

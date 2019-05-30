@@ -232,7 +232,25 @@ set arch i386:x86-64:intel
 target remote :1234
 ```
 
-连接上后就可以看到 gdb 正常的输出 start_kernel 处的代码，然后按照 gdb 的调试指令进行内核调试即可。
+连接上后就可以看到 gdb 正常的输出 start\_kernel 处的代码，然后按照 gdb 的调试指令进行内核调试即可。
+
+直到最后完全启动, 到达根目录
+
+```
+/ # ls -l
+total 0
+drwxr-xr-x    2 0        0             5320 May 30 07:46 bin
+drwxrwxrwt    6 0        0             2060 May 30 08:21 dev
+drwxr-xr-x    3 0        0              100 May 30 07:46 etc
+lrwxrwxrwx    1 0        0               11 May 30 07:46 linuxrc -> bin/busybox
+drwxr-xr-x    2 0        0               40 May 30 07:46 mnt
+dr-xr-xr-x   57 0        0                0 May 30 08:21 proc
+drwxr-xr-x    2 0        0             2620 May 30 07:46 sbin
+dr-xr-xr-x   13 0        0                0 May 30 08:21 sys
+drwxrwxrwt    2 0        0               40 May 30 08:21 tmp
+```
+
+这就是initramfs中包含的内容
 
 # 4 问题和解决方案
 
