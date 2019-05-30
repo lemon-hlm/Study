@@ -126,17 +126,17 @@ $ mkdir –p etc/init.d/
 #!/bin/sh
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
-mkdir –p /proc
-mkdir –p /tmp
+mkdir -p /proc
+mkdir -p /tmp
 mkdir -p /sys
-mkdir –p /mnt
+mkdir -p /mnt
 
 /bin/mount -a
 mkdir -p /dev/pts
 mount -t devpts devpts /dev/pts
 
 echo /sbin/mdev > /proc/sys/kernel/hotplug
-mdev –s
+mdev -s
 ```
 
 在\_install/etc 目录新创建一个叫 fstab 的文件，并写入如下内容。
