@@ -81,7 +81,7 @@ bin  linuxrc  sbin  usr
 $ mkdir etc
 $ mkdir dev
 $ mkdir mnt
-$ mkdir –p etc/init.d/
+$ mkdir -p etc/init.d/
 ```
 
 在\_install/etc/init.d/目录下新创建一个叫 rcS 的文件，并且写入如下内容：
@@ -103,6 +103,12 @@ echo /sbin/mdev > /proc/sys/kernel/hotplug
 mdev -s
 ```
 
+需要给执行权限
+
+```
+chmod a+x etc/init.d/rcS
+```
+
 在\_install/etc 目录新创建一个叫 fstab 的文件，并写入如下内容。
 
 ```
@@ -119,7 +125,7 @@ debugfs /sys/kernel/debug debugfs defaults 0 0
 ::sysinit:/etc/init.d/rcS
 ::respawn:-/bin/sh
 ::askfirst:-/bin/sh
-::ctrlaltdel:/bin/umount -a –r
+::ctrlaltdel:/bin/umount -a -r
 ```
 
 在_install/dev 目录下创建如下设备节点，需要 root 权限。
