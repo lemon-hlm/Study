@@ -5,13 +5,7 @@
 
 * [1 编译调试版内核](#1-编译调试版内核)
 * [2 构建initramfs根文件系统](#2-构建initramfs根文件系统)
-		* [1.1 第一种选择](#11-第一种选择)
-		* [1.2 第二种选择（优先）](#12-第二种选择优先)
-	* [2. 编译调试版内核](#2-编译调试版内核)
-		* [2.1 第一种选择（对应1.1）](#21-第一种选择对应11)
-		* [2.2 第二种选择（对应1.2）](#22-第二种选择对应12)
 	* [3. 调试](#3-调试)
-		* [3.1 第一种选择（对应1.1）](#31-第一种选择对应11)
 		* [3.2 第二种选择（对应1.2）](#32-第二种选择对应12)
 	* [4. 获取当前进程](#4-获取当前进程)
 	* [5. 参考](#5-参考)
@@ -58,6 +52,10 @@ Kernel hacking  --->
         [*]   Provide GDB scripts for kernel debugging
 ```
 
+编译后，**bzImage**这个是**被压缩了的**，**不带调试信息的**内核，供qemu虚拟机使用（arch/x86/boot/bzImage），**vmlinux**里面带了**调试信息**，没有压缩，供**gdb使用**。
+
+当编译结束后，可以将vmlinux和bzImage文件copy到一个干净的目录下。
+
 # 2 构建initramfs根文件系统
 
 Linux系统启动阶段，boot loader加载完**内核文件vmlinuz后**，内核**紧接着**需要挂载磁盘根文件系统，但如果此时内核没有相应驱动，无法识别磁盘，就需要先加载驱动，而驱动又位于/lib/modules，得挂载根文件系统才能读取，这就陷入了一个两难境地，系统无法顺利启动。于是有了**initramfs根文件系统**，其中包含必要的设备驱动和工具，boot loader加载initramfs到内存中，内核会将其挂载到根目录/,然后**运行/init脚本**，挂载真正的磁盘根文件系统。
@@ -103,25 +101,7 @@ $ rm linuxrc
 $ vim init
 $ chmod a+x init
 $ ls
-$ bin   dev  init  proc  sbin  sys   usr
-```
-
-
-### 1.1 第一种选择
-
-创建initramfs，其中包含**BusyBox可执行程序**、必要的**设备文件**、**启动脚本init**。这里没有内核模块，如果需要调试内核模块，可将需要的**内核模块**包含进来。**init脚本只挂载了虚拟文件系统procfs和sysfs，没有挂载磁盘根文件系统**，所有调试操作都**在内存中进行**，不会落磁盘。
-
-```
-$ mkdir initramfs
-$ cd initramfs
-$ cp ../_install/* -rf ./
-$ mkdir dev proc sys
-$ sudo cp -a /dev/{null, console, tty, tty1, tty2, tty3, tty4} dev/
-$ rm linuxrc
-$ vim init
-$ chmod a+x init
-$ ls
-$ bin   dev  init  proc  sbin  sys   usr
+bin   dev  init  proc  sbin  sys   usr
 ```
 
 init文件内容：
@@ -140,125 +120,11 @@ exec /sbin/init
 $ find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
 ```
 
-### 1.2 第二种选择（优先）
-
-把\_install 目录拷贝到 linux-4.0 目录下。进入\_install 目录，先创建 etc、dev 等目录。
-
-```
-$ mkdir etc
-$ mkdir dev
-$ mkdir mnt
-$ mkdir –p etc/init.d/
-```
-
-在\_install/etc/init.d/目录下新创建一个叫 rcS 的文件，并且写入如下内容：
-
-```
-#!/bin/sh
-export PATH=/sbin:/usr/sbin:/bin:/usr/bin
-
-mkdir -p /proc
-mkdir -p /tmp
-mkdir -p /sys
-mkdir -p /mnt
-
-/bin/mount -a
-mkdir -p /dev/pts
-mount -t devpts devpts /dev/pts
-
-echo /sbin/mdev > /proc/sys/kernel/hotplug
-mdev -s
-```
-
-在\_install/etc 目录新创建一个叫 fstab 的文件，并写入如下内容。
-
-```
-proc /proc proc defaults 0 0
-tmpfs /tmp tmpfs defaults 0 0
-sysfs /sys sysfs defaults 0 0
-tmpfs /dev tmpfs defaults 0 0
-debugfs /sys/kernel/debug debugfs defaults 0 0
-```
-
-在\_install/etc 目录新创建一个叫 inittab 的文件，并写入如下内容。
-
-```
-::sysinit:/etc/init.d/rcS
-::respawn:-/bin/sh
-::askfirst:-/bin/sh
-::ctrlaltdel:/bin/umount -a –r
-```
-
-在_install/dev 目录下创建如下设备节点，需要 root 权限。
-
-```
-$ cd _install/dev/
-$ sudo mknod console c 5 1
-$ sudo mknod null c 1 3
-```
-
-当然也可以使用既有的initramfs，或者将其进行裁剪（https://blog.csdn.net/weijitao/article/details/79477792）
-
-## 2. 编译调试版内核
-
-### 2.1 第一种选择（对应1.1）
-
-对内核进行调试需要解析符号信息，所以得编译一个调试版内核。
-
-```
-$ cd linux-4.14
-$ make menuconfig
-$ make -j 20
-```
-
-这里需要开启内核参数CONFIG\_DEBUG\_INFO和CONFIG\_GDB\_SCRIPTS。GDB提供了Python接口来扩展功能，内核基于Python接口实现了一系列辅助脚本，简化内核调试，开启CONFIG\_GDB\_SCRIPTS参数就可以使用了。
-
-```
-Kernel hacking  ---> 
-    [*] Kernel debugging
-    Compile-time checks and compiler options  --->
-        [*] Compile the kernel with debug info
-        [*] Provide GDB scripts for kernel debugging
-```
-
-编译后，bzImage这个是被压缩了的，不带调试信息的内核，供qemu虚拟机使用（arch/x86/boot/bzImage），vmlinux里面带了调试信息，没有压缩，供gdb使用。
-
-当编译结束后，可以将vmlinux和bzImage文件copy到一个干净的目录下。
-
-### 2.2 第二种选择（对应1.2）
-
-配置 initramfs，在 initramfs source file 中填入\_install。另外需要把 Default kernel command string 清空。
-
-```
-General setup --->
-    [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
-        (_install) Initramfs source file(s)
-
-Boot options -->
-    ()Default kernel command string
-```
-
-配置 memory split 为“3G/1G user/kernel split”以及打开高端内存。
-
-```
-Kernel Features --->
-Memory split (3G/1G user/kernel split) --->
-[ *] High Memory Support
-```
-
-```
-Kernel hacking  ---> 
-    [*] Kernel debugging
-    Compile-time checks and compiler options  --->
-        [*] Compile the kernel with debug info
-        [*] Provide GDB scripts for kernel debugging
-```
-
 ## 3. 调试
 
-qemu 是一款虚拟机，可以模拟x86 & arm 等等硬件平台<似乎可模拟的硬件平台很多...>，而qemu 也内嵌了一个 gdbserver。这个gdbserver于是就可以和gdb构成一个远程合作伙伴，通过ip:port 网络方式或者是通过串口/dev/ttyS\*来进行工作，一个在这头，一个在那头。
+qemu 是一款虚拟机，可以模拟x86 & arm 等等硬件平台<似乎可模拟的硬件平台很多...>，而qemu 也内嵌了一个 gdbserver。
 
-### 3.1 第一种选择（对应1.1）
+这个gdbserver于是就可以和gdb构成一个远程合作伙伴，通过ip:port 网络方式或者是通过串口/dev/ttyS\*来进行工作，一个在这头，一个在那头。
 
 启动内核：
 
