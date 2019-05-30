@@ -33,6 +33,21 @@
 	* [4.4 屏蔽（使它不能启动）或显示套接口](#44-屏蔽使它不能启动或显示套接口)
 * [5 服务的CPU利用率](#5-服务的cpu利用率)
 	* [5.1 获取当前某个服务的CPU分配额](#51-获取当前某个服务的cpu分配额)
+	* [5.2 将某个服务（httpd.service）的CPU分配份额限制为2000 CPUShares\/](#52-将某个服务httpdservice的cpu分配份额限制为2000-cpushares)
+	* [5.3 检查某个服务的所有配置细节](#53-检查某个服务的所有配置细节)
+	* [5.4 分析某个服务的关键链](#54-分析某个服务的关键链)
+	* [5.5 获取某个服务的依赖性列表](#55-获取某个服务的依赖性列表)
+	* [5.6 按等级列出控制组](#56-按等级列出控制组)
+	* [5.7 按CPU、内存、输入和输出列出控制组](#57-按cpu-内存-输入和输出列出控制组)
+* [6 控制系统运行等级](#6-控制系统运行等级)
+	* [6.1 启动系统救援模式](#61-启动系统救援模式)
+	* [6.2 进入紧急模式](#62-进入紧急模式)
+	* [6.3 列出当前使用的运行等级](#63-列出当前使用的运行等级)
+	* [6.4 启动运行等级5，即图形模式](#64-启动运行等级5即图形模式)
+	* [6.5 启动运行等级3，即多用户模式（命令行）](#65-启动运行等级3即多用户模式命令行)
+	* [6.6 设置多用户模式或图形模式为默认运行等级](#66-设置多用户模式或图形模式为默认运行等级)
+	* [6.7 重启、停止、挂起、休眠系统或使系统进入混合睡眠](#67-重启-停止-挂起-休眠系统或使系统进入混合睡眠)
+* [7 参考](#7-参考)
 
 <!-- /code_chunk_output -->
 Systemctl是一个systemd工具，主要负责控制systemd系统和服务管理器。
@@ -338,6 +353,118 @@ rm '/etc/systemd/system/cups.socket'
 CPUShares=1024
 ```
 
-参考
+注意：各个服务的默认CPU分配份额=1024，你可以增加/减少某个进程的CPU分配份额。
+
+## 5.2 将某个服务（httpd.service）的CPU分配份额限制为2000 CPUShares\/
+
+```
+# systemctl set-property httpd.service CPUShares=2000
+# systemctl show -p CPUShares httpd.service
+CPUShares=2000
+```
+
+注意：当你为某个服务设置CPUShares，会自动创建一个以服务名命名的目录（如 httpd.service），里面包含了一个名为90-CPUShares.conf的文件，该文件含有CPUShare限制信息，你可以通过以下方式查看该文件：
+
+```
+# vi /etc/systemd/system/httpd.service.d/90-CPUShares.conf
+
+[Service]
+CPUShares=2000
+```
+
+## 5.3 检查某个服务的所有配置细节
+
+```
+# systemctl show httpd
+```
+
+## 5.4 分析某个服务的关键链
+
+```
+# systemd-analyze critical-chain httpd.service
+```
+
+## 5.5 获取某个服务的依赖性列表
+
+```
+# systemctl list-dependencies httpd.service
+```
+
+## 5.6 按等级列出控制组
+
+```
+# systemd-cgls
+```
+
+## 5.7 按CPU、内存、输入和输出列出控制组
+
+```
+# systemd-cgtop
+```
+
+# 6 控制系统运行等级
+
+## 6.1 启动系统救援模式
+
+```
+# systemctl rescue
+```
+
+## 6.2 进入紧急模式
+
+```
+# systemctl emergency
+```
+
+## 6.3 列出当前使用的运行等级
+
+```
+# systemctl get-default
+```
+
+## 6.4 启动运行等级5，即图形模式
+
+```
+# systemctl isolate runlevel5.target
+或
+# systemctl isolate graphical.target
+```
+
+## 6.5 启动运行等级3，即多用户模式（命令行）
+
+```
+# systemctl isolate runlevel3.target
+或
+# systemctl isolate multiuser.target
+```
+
+## 6.6 设置多用户模式或图形模式为默认运行等级
+
+```
+# systemctl set-default runlevel3.target
+
+# systemctl set-default runlevel5.target
+```
+
+## 6.7 重启、停止、挂起、休眠系统或使系统进入混合睡眠
+
+```
+# systemctl reboot
+# systemctl halt
+# systemctl suspend
+# systemctl hibernate
+# systemctl hybrid-sleep
+```
+
+运行等级:
+
+- Runlevel 0 : 关闭系统
+- Runlevel 1 : 救援？维护模式
+- Runlevel 3 : 多用户，无图形系统
+- Runlevel 4 : 多用户，无图形系统
+- Runlevel 5 : 多用户，图形化系统
+- Runlevel 6 : 关闭并重启机器
+
+# 7 参考
 
 https://linux.cn/article-5926-1.html
