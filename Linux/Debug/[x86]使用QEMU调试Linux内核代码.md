@@ -4,8 +4,6 @@
 <!-- code_chunk_output -->
 
 * [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
-	* [1.1 第一种选择](#11-第一种选择)
-	* [1.2 第二种选择（优先）](#12-第二种选择优先)
 * [2. 编译调试版内核](#2-编译调试版内核)
 	* [2.1 第一种选择（对应1.1）](#21-第一种选择对应11)
 	* [2.2 第二种选择（对应1.2）](#22-第二种选择对应12)
@@ -76,40 +74,6 @@ $ make install
 $ ls _install 
 bin  linuxrc  sbin  usr
 ```
-### 1.1 第一种选择
-
-创建initramfs，其中包含**BusyBox可执行程序**、必要的**设备文件**、**启动脚本init**。这里没有内核模块，如果需要调试内核模块，可将需要的**内核模块**包含进来。**init脚本只挂载了虚拟文件系统procfs和sysfs，没有挂载磁盘根文件系统**，所有调试操作都**在内存中进行**，不会落磁盘。
-
-```
-$ mkdir initramfs
-$ cd initramfs
-$ cp ../_install/* -rf ./
-$ mkdir dev proc sys
-$ sudo cp -a /dev/{null, console, tty, tty1, tty2, tty3, tty4} dev/
-$ rm linuxrc
-$ vim init
-$ chmod a+x init
-$ ls
-$ bin   dev  init  proc  sbin  sys   usr
-```
-
-init文件内容：
-
-```
-#!/bin/busybox sh         
-mount -t proc none /proc  
-mount -t sysfs none /sys  
-
-exec /sbin/init
-```
-
-打包initramfs:
-
-```
-$ find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
-```
-
-### 1.2 第二种选择（优先）
 
 把\_install 目录拷贝到 linux-4.0 目录下。进入\_install 目录，先创建 etc、dev 等目录。
 
