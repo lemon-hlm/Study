@@ -91,8 +91,20 @@ make install
 bin  linuxrc  sbin
 ```
 
-创建initramfs，其中包含BusyBox可执行程序、必要的设备文件、启动脚本init。这里没有内核模块，如果需要调试内核模块，可将需要的内核模块包含进来。init脚本只挂载了虚拟文件系统procfs和sysfs，没有挂载磁盘根文件系统，所有调试操作都在内存中进行，不会落磁盘。
+创建initramfs，其中包含**BusyBox可执行程序**、必要的**设备文件**、**启动脚本init**。这里没有内核模块，如果需要调试内核模块，可将需要的**内核模块**包含进来。**init脚本只挂载了虚拟文件系统procfs和sysfs，没有挂载磁盘根文件系统**，所有调试操作都**在内存中进行**，不会落磁盘。
 
+```
+$ mkdir initramfs
+$ cd initramfs
+$ cp ../_install/* -rf ./
+$ mkdir dev proc sys
+$ sudo cp -a /dev/{null, console, tty, tty1, tty2, tty3, tty4} dev/
+$ rm linuxrc
+$ vim init
+$ chmod a+x init
+$ ls
+$ bin   dev  init  proc  sbin  sys   usr
+```
 
 
 ### 1.1 第一种选择
