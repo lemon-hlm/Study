@@ -27,7 +27,9 @@
 	* [3.3 在启动时激活、启用或禁用挂载点（系统启动时自动挂载）](#33-在启动时激活-启用或禁用挂载点系统启动时自动挂载)
 	* [3.4 在Linux中屏蔽（让它不能启用）或可见挂载点](#34-在linux中屏蔽让它不能启用或可见挂载点)
 * [4 使用Systemctl控制并管理套接口](#4-使用systemctl控制并管理套接口)
-* [参考](#参考)
+	* [4.1 列出所有可用系统套接口](#41-列出所有可用系统套接口)
+	* [4.2 在Linux中启动、重启、停止、重载套接口并检查其状态](#42-在linux中启动-重启-停止-重载套接口并检查其状态)
+	* [4.3 在启动时激活套接口，并启用或禁用它（系统启动时自启动）](#43-在启动时激活套接口并启用或禁用它系统启动时自启动)
 
 <!-- /code_chunk_output -->
 Systemctl是一个systemd工具，主要负责控制systemd系统和服务管理器。
@@ -290,7 +292,26 @@ rm '/etc/systemd/system/tmp.mount'
 
 # 4 使用Systemctl控制并管理套接口
 
+## 4.1 列出所有可用系统套接口
 
-# 参考
+```
+systemctl list-unit-files --type=socket
+```
+
+## 4.2 在Linux中启动、重启、停止、重载套接口并检查其状态
+
+```
+# systemctl start cups.socket
+# systemctl restart cups.socket
+# systemctl stop cups.socket
+# systemctl reload cups.socket
+# systemctl status cups.socket
+```
+
+## 4.3 在启动时激活套接口，并启用或禁用它（系统启动时自启动）
+
+
+
+参考
 
 https://linux.cn/article-5926-1.html
