@@ -3,12 +3,11 @@
 
 <!-- code_chunk_output -->
 
-* [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
-* [2. 编译调试版内核](#2-编译调试版内核)
-* [3. 调试](#3-调试)
-	* [3.2 第二种选择（对应1.2）](#32-第二种选择对应12)
-* [4. 获取当前进程](#4-获取当前进程)
-* [5. 参考](#5-参考)
+	* [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
+	* [2. 编译调试版内核](#2-编译调试版内核)
+	* [3. 调试](#3-调试)
+	* [5. 参考](#5-参考)
+* [6 问题和解决方案](#6-问题和解决方案)
 
 <!-- /code_chunk_output -->
 
@@ -148,8 +147,11 @@ $ make menuconfig
 
 配置 initramfs，在 initramfs source file 中填入\_install。另外需要把 Default kernel command string 清空。
 
-取消 Processor type and features \-\> Build a relocatable kernel 
+取消 Processor type and features \-\> Build a relocatable kernel: 因为内核启用这项特性之后，内核启动时会随机化内核的各个 section 的虚拟地址（VA），导致 gdb 断点设置在错误的虚拟地址上，内核执行时就不会触发这些断点。
+
 取消后 Build a relocatable kernel 的子项 Randomize the address of the kernel image (KASLR) 也会一并被取消
+
+Generate dwarf4 debuginfo: 方便 gdb 调试。可参考 dwarf4 格式。
 
 ```
 Kernel hacking  ---> 
@@ -184,15 +186,11 @@ $ make -j 20
 
 qemu 是一款虚拟机，可以模拟x86 & arm 等等硬件平台<似乎可模拟的硬件平台很多...>，而qemu 也内嵌了一个 gdbserver。这个gdbserver于是就可以和gdb构成一个远程合作伙伴，通过ip:port 网络方式或者是通过串口/dev/ttyS\*来进行工作，一个在这头，一个在那头。
 
-### 3.2 第二种选择（对应1.2）
-
 start\_kernel脚本：
 
 ```
 #!/usr/bin/bash
-qemu-system-x86_64 -M pc -smp 2 -m 1024 \
-    -kernel arch/x86/boot/bzImage \
-    -append "rdinit=/linuxrc loglevel=7" -S -s
+qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -serial mon:stdio -append "rdinit=/linuxrc loglevel=8 console=ttyS0" -S -s
 ```
 
 启动gdb脚本：
@@ -208,42 +206,6 @@ gdb ./vmlinux -ex "target remote localhost:1234"    \
               -ex "target remote localhost:1234"
 ```
 
-## 4. 获取当前进程
-
-《深入理解Linux内核》第三版第三章–进程，讲到内核采用了一种精妙的设计来获取当前进程。
-
-![config](images/1.jpg)
-
-Linux把跟一个进程相关的thread\_info和内核栈stack放在了同一内存区域，内核通过esp寄存器获得当前CPU上运行进程的内核栈栈底地址，该地址正好是thread\_info地址，由于进程描述符指针task字段在thread\_info结构体中偏移量为0，进而获得task。相关汇编指令如下：
-
-```
-movl $0xffffe000, %ecx      /* 内核栈大小为8K，屏蔽低13位有效位。
-andl $esp, %ecx
-movl (%ecx), p
-```
-
-指令运行后，p就获得当前CPU上运行进程的描述符指针。
-
-然而在调试器中调了下，发现**这种机制早已经被废弃掉了**。thread\_info结构体中只剩下一个字段flags，进程描述符字段task已经删除，无法通过thread\_info获取进程描述符了。
-
-而且进程的thread\_info也不再位于进程内核栈底了，而是放在了进程描述符task\_struct结构体中，见提交sched/core: Allow putting thread\_info into task\_struct和x86: Move thread\_info into task\_struct，这样也无法通过esp寄存器获取thread\_info地址了。
-
-```
-(gdb) p $lx_current().thread_info
-$5 = {flags = 2147483648}
-```
-
-这样做是从安全角度考虑的，一方面可以防止esp寄存器泄露后进而泄露进程描述符指针，二是防止内核栈溢出覆盖thread_info。
-
-Linux内核从2.6引入了Per-CPU变量，获取当前指针也是通过Per-CPU变量实现的。
-
-```
-(gdb) p $lx_current().pid
-$50 = 77
-(gdb) p $lx_per_cpu("current_task").pid
-$52 = 77
-```
-
 ## 5. 参考
 
 - [Tips for Linux Kernel Development](http://eisen.io/slides/jeyu_tips_for_kernel_dev_cmps107_2017.pdf)
@@ -254,3 +216,24 @@ $52 = 77
 - [Custom Initramfs](https://wiki.gentoo.org/wiki/Custom_Initramfs)
 - [Per-CPU variables](https://0xax.gitbooks.io/linux-insides/content/Concepts/per-cpu.html)
 - [Linux kernel debugging with GDB: getting a task running on a CPU](http://slavaim.blogspot.com/2017/09/linux-kernel-debugging-with-gdb-getting.html)
+
+# 6 问题和解决方案
+
+1. 为什么要关闭 Build a relocatable kernel 
+
+因为内核启用这项特性之后，内核启动时会随机化内核的各个 section 的虚拟地址（VA），导致 gdb 断点设置在错误的虚拟地址上，内核执行时就不会触发这些断点。
+
+2. Generate dwarf4 debuginfo 有什么用 
+
+方便 gdb 调试。可参考 dwarf4 格式。
+
+3. Remote 'g' packet reply is too long 错误的原因 
+
+这个错误是当目标程序执行时发生模式切换（real mode 16bit -> protected mode 32bit -> long mode 64bit）的时候，gdb server（此处就是 qemu）发送了不同长度的信息，gdb 无法正确的处理这种情况，所以直接就报错。 
+此时需要断开连接并切换 gdb 的 arch （i386:x86-64 和 i386:x86-64:intel ），arch 变化后，gdb 会重新设置缓冲区，然后再连接上去就能正常调试。这个方法规避了一些麻烦，但是实际上有两种正规的解决方案： 
+（1） 修改 gdb 的源码，使 gdb 支持这种长度变化（gdb 开发者似乎认为这个问题应该由 gdb server 解决）。 
+（2） 修改 qemu 的 gdb server，始终发送 64bit 的消息（但是这种方式可能导致无法调试 real mode 的代码）。
+
+4. 为什么最后内核执行出现了 Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) 
+
+因为 qemu 没有加载 rootfs，所以内核最后挂 VFS 的时候会出错。可以用 busybox 构建一个文件系统镜像，然后 qemu 增加 -initrd 选项指向该文件系统镜像即可。
