@@ -11,21 +11,6 @@
 
 <!-- /code_chunk_output -->
 
-
-https://consen.github.io/2018/01/17/debug-linux-kernel-with-qemu-and-gdb/
-
-奔跑吧Linux内核/下内容
-
-1. 编译调试版内核
-2. 构建initramfs根文件系统
-3. 调试
-4. 获取当前进程
-5. 参考
-
-排查Linux内核Bug，研究内核机制，除了查看资料阅读源码，还可通过调试器，动态分析内核执行流程。
-
-QEMU模拟器原生支持GDB调试器，这样可以很方便地使用GDB的强大功能对操作系统进行调试，如设置断点；单步执行；查看调用栈、查看寄存器、查看内存、查看变量；修改变量改变执行流程等。
-
 用qemu+GDB来调试内核和ko，当然我们需要准备如下：
 
 - 带调试信息的内核vmlinux
@@ -129,7 +114,7 @@ qemu 是一款虚拟机，可以模拟x86 & arm 等等硬件平台<似乎可模�
 
 ```
 $ cd busybox-1.28.0
-$ qemu-system-x86_64 -s -S -m 512 -kernel arch/x86/boot/bzImage -initrd initramfs.cpio.gz -nographic -append "console=ttyS0"
+$ qemu-system-x86_64 -s -S -m 512 -kernel arch/x86/boot/bzImage -initrd initramfs.cpio.gz -nographic -append "console=ttyS0, loglevel=8"
 ```
 
 - \-s是-gdb tcp::1234缩写，监听1234端口，在GDB中可以通过target remote localhost:1234连接；
