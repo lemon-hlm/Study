@@ -1,3 +1,23 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
+	* [1.1 第一种选择](#11-第一种选择)
+	* [1.2 第二种选择（优先）](#12-第二种选择优先)
+* [2. 编译调试版内核](#2-编译调试版内核)
+	* [2.1 第一种选择（对应1.1）](#21-第一种选择对应11)
+	* [2.2 第二种选择（对应1.2）](#22-第二种选择对应12)
+* [3. 调试](#3-调试)
+	* [3.1 第一种选择（对应1.1）](#31-第一种选择对应11)
+	* [3.2 第二种选择（对应1.2）](#32-第二种选择对应12)
+* [4. 获取当前进程](#4-获取当前进程)
+* [5. 参考](#5-参考)
+
+<!-- /code_chunk_output -->
+
+
 https://consen.github.io/2018/01/17/debug-linux-kernel-with-qemu-and-gdb/
 
 奔跑吧Linux内核/下内容
@@ -100,7 +120,7 @@ $ mkdir mnt
 $ mkdir –p etc/init.d/
 ```
 
-在\_install /etc/init.d/目录下新创建一个叫 rcS 的文件，并且写入如下内容：
+在\_install/etc/init.d/目录下新创建一个叫 rcS 的文件，并且写入如下内容：
 
 ```
 #!/bin/sh
@@ -119,7 +139,7 @@ echo /sbin/mdev > /proc/sys/kernel/hotplug
 mdev –s
 ```
 
-在\_install /etc 目录新创建一个叫 fstab 的文件，并写入如下内容。
+在\_install/etc 目录新创建一个叫 fstab 的文件，并写入如下内容。
 
 ```
 proc /proc proc defaults 0 0
@@ -129,7 +149,7 @@ tmpfs /dev tmpfs defaults 0 0
 debugfs /sys/kernel/debug debugfs defaults 0 0
 ```
 
-在\_install /etc 目录新创建一个叫 inittab 的文件，并写入如下内容。
+在\_install/etc 目录新创建一个叫 inittab 的文件，并写入如下内容。
 
 ```
 ::sysinit:/etc/init.d/rcS
