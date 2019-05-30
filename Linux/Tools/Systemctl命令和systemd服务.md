@@ -7,6 +7,14 @@
 	* [1.1 版本](#11-版本)
 	* [1.2 二进制文件和库文件](#12-二进制文件和库文件)
 	* [1.3 systemd是否运行](#13-systemd是否运行)
+	* [1.4 分析systemd启动进程](#14-分析systemd启动进程)
+	* [1.5 分析启动时各个进程花费的时间](#15-分析启动时各个进程花费的时间)
+	* [1.6 分析启动时的关键链](#16-分析启动时的关键链)
+	* [1.7 列出所有可用单元](#17-列出所有可用单元)
+	* [1.8 列出所有运行中单元](#18-列出所有运行中单元)
+	* [1.9 列出所有失败单元](#19-列出所有失败单元)
+	* [1.10 检查某个单元（如 cron.service）是否启用](#110-检查某个单元如-cronservice是否启用)
+	* [1.11 检查某个单元或服务是否运行](#111-检查某个单元或服务是否运行)
 * [参考](#参考)
 
 <!-- /code_chunk_output -->
@@ -48,6 +56,128 @@ root      2656     1  0 5月21 ?       00:00:04 /usr/lib/systemd/systemd-journal
 root      2692     1  0 5月21 ?       00:00:00 /usr/lib/systemd/systemd-udevd
 dbus      5466     1  7 5月21 ?       16:21:20 /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
 root      5501     1  0 5月21 ?       00:00:07 /usr/lib/systemd/systemd-logind
+```
+
+注意：systemd是作为父进程（PID=1）运行的。在上面带（\-e）参数的ps命令输出中，选择所有进程，（\-a）选择除会话前导外的所有进程，并使用（\-f）参数输出完整格式列表（即 \-eaf）。
+
+## 1.4 分析systemd启动进程
+
+```
+[root@gerrylee project]# systemd-analyze
+Startup finished in 12.824s (firmware) + 3.846s (loader) + 798ms (kernel) + 1.862s (initrd) + 26.028s (userspace) = 45.361s
+```
+
+## 1.5 分析启动时各个进程花费的时间
+
+```
+[root@gerrylee project]# systemd-analyze blame
+         18.211s kdump.service
+          6.331s NetworkManager-wait-online.service
+          5.034s bolt.service
+           656ms fwupd.service
+           563ms systemd-udev-settle.service
+           484ms dev-mapper-centos\x2droot.device
+           461ms lvm2-monitor.service
+...
+```
+
+## 1.6 分析启动时的关键链
+
+```
+[root@gerrylee project]# systemd-analyze critical-chain
+The time after the unit is active or started is printed after the "@" character.
+The time the unit takes to start is printed after the "+" character.
+
+graphical.target @26.024s
+└─multi-user.target @26.024s
+  └─tuned.service @7.800s +291ms
+    └─network.target @7.793s
+      └─network.service @7.505s +287ms
+        └─NetworkManager-wait-online.service @1.173s +6.331s
+          └─NetworkManager.service @1.121s +44ms
+            └─dbus.service @1.088s
+              └─basic.target @1.082s
+                └─paths.target @1.082s
+                  └─cups.path @1.082s
+                    └─sysinit.target @1.077s
+                      └─systemd-update-utmp.service @1.066s +9ms
+                        └─auditd.service @919ms +144ms
+                          └─systemd-tmpfiles-setup.service @902ms +16ms
+                            └─rhel-import-state.service @889ms +12ms
+                              └─local-fs.target @887ms
+                                └─run-user-42.mount @11.469s
+                                  └─swap.target @800ms
+                                    └─dev-mapper-centos\x2dswap.swap @784ms +15ms
+                                      └─dev-mapper-centos\x2dswap.device @718ms
+```
+
+重要：Systemctl接受服务（.service），挂载点（.mount），套接口（.socket）和设备（.device）作为单元。
+
+## 1.7 列出所有可用单元
+
+```
+[root@gerrylee project]# systemctl list-unit-files
+UNIT FILE                                     STATE
+proc-sys-fs-binfmt_misc.automount             static
+dev-hugepages.mount                           static
+dev-mqueue.mount                              static
+proc-fs-nfsd.mount                            static
+proc-sys-fs-binfmt_misc.mount                 static
+sys-fs-fuse-connections.mount                 static
+sys-kernel-config.mount                       static
+sys-kernel-debug.mount                        static
+tmp.mount                                     disabled
+var-lib-nfs-rpc_pipefs.mount                  static
+brandbot.path                                 disabled
+cups.path                                     enabled
+systemd-ask-password-console.path             static
+systemd-ask-password-plymouth.path            static
+...
+```
+
+## 1.8 列出所有运行中单元
+
+```
+[root@gerrylee project]# systemctl list-units
+  UNIT                                                  LOAD   ACTIVE SUB       DESCRIPTION
+  proc-sys-fs-binfmt_misc.automount                     loaded active running   Arbitrary Executable File Formats File System Automou
+  sys-devices-pci0000:00-0000:00:01.0-0000:01:00.1-sound-card1.device loaded active plugged   GP106 High Definition Audio Controller
+  sys-devices-pci0000:00-0000:00:17.0-ata1-host0-target0:0:0-0:0:0:0-block-sda-sda1.device loaded active plugged   ST2000DM005-2CW102
+  sys-devices-pci0000:00-0000:00:17.0-ata1-host0-target0:0:0-0:0:0:0-block-sda.device loaded active plugged   ST2000DM005-2CW102
+  sys-devices-pci0000:00-0000:00:17.0-ata3-host2-target2:0:0-2:0:0:0-block-sdb-sdb1.device loaded active plugged   INTEL_SSDSC2KW512G
+  sys-devices-pci0000:00-0000:00:1f.6-net-enp0s31f6.device loaded active plugged   Ethernet Connection (2) I219-V
+  sys-devices-platform-serial8250-tty-ttyS1.device      loaded active plugged   /sys/devices/platform/serial8250/tty/ttyS1
+  sys-devices-platform-serial8250-tty-ttyS2.device      loaded active plugged   /sys/devices/platform/serial8250/tty/ttyS2
+  sys-devices-platform-serial8250-tty-ttyS3.device      loaded active plugged   /sys/devices/platform/serial8250/tty/ttyS3
+...
+```
+
+## 1.9 列出所有失败单元
+
+```
+root@gerrylee project]# systemctl --failed
+  UNIT            LOAD   ACTIVE SUB    DESCRIPTION
+● ipmievd.service loaded failed failed Ipmievd Daemon
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+
+1 loaded units listed. Pass --all to see loaded but inactive units, too.
+To show all installed unit files use 'systemctl list-unit-files'.
+```
+
+## 1.10 检查某个单元（如 cron.service）是否启用
+
+```
+[root@gerrylee project]# systemctl is-enabled crond.service
+enabled
+```
+
+## 1.11 检查某个单元或服务是否运行
+
+```
+
 ```
 
 # 参考
