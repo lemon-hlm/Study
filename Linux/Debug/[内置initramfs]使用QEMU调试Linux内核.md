@@ -285,3 +285,4 @@ drwxrwxrwt    2 0        0               40 May 30 08:21 tmp
 - [Linux kernel debugging with GDB: getting a task running on a CPU](http://slavaim.blogspot.com/2017/09/linux-kernel-debugging-with-gdb-getting.html)
 - 使用 QEMU 和 GDB 调试 Linux 内核 v4.12: https://imkira.com/a21.html
 - https://consen.github.io/2018/01/17/debug-linux-kernel-with-qemu-and-gdb/
+- QEMU+GDB调试内核: https://blog.csdn.net/weijitao/article/details/79477792
