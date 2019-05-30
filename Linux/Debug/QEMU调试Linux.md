@@ -5,9 +5,9 @@
 
 * [1 编译调试版内核](#1-编译调试版内核)
 * [2 构建initramfs根文件系统](#2-构建initramfs根文件系统)
-	* [3. 调试](#3-调试)
-	* [4. 获取当前进程](#4-获取当前进程)
-	* [5. 参考](#5-参考)
+* [3 调试](#3-调试)
+* [4 获取当前进程](#4-获取当前进程)
+* [5 参考](#5-参考)
 
 <!-- /code_chunk_output -->
 
@@ -119,7 +119,7 @@ exec /sbin/init
 $ find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz
 ```
 
-## 3. 调试
+# 3 调试
 
 qemu 是一款虚拟机，可以模拟x86 & arm 等等硬件平台<似乎可模拟的硬件平台很多...>，而qemu 也内嵌了一个 gdbserver。
 
@@ -139,7 +139,7 @@ $ qemu-system-x86_64 -s -S -m 512 -kernel arch/x86/boot/bzImage -initrd initramf
 - \-nographic取消图形输出窗口，使QEMU成简单的命令行程序；
 - \-append "console=ttyS0"将输出重定向到console，将会显示在标准输出stdio。
 
-**内核安装**的vmlinuz-2.6.32-504.el6.x86_64是bzImage格式（需要使用arch/x86/boot/bzImage文件），而内核编译完，内核源码{KERNEL}根目录下的vmlinux是ELF格式。
+**内核安装**的vmlinuz-2.6.32-504.el6.x86_64是bzImage格式（需要使用arch/x86/boot/bzImage文件），而内核编译完，内核源码\{KERNEL}根目录下的vmlinux是ELF格式。
 
 **启动后的根目录**, 就是**initramfs**中包含的内容：
 
@@ -243,7 +243,7 @@ Breakpoint 1, cmdline_proc_show (m=0xffff880006695000, v=0x1 <irq_stack_union+1>
 $2 = 0xffff880007e68980 "console=ttyS0"
 ```
 
-## 4. 获取当前进程
+# 4 获取当前进程
 
 《深入理解Linux内核》第三版第三章–进程，讲到内核采用了一种精妙的设计来获取当前进程。
 
@@ -279,7 +279,7 @@ $50 = 77
 $52 = 77
 ```
 
-## 5. 参考
+# 5 参考
 
 - [Tips for Linux Kernel Development](http://eisen.io/slides/jeyu_tips_for_kernel_dev_cmps107_2017.pdf)
 - [How to Build A Custom Linux Kernel For Qemu](http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html)

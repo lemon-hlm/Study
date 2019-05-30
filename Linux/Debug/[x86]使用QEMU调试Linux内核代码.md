@@ -3,28 +3,13 @@
 
 <!-- code_chunk_output -->
 
-	* [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
-	* [2. 编译调试版内核](#2-编译调试版内核)
-	* [3. 调试](#3-调试)
-	* [5. 参考](#5-参考)
-* [6 问题和解决方案](#6-问题和解决方案)
+* [1 构建initramfs根文件系统](#1-构建initramfs根文件系统)
+* [2 编译调试版内核](#2-编译调试版内核)
+* [3 调试](#3-调试)
+* [4 问题和解决方案](#4-问题和解决方案)
+* [5. 参考](#5-参考)
 
 <!-- /code_chunk_output -->
-
-
-https://consen.github.io/2018/01/17/debug-linux-kernel-with-qemu-and-gdb/
-
-奔跑吧Linux内核/下内容
-
-1. 编译调试版内核
-2. 构建initramfs根文件系统
-3. 调试
-4. 获取当前进程
-5. 参考
-
-排查Linux内核Bug，研究内核机制，除了查看资料阅读源码，还可通过调试器，动态分析内核执行流程。
-
-QEMU模拟器原生支持GDB调试器，这样可以很方便地使用GDB的强大功能对操作系统进行调试，如设置断点；单步执行；查看调用栈、查看寄存器、查看内存、查看变量；修改变量改变执行流程等。
 
 用qemu+GDB来调试内核和ko，当然我们需要准备如下：
 
@@ -32,7 +17,7 @@ QEMU模拟器原生支持GDB调试器，这样可以很方便地使用GDB的强�
 - 一个压缩的内核vmlinuz或者bzImage
 - 一份裁剪过的文件系统initrd
 
-## 1. 构建initramfs根文件系统
+# 1 构建initramfs根文件系统
 
 Linux系统启动阶段，boot loader加载完**内核文件vmlinuz后**，内核**紧接着**需要挂载磁盘根文件系统，但如果此时内核没有相应驱动，无法识别磁盘，就需要先加载驱动，而驱动又位于/lib/modules，得挂载根文件系统才能读取，这就陷入了一个两难境地，系统无法顺利启动。于是有了**initramfs根文件系统**，其中包含必要的设备驱动和工具，boot loader加载initramfs到内存中，内核会将其挂载到根目录/,然后**运行/init脚本**，挂载真正的磁盘根文件系统。
 
@@ -134,7 +119,7 @@ $ sudo mknod null c 1 3
 
 当然也可以使用既有的initramfs，或者将其进行裁剪（https://blog.csdn.net/weijitao/article/details/79477792）
 
-## 2. 编译调试版内核
+# 2 编译调试版内核
 
 对内核进行调试需要解析符号信息，所以得编译一个调试版内核。
 
@@ -182,7 +167,7 @@ $ make -j 20
 当编译结束后，可以将vmlinux和bzImage文件copy到一个干净的目录下。
 
 
-## 3. 调试
+# 3 调试
 
 qemu 是一款虚拟机，可以模拟x86 & arm 等等硬件平台<似乎可模拟的硬件平台很多...>，而qemu 也内嵌了一个 gdbserver。这个gdbserver于是就可以和gdb构成一个远程合作伙伴，通过ip:port 网络方式或者是通过串口/dev/ttyS\*来进行工作，一个在这头，一个在那头。
 
@@ -206,18 +191,50 @@ gdb ./vmlinux -ex "target remote localhost:1234"    \
               -ex "target remote localhost:1234"
 ```
 
-## 5. 参考
+```
+# vmlinux 是编译内核时生成的调试文件，在内核源码的根目录中。
+gdb vmlinux
+# 进入 gdb 的交互模式后，首先执行
+show arch
+# 当前架构一般是: i386:x86-64
 
-- [Tips for Linux Kernel Development](http://eisen.io/slides/jeyu_tips_for_kernel_dev_cmps107_2017.pdf)
-- [How to Build A Custom Linux Kernel For Qemu](http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html)
-- [Linux Kernel System Debugging](https://blog.0x972.info/?d=2014/11/27/18/45/48-linux-kernel-system-debugging-part-1-system-setup)
-- [Debugging kernel and modules via gdb](https://www.kernel.org/doc/html/latest/dev-tools/gdb-kernel-debugging.html)
-- [BusyBox simplifies embedded Linux systems](https://www.ibm.com/developerworks/library/l-busybox/index.html)
-- [Custom Initramfs](https://wiki.gentoo.org/wiki/Custom_Initramfs)
-- [Per-CPU variables](https://0xax.gitbooks.io/linux-insides/content/Concepts/per-cpu.html)
-- [Linux kernel debugging with GDB: getting a task running on a CPU](http://slavaim.blogspot.com/2017/09/linux-kernel-debugging-with-gdb-getting.html)
+# 连接 qemu 进行调试：
+target remote :1234
 
-# 6 问题和解决方案
+# 设置断点
+# 如果上面qemu是使用 qemu-kvm 执行的内核的话，就需要使用 hbreak 来设置断点，否则断点无法生效。
+# 但是我们使用的是 qemu-system-x86_64，所以可以直接使用 b 命令设置断点。
+b start_kernel
+# 执行内核
+c
+```
+
+执行内核后，gdb 会出现一个错误：
+
+```
+Remote 'g' packet reply is too long: 后续一堆的十六进制数字
+```
+
+这是 gdb 的一个bug，可以通过以下方式规避：
+
+```
+# 断开 gdb 的连接
+disconnect
+# 重新设置 arch
+# 此处设置和之前 show arch 的要不一样
+# 之前是  i386:x86-64 于是改成  i386:x86-64:intel
+set arch i386:x86-64:intel
+```
+
+设置完 arch 后，重新连接：
+
+```
+target remote :1234
+```
+
+连接上后就可以看到 gdb 正常的输出 start_kernel 处的代码，然后按照 gdb 的调试指令进行内核调试即可。
+
+# 4 问题和解决方案
 
 1. 为什么要关闭 Build a relocatable kernel 
 
@@ -237,3 +254,16 @@ gdb ./vmlinux -ex "target remote localhost:1234"    \
 4. 为什么最后内核执行出现了 Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) 
 
 因为 qemu 没有加载 rootfs，所以内核最后挂 VFS 的时候会出错。可以用 busybox 构建一个文件系统镜像，然后 qemu 增加 -initrd 选项指向该文件系统镜像即可。
+
+# 5. 参考
+
+- [Tips for Linux Kernel Development](http://eisen.io/slides/jeyu_tips_for_kernel_dev_cmps107_2017.pdf)
+- [How to Build A Custom Linux Kernel For Qemu](http://mgalgs.github.io/2015/05/16/how-to-build-a-custom-linux-kernel-for-qemu-2015-edition.html)
+- [Linux Kernel System Debugging](https://blog.0x972.info/?d=2014/11/27/18/45/48-linux-kernel-system-debugging-part-1-system-setup)
+- [Debugging kernel and modules via gdb](https://www.kernel.org/doc/html/latest/dev-tools/gdb-kernel-debugging.html)
+- [BusyBox simplifies embedded Linux systems](https://www.ibm.com/developerworks/library/l-busybox/index.html)
+- [Custom Initramfs](https://wiki.gentoo.org/wiki/Custom_Initramfs)
+- [Per-CPU variables](https://0xax.gitbooks.io/linux-insides/content/Concepts/per-cpu.html)
+- [Linux kernel debugging with GDB: getting a task running on a CPU](http://slavaim.blogspot.com/2017/09/linux-kernel-debugging-with-gdb-getting.html)
+- 使用 QEMU 和 GDB 调试 Linux 内核 v4.12: https://imkira.com/a21.html
+- https://consen.github.io/2018/01/17/debug-linux-kernel-with-qemu-and-gdb/
