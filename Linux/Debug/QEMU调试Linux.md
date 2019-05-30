@@ -5,7 +5,6 @@
 
 * [1 编译调试版内核](#1-编译调试版内核)
 * [2 构建initramfs根文件系统](#2-构建initramfs根文件系统)
-	* [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
 		* [1.1 第一种选择](#11-第一种选择)
 		* [1.2 第二种选择（优先）](#12-第二种选择优先)
 	* [2. 编译调试版内核](#2-编译调试版内核)
@@ -74,47 +73,28 @@ make menuconfig
 ```
 Settings  --->
     [*] Build static binary (no shared libs)
+General Configuration  --->
+    [*] Don't use /usr
 ```
 
-
-## 1. 构建initramfs根文件系统
-
-Linux系统启动阶段，boot loader加载完**内核文件vmlinuz后**，内核**紧接着**需要挂载磁盘根文件系统，但如果此时内核没有相应驱动，无法识别磁盘，就需要先加载驱动，而驱动又位于/lib/modules，得挂载根文件系统才能读取，这就陷入了一个两难境地，系统无法顺利启动。于是有了**initramfs根文件系统**，其中包含必要的设备驱动和工具，boot loader加载initramfs到内存中，内核会将其挂载到根目录/,然后**运行/init脚本**，挂载真正的磁盘根文件系统。
-
-这里借助BusyBox构建极简initramfs，提供基本的用户态可执行程序。
-
-编译BusyBox，配置CONFIG\_STATIC参数，编译静态版BusyBox，编译好的可执行文件busybox不依赖动态链接库，可以独立运行，方便构建initramfs。
+Don't use \/usr也一定要选,否则make install后busybox将安装在原系统的/usr下,这将覆盖掉系统原有的命令。选择这个选项后,make install后会在busybox目录下生成一个叫\_install的目录,里面有busybox和指向它的链接.
 
 ```
-$ cd busybox-1.28.0
-$ make menuconfig
-```
-
-```
-BusyBox Settings  --->
-    Build Options  --->
-        [*] Build BusyBox as a static binary (no shared libs)
-```
-
-Don't use /usr也一定要选,否则make install后busybox将安装在原系统的/usr下,这将覆盖掉系统原有的命令。选择这个选项后,make install后会在busybox目录下生成一个叫_install的目录,里面有busybox和指向它的链接.
-
-```
-BusyBox Settings  --->
-    General Configuration  --->
-        [*] Don't use /usr
-```
-
-```
-$ make -j 20
-$ make install
+make -j 20
+make install
 ```
 
 会安装在\_install目录:
 
 ```
-$ ls _install 
-bin  linuxrc  sbin  usr
+# ls _install/
+bin  linuxrc  sbin
 ```
+
+创建initramfs，其中包含BusyBox可执行程序、必要的设备文件、启动脚本init。这里没有内核模块，如果需要调试内核模块，可将需要的内核模块包含进来。init脚本只挂载了虚拟文件系统procfs和sysfs，没有挂载磁盘根文件系统，所有调试操作都在内存中进行，不会落磁盘。
+
+
+
 ### 1.1 第一种选择
 
 创建initramfs，其中包含**BusyBox可执行程序**、必要的**设备文件**、**启动脚本init**。这里没有内核模块，如果需要调试内核模块，可将需要的**内核模块**包含进来。**init脚本只挂载了虚拟文件系统procfs和sysfs，没有挂载磁盘根文件系统**，所有调试操作都**在内存中进行**，不会落磁盘。
