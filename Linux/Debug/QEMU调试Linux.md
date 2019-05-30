@@ -6,7 +6,6 @@
 * [1 编译调试版内核](#1-编译调试版内核)
 * [2 构建initramfs根文件系统](#2-构建initramfs根文件系统)
 	* [3. 调试](#3-调试)
-		* [3.2 第二种选择（对应1.2）](#32-第二种选择对应12)
 	* [4. 获取当前进程](#4-获取当前进程)
 	* [5. 参考](#5-参考)
 
@@ -142,14 +141,14 @@ $ qemu-system-x86_64 -s -S -m 512 -kernel arch/x86/boot/bzImage -initrd initramf
 
 **内核安装**的vmlinuz-2.6.32-504.el6.x86_64是bzImage格式（需要使用arch/x86/boot/bzImage文件），而内核编译完，内核源码{KERNEL}根目录下的vmlinux是ELF格式。
 
-启动后的根目录, 就是initramfs中包含的内容：
+**启动后的根目录**, 就是**initramfs**中包含的内容：
 
 ```
 / # ls                    
 bin   dev  init  proc  root  sbin  sys   usr
 ```
 
-由于系统自带的GDB版本为7.2，内核辅助脚本无法使用，重新编译了一个新版GDB：
+由于系统自带的GDB版本为7.2，内核辅助脚本无法使用，重新编译了一个**新版GDB**：
 
 ```
 $ cd gdb-7.9.1
@@ -242,30 +241,6 @@ Breakpoint 1, cmdline_proc_show (m=0xffff880006695000, v=0x1 <irq_stack_union+1>
 #15 0x0000000000000000 in ?? ()
 (gdb) p saved_command_line
 $2 = 0xffff880007e68980 "console=ttyS0"
-```
-
-### 3.2 第二种选择（对应1.2）
-
-start\_kernel脚本：
-
-```
-#!/usr/bin/bash
-qemu-system-x86_64 -M pc -smp 2 -m 1024 \
-    -kernel arch/x86/boot/bzImage \
-    -append "rdinit=/linuxrc loglevel=7" -S -s
-```
-
-启动gdb脚本：
-
-```
-#!/bin/bash
-
-gdb ./vmlinux -ex "target remote localhost:1234"    \
-              -ex "break start_kernel"              \
-              -ex "continue"                        \
-              -ex "disconnect"                      \
-              -ex "set architecture i386:x86-64:intel" \
-              -ex "target remote localhost:1234"
 ```
 
 ## 4. 获取当前进程
