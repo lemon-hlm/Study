@@ -5,7 +5,6 @@
 
 * [1. 构建initramfs根文件系统](#1-构建initramfs根文件系统)
 * [2. 编译调试版内核](#2-编译调试版内核)
-	* [2.1 第一种选择（对应1.1）](#21-第一种选择对应11)
 	* [2.2 第二种选择（对应1.2）](#22-第二种选择对应12)
 * [3. 调试](#3-调试)
 	* [3.1 第一种选择（对应1.1）](#31-第一种选择对应11)
@@ -140,8 +139,6 @@ $ sudo mknod null c 1 3
 
 ## 2. 编译调试版内核
 
-### 2.1 第一种选择（对应1.1）
-
 对内核进行调试需要解析符号信息，所以得编译一个调试版内核。
 
 ```
@@ -152,12 +149,21 @@ $ make -j 20
 
 这里需要开启内核参数CONFIG\_DEBUG\_INFO和CONFIG\_GDB\_SCRIPTS。GDB提供了Python接口来扩展功能，内核基于Python接口实现了一系列辅助脚本，简化内核调试，开启CONFIG\_GDB\_SCRIPTS参数就可以使用了。
 
+配置 initramfs，在 initramfs source file 中填入\_install。另外需要把 Default kernel command string 清空。
+
 ```
 Kernel hacking  ---> 
     [*] Kernel debugging
     Compile-time checks and compiler options  --->
         [*] Compile the kernel with debug info
         [*] Provide GDB scripts for kernel debugging
+
+General setup --->
+    [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+        (_install) Initramfs source file(s)
+
+Boot options -->
+    ()Default kernel command string
 ```
 
 编译后，bzImage这个是被压缩了的，不带调试信息的内核，供qemu虚拟机使用（arch/x86/boot/bzImage），vmlinux里面带了调试信息，没有压缩，供gdb使用。
@@ -168,20 +174,6 @@ Kernel hacking  --->
 
 配置 initramfs，在 initramfs source file 中填入\_install。另外需要把 Default kernel command string 清空。
 
-```
-General setup --->
-    [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
-        (_install) Initramfs source file(s)
-
-Boot options -->
-    ()Default kernel command string
-
-Kernel hacking  ---> 
-    [*] Kernel debugging
-    Compile-time checks and compiler options  --->
-        [*] Compile the kernel with debug info
-        [*] Provide GDB scripts for kernel debugging
-```
 
 配置 memory split 为“3G/1G user/kernel split”以及打开高端内存。
 
