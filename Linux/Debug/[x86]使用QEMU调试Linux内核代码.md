@@ -175,6 +175,12 @@ General setup --->
 
 Boot options -->
     ()Default kernel command string
+
+Kernel hacking  ---> 
+    [*] Kernel debugging
+    Compile-time checks and compiler options  --->
+        [*] Compile the kernel with debug info
+        [*] Provide GDB scripts for kernel debugging
 ```
 
 配置 memory split 为“3G/1G user/kernel split”以及打开高端内存。
