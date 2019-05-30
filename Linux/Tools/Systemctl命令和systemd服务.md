@@ -30,6 +30,9 @@
 	* [4.1 列出所有可用系统套接口](#41-列出所有可用系统套接口)
 	* [4.2 在Linux中启动、重启、停止、重载套接口并检查其状态](#42-在linux中启动-重启-停止-重载套接口并检查其状态)
 	* [4.3 在启动时激活套接口，并启用或禁用它（系统启动时自启动）](#43-在启动时激活套接口并启用或禁用它系统启动时自启动)
+	* [4.4 屏蔽（使它不能启动）或显示套接口](#44-屏蔽使它不能启动或显示套接口)
+* [5 服务的CPU利用率](#5-服务的cpu利用率)
+	* [5.1 获取当前某个服务的CPU分配额](#51-获取当前某个服务的cpu分配额)
 
 <!-- /code_chunk_output -->
 Systemctl是一个systemd工具，主要负责控制systemd系统和服务管理器。
@@ -310,7 +313,30 @@ systemctl list-unit-files --type=socket
 
 ## 4.3 在启动时激活套接口，并启用或禁用它（系统启动时自启动）
 
+```
+# systemctl is-active cups.socket
+# systemctl enable cups.socket
+# systemctl disable cups.socket
+```
 
+## 4.4 屏蔽（使它不能启动）或显示套接口
+
+```
+# systemctl mask cups.socket
+ln -s '/dev/null' '/etc/systemd/system/cups.socket'
+
+# systemctl unmask cups.socket
+rm '/etc/systemd/system/cups.socket'
+```
+
+# 5 服务的CPU利用率
+
+## 5.1 获取当前某个服务的CPU分配额
+
+```
+# systemctl show -p CPUShares httpd.service
+CPUShares=1024
+```
 
 参考
 
