@@ -58,10 +58,7 @@ qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -append "rdinit=
 
 preferences-->C/C++-->indexer 去掉勾选 Enable indexer。
 
-
-
-
-
+preferences-->General-->Workspace 去掉勾选 Build Automatically。
 
 ### 1.3.1 创建项目
 
