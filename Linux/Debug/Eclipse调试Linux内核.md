@@ -62,10 +62,6 @@ preferences-->C/C++-->indexer 去掉勾选 Enable indexer。
 
 preferences-->General-->Workspace 去掉勾选 Build Automatically。
 
-file-->new-->c project-->project name填写你自己合意的，比如linux-kernel-study / 去掉use default location，location输入框中选择你的linux-4.4.19路径。 / project type 选择 Makefile project-Empty project / Toolschains选择Linux GCC-->next-->Advanced Setting-->C/C++ Build-->去掉勾选use default build command， build command输入框内写上 make CONFIG_DEBUG_SECTION_MISMATCH=y -j2，build directory选择你的linux-4.4.19路径。 / Behavior页签 Build(Increament build) 输入框中输入一个空格即可。然后完成工程创建即可。
-
-点击工具栏中的绿色小虫子右边的箭头，选择Debug Configurations-->C/C++ Remote Application(双击)-->proiect选择你刚创建的project / C/C++ Application选择你的linux-4.4.19路径下的vmlinux。 / 选中 Disable auto build 点击select other换一个启动器 选择 GDB(DSF)Manual Remote Debugging...
-
 ### 1.3.1 创建项目
 
 New → "Makefile Project with Existing Code", 这里代码目录选择上面说的与调试内核代码一致的目录, Toolchain选为None.
@@ -98,7 +94,7 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 1. 选中项目→菜单栏 ”Run“→Debug Configurations…
 
-2. 双击 C/C++ Remote Application 新建一个配置，Eclipse会根据当前选择的项目初始化大部分配置，Project选择我们的linux\-debug项目, application填上面的带有调试信息的vmlinux, 
+2. 双击 C/C++ Remote Application 新建一个配置，Eclipse会根据当前选择的项目初始化大部分配置，Project选择我们的linux\-debug项目, application填上面的带有调试信息的vmlinux, 选中 Disable auto build
 
 ![](./images/2019-05-31-22-28-18.png)
 
@@ -120,8 +116,14 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 接下来在目标板上运行 gdbserver, 即上面的执行虚拟机命令
 
-点击
+点击CDT工具栏中的绿色小虫子右边的箭头，选择1New_configuration，如果有什么错误提示不用理会，继续proceed。 连接成功后，控制台会有输出，也可以在控制台输入gdb调试指令，也可以在CDT上直接加断点。
+这时你会发现在 start_kernel处停了下来。
+F5 F6这些快捷键都可以用。
 
+
+
+
+file-->new-->c project-->project name填写你自己合意的，比如linux-kernel-study / 去掉use default location，location输入框中选择你的linux-4.4.19路径。 / project type 选择 Makefile project-Empty project / Toolschains选择Linux GCC-->next-->Advanced Setting-->C/C++ Build-->去掉勾选use default build command， build command输入框内写上 make CONFIG_DEBUG_SECTION_MISMATCH=y -j2，build directory选择你的linux-4.4.19路径。 / Behavior页签 Build(Increament build) 输入框中输入一个空格即可。然后完成工程创建即可。
 
 
 
