@@ -16,7 +16,11 @@
 	* [3.8 语言](#38-语言)
 * [4 搜索功能](#4-搜索功能)
 * [5 项目视图](#5-项目视图)
-	* [4.1 层级关系视图分类：](#41-层级关系视图分类)
+	* [4.1 层级关系视图分类](#41-层级关系视图分类)
+	* [4.2 结构关系视图分类](#42-结构关系视图分类)
+* [术语 Terminology](#术语-terminology)
+	* [Architecture 层级:](#architecture-层级)
+	* [Database 数据库](#database-数据库)
 
 <!-- /code_chunk_output -->
 
@@ -146,9 +150,113 @@ Assembly、C/C\+\+、Python、Web
 
 然后点击图标右下角的下拉箭头，弹出如下菜单，即可选择查看相关视图：
 
-## 4.1 层级关系视图分类：
+## 4.1 层级关系视图分类
 
 1. Butterfly：如果两个实体间存在关系，就显示这两个实体间的调用和被调用关系；
 
 如下图为Activity中的一个方法的关系图：
 
+![](./images/2019-05-31-11-21-18.png)
+
+2. Calls：展示从你选择的这个方法开始的整个调用链条；
+
+3. Called By：展示了这个实体被哪些代码调用，这个结构图是从底部向上看或者从右到左看；
+
+![](./images/2019-05-31-11-24-57.png)
+
+4. Calls Relationship/Calledby Relationship:展示了两个实体之间的调用和被调用关系，操作方法：首先右键你要选择的第一个实体，然后点击另一个你要选择的实体，如果选择错误，可以再次点击其他正确即可，然后点击ok；
+
+![](./images/2019-05-31-11-25-12.png)
+
+![](./images/2019-05-31-11-25-16.png)
+
+5. Contains:展示一个实体中的层级图，也可以是一个文件，一条连接线读作”x includes y“；
+
+![](./images/2019-05-31-11-25-31.png)
+
+6. Extended By:展示这个类被哪些类所继承，
+
+![](./images/2019-05-31-11-25-45.png)
+
+7. Extends:展示这个类继承自那个类：
+
+![](./images/2019-05-31-11-25-59.png)
+
+## 4.2 结构关系视图分类
+
+1.Graph Architecture：展示一个框架节点的结构关系；
+
+2.Declaration:展示一个实体的结构关系，例如：展示参数，则返回类型和被调用函数，对于类，则展示私有成员变量（谁继承这个类，谁基于这个类）
+
+3.Parent Declaration:展示这个实体在哪里被声明了的结构关系；
+
+4.Declaration File:展示所选的文件中所有被定义的实体（例如函数，类型，变量，常量等）；
+
+5.Declaration Type:展示组成类型；
+
+6.Class Declaration:展示定义类和父类的成员变量；
+
+7.Data Members:展示类或者方法的组成，或者包含的类型；
+
+8.Control Flow:展示一个实体的控制流程图或者类似实体类型；
+
+![](./images/2019-05-31-11-26-28.png)
+
+9.Cluster Control Flow:展示一个实体的流程图或者类似实体类型，这个比上一个更具有交互性；
+
+10.UML Class Diagram:展示这个项目中或者一个文件中定义的类以及与这个类关联的类
+
+![](./images/2019-05-31-11-27-46.png)
+
+11.UML Sequence Diagram:展示两个实体之间的时序关系图；
+
+![](./images/2019-05-31-11-28-09.png)
+
+12.Package:展示给定包名中声明的所有实体
+
+13.Task:展示一个任务中的参数，调用，实体
+
+14.Rename Declaration:展示实体中被重命名的所有实体
+
+由于视图比较多，所以就一一贴上代码，主要还是需要自己去调试，查看各个功能视图的展示结构以及作用，孰能生巧，多操作几下就会了，所以不再做过多的解释。最终希望这款软件能够帮助你快速开发，快速阅读别人的或者自己的代码。
+
+# 术语 Terminology
+
+## Architecture 层级:
+
+An architecture is a hierarchical aggregation of source code units (entities). An architecture can be user created or automatically generated. Architectures need not be complete (that is, an architecture’s flattened expansion need not reference every source entity in the database), nor unique (that is, an architecture’s flattened expansion need not maintain the set property).
+
+层级表示代码单元（或者实体）组成的层次结构，可以由用户手动创建，也可由本软件自动生成。一个层级可以不完整（例如一个层级的扁平化扩展有可能不会关联数据库中的所有代码实体），也可能不唯一（扁平化扩展的层级可能不会处理其预设属性）。
+
+## Database 数据库
+
+The database is where the results of the source code analysis, as well as project settings, are stored. By default, this is a project’s “.udb” file.
+
+代码经分析后产生的中间结果，以及工程设置保存在数据库，其缺省扩展名为“.udb”。
+
+## Entity 实体
+
+An Understand “entity” is anything it has information about. In practice this means anything declared or used in your source code and the files that contain the project. Subroutines, variables, and source files are all examples of entities.
+
+Understand 描述的“实体”表示任何包含信息的事物，具体来说，代码中声明或 
+者使用的标识、包含工程的文件、子程序、变量、源文件都可以被称为实体。
+
+Project 工程
+
+The set of source code you have analyzed and the settings and parameters chosen. A “project file” contains the list of source files and the project settings.
+
+表示源代码的集合以及相关的配置和参数，工程文件包含源文件清单和工程设置。
+
+Relationship 关联
+
+A particular way that entities relate to one another. The names of relationships come from the syntax and semantics of a programming language. For instance, subroutine entities can have “Call” relationships and “CalledBy” relationships.
+
+互作用的实体之间的关系，关联的名称来源于编程语言的语法和语义，例如过程式实体具有“调用”和“被调用”的关联对象。
+
+Script 脚本
+
+Generally a Perl script. These can be run from within Understand’s GUI, or externally via the “uperl” command. The Understand Perl API provides easy and direct access to all information stored in an Understand database.
+通常指perl脚本，脚本可以通过Understand 2.5的图形用户界面或者外部的脚本命令执行。Understand Perl API提供了快捷的访问Understand数据库所有信息的接口。
+
+parts 部件
+下面的图形展示了一些Understand 图形用户界面(GUI) 中常用的部件:
