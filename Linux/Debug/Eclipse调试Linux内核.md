@@ -5,8 +5,10 @@
 
 * [1 两个环境(远程调试)](#1-两个环境远程调试)
 	* [1.1 初始化环境配置](#11-初始化环境配置)
-	* [1.2 启动远端gdbserver](#12-启动远端gdbserver)
+	* [1.2 连接调试测试](#12-连接调试测试)
 	* [1.3 配置eclipse](#13-配置eclipse)
+		* [1.3.1 创建项目](#131-创建项目)
+		* [1.3.2 配置debug选项](#132-配置debug选项)
 
 <!-- /code_chunk_output -->
 
@@ -28,7 +30,9 @@
 
 本地vmlinux是带有调试信息的镜像, 与上面的对应
 
-## 1.2 启动远端gdbserver
+## 1.2 连接调试测试
+
+启动远端gdbserver
 
 ```
 qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -append "rdinit=/linuxrc loglevel=8 console=ttyS0" -S -s
@@ -40,17 +44,41 @@ qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -appe
 qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -append "rdinit=/linuxrc loglevel=8" -S -s -daemonize
 ```
 
+在当前节点
+
+```
+# gdb
+(gdb) target remote 10.1.194.104:1234
+(gdb) b start_kernel
+(gdb) c
+```
+
 ## 1.3 配置eclipse
+
+### 1.3.1 创建项目
+
+New → "Makefile Project with Existing Code", 这里代码目录选择上面说的与调试内核代码一致的目录, Toolchain选为None.
+
+![](./images/2019-05-31-14-06-14.png)
 
 右上角"Debug", 选择"C/C\+\+"
 
 ![](./images/2019-05-31-12-51-02.png)
 
-new → "Makefile Project with Existing Code", 这里代码目录选择上面说的与调试内核代码一致的目录, Toolchain选为None.
+### 1.3.2 配置debug选项
 
-![](./images/2019-05-31-14-06-14.png)
+配置debug选项, "Run" → "Debug Configurations", 选择"C\/C\+\+ Remote Application", 右击"New", 创建一个远程调试配置, 起个名字
 
-配置debug选项, "Run" → "Debug Configurations", 选择"C/C\+\+ Attach to Application"双击, 新建一个配置, 起个名字
+
+
+如果安装的CDT插件不全，可能没有“C\/C\+\+ Remote Application”这个类型，意味着CDT没有远程调试功能。这时需要安装一个叫“Remote System Explorer End-User Runtime ”的插件
+
+
+
+
+
+
+选择"C/C\+\+ Attach to Application"双击, 新建一个配置, 起个名字
 
 Main中
 
