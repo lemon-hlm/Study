@@ -96,11 +96,13 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 1. 选中项目→菜单栏 ”Run“→Debug Configurations…
 
-2. 双击 C/C++ Remote Application 新建一个配置，Eclipse会根据当前选择的项目初始化大部分配置，这里只需**修改Debugger配置页**
+2. 双击 C/C++ Remote Application 新建一个配置，Eclipse会根据当前选择的项目初始化大部分配置，这里重点**修改Debugger配置页**
 
 3. 在右下方点击“**Select other**”，选择“**GDB(DSF) Manual Remote Debugging Launcher**”，确认
 
-4. 选择进入Debugger配置页，在**Main标签**中，GDB debugger 填写gdb，如果未加入PATH环境变量则应该填入绝对路径
+![](./images/2019-05-31-22-03-57.png)
+
+4. 选择进入Debugger配置页，在**Main标签**中，GDB debugger 填写**gdb**，如果**未加入PATH**环境变量则应该**填入绝对路径**, 
 
 5. 在Debugger配置页的Shared Libraries标签中，可以添加库路径，比如调试过程中要步入**外部函数**，就必须在这里给出**带调试信息的库文件路径**，否则会找不到该函数的定义
 
