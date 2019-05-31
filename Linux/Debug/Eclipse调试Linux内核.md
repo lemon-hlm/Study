@@ -56,6 +56,10 @@ qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -append "rdinit=
 
 ## 1.3 配置eclipse
 
+preferences-->C/C++-->indexer 去掉勾选 Enable indexer。
+
+
+
 ### 1.3.1 创建项目
 
 New → "Makefile Project with Existing Code", 这里代码目录选择上面说的与调试内核代码一致的目录, Toolchain选为None.
