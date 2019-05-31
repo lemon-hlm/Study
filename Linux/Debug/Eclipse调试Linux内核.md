@@ -20,7 +20,7 @@
 
 ## 1.1 初始化环境配置
 
-本地安装Eclipse for Cpp
+本地安装Eclipse for Cpp, 这个版本自带了CDT，不用另行安装CDT插件。
 
 本地checkout一份代码出来, 该代码和编译的调试用的kernel commit信息一致
 
@@ -67,13 +67,17 @@ New → "Makefile Project with Existing Code", 这里代码目录选择上面说
 
 ### 1.3.2 配置debug选项
 
-配置debug选项, "Run" → "Debug Configurations", 选择"C\/C\+\+ Remote Application", 右击"New", 创建一个远程调试配置, 起个名字
+配置debug选项, "Run" → "Debug Configurations", 选择"C\/C\+\+ Remote Application(属于CDT插件)"
 
+Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一个应用程序时，CDT有三种运行方式：
 
+1. Automatic Remote Launcher ：**远程自动运行**，这是最方便好用的一种方式
 
-如果安装的CDT插件不全，可能没有“C\/C\+\+ Remote Application”这个类型，意味着CDT没有远程调试功能。这时需要安装一个叫“Remote System Explorer End-User Runtime ”的插件
+2. Manual Remote Launcher : **远程手动运行**。**用户**自己在**目标板**上运行**gdbserver**，然后在**开发主机**上指定**远程连接的方式**（如IP地址和端口），连接到gdbserver
 
+3. Remote Attach Launcher ：**远程依附运行**。类似于上一种，但它不是重新运行程序开启一个debug会话，而是**直接Attach到一个已经运行的程序**，然后调试
 
+在Debug Configurations 对话框中，创建一个远程调试配置，这个配置在创建时会根据项目情况提供一个默认的配置，默认将使用第一种Automatic Remote Launcher方式，这在Main标签中下方“GDB (DSF) Automatic Remote Debugging Launcher”可以看出，点击右边的“Select other…”可以切换其它方式。
 
 
 
