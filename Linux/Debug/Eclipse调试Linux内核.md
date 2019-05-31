@@ -3,15 +3,20 @@
 
 <!-- code_chunk_output -->
 
-* [1 初始化环境配置](#1-初始化环境配置)
-* [2 配置eclipse](#2-配置eclipse)
-* [3 启动虚拟机](#3-启动虚拟机)
+* [1 两个环境(远程调试)](#1-两个环境远程调试)
+	* [1.1 初始化环境配置](#11-初始化环境配置)
+	* [1.2 启动远端gdbserver](#12-启动远端gdbserver)
+	* [1.3 配置eclipse](#13-配置eclipse)
 
 <!-- /code_chunk_output -->
 
 使用QEMU \+ GDB \+ Eclipse调试Linux内核
 
-# 1 初始化环境配置
+有两种情况, 一种是内核虚拟机和eclipse在同一个环境, 另一种分属两个环境
+
+# 1 两个环境(远程调试)
+
+## 1.1 初始化环境配置
 
 本地安装Eclipse for Cpp
 
@@ -23,7 +28,19 @@
 
 本地vmlinux是带有调试信息的镜像, 与上面的对应
 
-# 2 配置eclipse
+## 1.2 启动远端gdbserver
+
+```
+qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -append "rdinit=/linuxrc loglevel=8 console=ttyS0" -S -s
+```
+
+或
+
+```
+qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -append "rdinit=/linuxrc loglevel=8" -S -s -daemonize
+```
+
+## 1.3 配置eclipse
 
 右上角"Debug", 选择"C/C\+\+"
 
@@ -55,14 +72,4 @@ connection中, 如下, 对端IP填写, 端口为1234
 
 点击右下的"debug"
 
-# 3 启动虚拟机
 
-```
-qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -append "rdinit=/linuxrc loglevel=8 console=ttyS0" -S -s
-```
-
-或
-
-```
-qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -append "rdinit=/linuxrc loglevel=8" -S -s -daemonize
-```
