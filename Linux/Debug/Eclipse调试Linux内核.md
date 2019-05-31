@@ -15,7 +15,7 @@
 
 本地安装Eclipse for Cpp
 
-本地checkout一份代码出来, 该代码和编译的kernel commit信息一致
+本地checkout一份代码出来, 该代码和编译的调试用的kernel commit信息一致
 
 # 2 启动虚拟机
 
@@ -29,5 +29,8 @@ qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -appe
 
 ![](./images/2019-05-31-12-51-02.png)
 
-new → "Makefile Project with Existing Code"
+new → "Makefile Project with Existing Code", 这里代码目录选择上面说的与调试内核代码一致的目录, Toolchain选为None.
 
+![](./images/2019-05-31-14-06-14.png)
+
+后下角的
