@@ -78,7 +78,7 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 3. Remote Attach Launcher ：**远程依附运行**。类似于上一种，但它不是重新运行程序开启一个debug会话，而是**直接Attach到一个已经运行的程序**，然后调试
 
-在Debug Configurations 对话框中，创建一个远程调试配置，这个配置在创建时会根据项目情况提供一个默认的配置，默认将使用第一种Automatic Remote Launcher方式，这在Main标签中下方“GDB (DSF) Automatic Remote Debugging Launcher”可以看出，点击右边的“Select other…”可以切换其它方式。
+在Debug Configurations 对话框中，创建一个远程调试配置，这个配置在创建时会根据项目情况提供一个默认的配置，**默认**将使用第一种Automatic Remote Launcher方式，这在Main标签中下方“GDB (DSF) Automatic Remote Debugging Launcher”可以看出，点击右边的“**Select other**…”可以切换其它方式。
 
 ### 1.3.2.1 远程手动运行方式
 
@@ -96,9 +96,15 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 5. 在Debugger配置页的Shared Libraries标签中，可以添加库路径，比如调试过程中要步入**外部函数**，就必须在这里给出**带调试信息的库文件路径**，否则会找不到该函数的定义
 
-6. 在Debugger配置页的Connection标签中，Type选“TCP”，并填写目标板上gdbserver监听的IP和端口号（这个在下面文档会提及）
+6. 在Debugger配置页的Connection标签中，Type选“TCP”，并填写目标板上gdbserver监听的IP和端口号
 
-所有配置完成后，点“Apply”保存配置，并关掉配置窗口
+所有配置完成后，点“**Apply**”保存配置，并关掉配置窗口, 不要直接"debug"
+
+接下来在目标板上运行 gdbserver, 即上面的执行虚拟机命令
+
+点击
+
+
 
 
 选择"C/C\+\+ Attach to Application"双击, 新建一个配置, 起个名字
