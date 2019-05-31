@@ -9,7 +9,8 @@
 	* [1.3 配置eclipse](#13-配置eclipse)
 		* [1.3.1 创建项目](#131-创建项目)
 		* [1.3.2 配置debug选项](#132-配置debug选项)
-		* [1.3.2.1 远程手动运行方式](#1321-远程手动运行方式)
+			* [1.3.2.1 远程手动运行方式](#1321-远程手动运行方式)
+			* [1.3.2.2 远程自动运行调试](#1322-远程自动运行调试)
 
 <!-- /code_chunk_output -->
 
@@ -86,7 +87,7 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 在Debug Configurations 对话框中，创建一个远程调试配置，这个配置在创建时会根据项目情况提供一个默认的配置，**默认**将使用第一种Automatic Remote Launcher方式，这在Main标签中下方“GDB (DSF) Automatic Remote Debugging Launcher”可以看出，点击右边的“**Select other**…”可以切换其它方式。
 
-### 1.3.2.1 远程手动运行方式
+#### 1.3.2.1 远程手动运行方式
 
 我们希望Eclipse**每次生成一个项目**之后，**自动**把生成出来的**二进制程序拷贝到目标板上**，这可以通过**NFS挂载共享目录来实现**，我们只需要配置项目属性（依次展开：C/C\+\+Build > Settings > Build Steps > Post\-build steps，在Command中输入“cp ProgramBin /mnt/share”）即可。
 
@@ -116,10 +117,21 @@ Eclipse的C/C++插件CDT已经很好的支持gdb在远程调试了。调试一�
 
 接下来在目标板上运行 gdbserver, 即上面的执行虚拟机命令
 
-点击CDT工具栏中的绿色小虫子右边的箭头，选择1New_configuration，如果有什么错误提示不用理会，继续proceed。 连接成功后，控制台会有输出，也可以在控制台输入gdb调试指令，也可以在CDT上直接加断点。
-这时你会发现在 start_kernel处停了下来。
-F5 F6这些快捷键都可以用。
+点击CDT工具栏中的绿色小虫子右边的箭头，选择Linux\-remote\-debug，如果有什么错误提示不用理会，继续proceed。 
 
+连接成功后，控制台会有输出，也可以在控制台输入gdb调试指令，也可以在CDT上直接加断点。
+
+这时你会发现在 start\_kernel处停了下来。F5 F6这些快捷键都可以用。
+
+#### 1.3.2.2 远程自动运行调试
+
+在开发主机上查看目标板（远端主机）的系统状况，如查看远程的文件，查看进程列表等，甚至打开终端运行远程机器上的程序。我们还希望这样一个工具软件能集成在Eclipse上，并且提供了API接口让Eclipse的插件能调用远程机器上的程序。
+
+**TM/RSE** 就是这样一个工具，全称是 Target Management / Remote Systems Explorer，是Eclipse上的一个插件。Eclipse的远程管理插件有很多，但这个最常用，所以我们安装了 Eclipse 的C++版，就自带了这个插件。ARM的软件开发环境DS-5  也使用了这个插件，其实整个DS-5的基础都是Eclipse社区的开源软件搭建起来的。关于TM/RSE的更多介绍，可参考其官方资料：TM and RSE FAQ
+
+我们可以在安装了TM/RSE的Eclipse上，点击右上角的“Open Perspective”按钮，打开“Remote System Explorer”，在 Remote System Explorer 上，你可以很方便的管理多个远程连接，查看远程文件和进程，运行远程程序等。
+
+RSE 支持很多网络连接类型，常用的有：
 
 
 
