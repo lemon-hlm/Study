@@ -33,4 +33,7 @@ new → "Makefile Project with Existing Code", 这里代码目录选择上面说
 
 ![](./images/2019-05-31-14-06-14.png)
 
-后下角的
+配置debug选项, "Run" → "Debug Configurations", 选择"C/C\+\+ Attach to Application"双击, 新建一个配置
+
+起个名字, Project选择刚才创建的project, C/C\+\+ Application
+
