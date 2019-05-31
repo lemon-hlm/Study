@@ -29,6 +29,14 @@
 * [常用词汇](#常用词汇)
 * [右键菜单](#右键菜单)
 * [Project Configuration](#project-configuration)
+* [Entity Filter窗口](#entity-filter窗口)
+* [信息浏览器](#信息浏览器)
+* [引用查看](#引用查看)
+* [工程浏览器](#工程浏览器)
+* [上下文信息边栏](#上下文信息边栏)
+* [Structure Browser](#structure-browser)
+* [大小写修改](#大小写修改)
+* [层级结构浏览器](#层级结构浏览器)
 
 <!-- /code_chunk_output -->
 
@@ -41,6 +49,10 @@
 "SourceCodePro Nerd Font Mono" 13
 
 修改颜色: Preference → Editor → Styles, Predefined选为"silver"
+
+Preference → General → Application Font
+
+"SourceCodePro Nerd Font Mono" 12
 
 2. 
 
@@ -386,7 +398,7 @@ Use Include cache：
 
 由于头文件通常被多个源文件使用，默认情况下，分析阶段头文件都采用高速缓存，这样能够加速分析过程，但是需要更多的内存，如果分析过程碰到内存问题，可以将此选项关闭。同时需要注意的是，高速缓存的使用会影响到分析结果。
 
-Entity Filter窗口
+# Entity Filter窗口
 
 ![](./images/2019-05-31-11-39-22.png)
 
@@ -416,5 +428,84 @@ Root Withs：
 
 仅显示被其他单元使用，而不使用其他单元的程序单元（包括包，任务，子程序等）（Ada）。
 
-信息浏览器
+# 信息浏览器
+
+![](./images/2019-05-31-11-40-37.png)
+
+信息浏览器同步
+
+取消Sync 勾选可以打开多个信息浏览器窗口，Sync 勾选的情况下，选中一个实体或者选择View Information 则会更新当前信息浏览器。
+
+选中File Sync 可以保证信息浏览器内容始终与激活的代码编辑器保持同步。
+
+![](./images/2019-05-31-11-40-50.png)
+
+# 引用查看
+
+信息浏览器的“References”区域显示了所有引用选中实体的相关信息：
+
+![](./images/2019-05-31-11-41-10.png)
+
+# 工程浏览器
+
+![](./images/2019-05-31-11-41-24.png)
+
+# 上下文信息边栏
+
+![](./images/2019-05-31-11-41-32.png)
+
+显示当前激活的编辑窗口的结构和信息，标签页包含了以下信息：
+
+# Structure Browser 
+
+提供当前文件的扩展范围列表，列出了文件中函数，头文件包含，宏定义，类及其他各种结构的名称。名称旁边的图标指示了实体类型。将鼠标移动到一个条目，弹出显示实体类型和名称的活动文本框。使用Ctrl+F 可以在标签页范围内进行查找。
+
+File Information 
+
+提供当前文件的信息浏览器。
+
+Scope Information 
+
+显示Structure Browser 中选中实体的相关信息。
+
+Context Browser 
+
+在左侧显示当前实体在层级结构中的位置，右侧显示当前实体包含的其他实体。文件信息标签页右上角的图标（或者使用Ctrl+,）可以将编辑窗口和CIS 中的文件替换为同目录下同名但不同扩展名的文件。例如，使用这种方法可以在.p/.cpp 和.h 文件之间快速切换。
+
+右键菜单也提供了多种快捷的操作选择。
+
+# 大小写修改
+
+Understand 2.5代码编辑器支持选中文本进行快速的大小写修改，方法如下：
+
+1. 选中代码中的一个或者多个单词。
+2. 通过菜单栏Edit\>Change Case，或者右键菜单中选择Change Case。
+3. 选择需要使用的大小写修改方式，选项包括： 
+
+![](./images/2019-05-31-11-42-32.png)
+
+# 层级结构浏览器
+
+![](./images/2019-05-31-11-43-38.png)
+
+![](./images/2019-05-31-11-43-44.png)
+
+层级结构节点（如文件系统目录节点和本季度修改节点）的右键菜单包含了以下一些其他对象的右键菜单没有提供的额外选项：
+
+Graphical Views>Dependency Graphs： 显示层级结构各节点的依赖关系，参见。
+
+Metrics Summary：提供选中节点各实体的度量数据，这些度量数据基于当前节点下的实体，不包括子节点中的实体，参见。
+
+Metrics Export：将度量总结导出到一个CSV 文件，参见。
+
+XML Export：将层级结构中选中节点及子节点包含的实体以XML 格式导出，参见。
+
+Edit Architecutre：为用户自己创建的层级结构打开一个层级结构构建器，Understand 
+自动构建的层级结构不能被修改，参见。
+
+Rename Architecture：为用户自己创建的层级结构或者节点打开一个层级结构重命名窗口供用户对其中名称进行修改，Understand 2.5 自动构建的层级结构不能被重命名，参见。
+
+Duplicate Architecture：打开层级结构复制窗口对选中层级结构的副本进行命名，参见。
+
+Manage Architecture：打开层级结构管理窗口，参见。
 
