@@ -17,7 +17,7 @@
 
 修改默认字体: Preference → Editor → Default style 
 
-
+"
 
 修改颜色: Preference → Editor → Styles, Predefined选为
 
