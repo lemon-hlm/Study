@@ -46,13 +46,19 @@
 
 修改默认字体: Preference → Editor → Default style 
 
-"SourceCodePro Nerd Font Mono" 13
+>"SourceCodePro Nerd Font Mono" 13
 
-修改颜色: Preference → Editor → Styles, Predefined选为"silver"
+修改颜色: Preference → Editor → Styles
+
+>Predefined选为"silver"
 
 Preference → General → Application Font
 
-"SourceCodePro Nerd Font Mono" 12
+>"SourceCodePro Nerd Font Mono" 12
+
+Preference → User Interface → Command Window Font
+
+>"SourceCodePro Nerd Font Mono" 10
 
 2. 
 
