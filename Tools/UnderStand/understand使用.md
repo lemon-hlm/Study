@@ -21,6 +21,14 @@
 * [术语 Terminology](#术语-terminology)
 	* [Architecture 层级:](#architecture-层级)
 	* [Database 数据库](#database-数据库)
+	* [Entity 实体](#entity-实体)
+	* [Project 工程](#project-工程)
+	* [Relationship 关联](#relationship-关联)
+	* [Script 脚本](#script-脚本)
+	* [parts 部件](#parts-部件)
+* [常用词汇](#常用词汇)
+* [右键菜单](#右键菜单)
+* [Project Configuration](#project-configuration)
 
 <!-- /code_chunk_output -->
 
@@ -241,22 +249,172 @@ An Understand “entity” is anything it has information about. In practice thi
 Understand 描述的“实体”表示任何包含信息的事物，具体来说，代码中声明或 
 者使用的标识、包含工程的文件、子程序、变量、源文件都可以被称为实体。
 
-Project 工程
+## Project 工程
 
 The set of source code you have analyzed and the settings and parameters chosen. A “project file” contains the list of source files and the project settings.
 
 表示源代码的集合以及相关的配置和参数，工程文件包含源文件清单和工程设置。
 
-Relationship 关联
+## Relationship 关联
 
 A particular way that entities relate to one another. The names of relationships come from the syntax and semantics of a programming language. For instance, subroutine entities can have “Call” relationships and “CalledBy” relationships.
 
 互作用的实体之间的关系，关联的名称来源于编程语言的语法和语义，例如过程式实体具有“调用”和“被调用”的关联对象。
 
-Script 脚本
+## Script 脚本
 
 Generally a Perl script. These can be run from within Understand’s GUI, or externally via the “uperl” command. The Understand Perl API provides easy and direct access to all information stored in an Understand database.
 通常指perl脚本，脚本可以通过Understand 2.5的图形用户界面或者外部的脚本命令执行。Understand Perl API提供了快捷的访问Understand数据库所有信息的接口。
 
-parts 部件
+## parts 部件
+
 下面的图形展示了一些Understand 图形用户界面(GUI) 中常用的部件:
+
+![](./images/2019-05-31-11-33-28.png)
+
+# 常用词汇
+
+![](./images/2019-05-31-11-36-41.png)
+
+# 右键菜单
+
+代码编辑窗口的右键菜单提供了很多浏览编辑操作的快捷方式，也提供了相关实体的特定信息。
+
+以下介绍了右键菜单包含的典型的浏览操作（与点击对象有关）：
+
+View Information 信息查看（参见信息浏览器）
+
+Graphic Views 图形视图（参见）
+
+Edit Source/Definition 代码编辑（参见）
+
+User Tools 用户工具（参见）
+
+Explore 浏览（参见层级查看）
+
+Find In… 查找（参见多文件查找）
+
+Add Favorite 添加到收藏夹（参见收藏夹）
+
+Metrics Chart 度量图表（参见）
+
+以下介绍了右键菜单包含的典型的编辑操作（与点击对象有关）：
+
+Undo/Redo 撤销/重做
+
+Cut/Copy/Past 剪切/复制/粘贴（参见文本选择和拷贝）
+
+Select All 全选（参见文本选择和拷贝）
+
+Jump to Marching Brace 跳到块末
+
+Select Block 块选择
+
+Hide/Show Inactive Lines 行显示/隐藏
+
+Fold All 折叠所有分支
+
+Soft Wrap 软包装
+
+Comment Selection/Uncomment Selection 注释选择/代码选择
+
+Change Case 大小写切换
+
+Revert 反转
+
+Add Bookmark 添加书签活动
+
+# Project Configuration
+
+使用菜单栏Project\>Configure Project，选择C\+\+可以打开如下窗口。
+
+![](./images/2019-05-31-11-37-32.png)
+
+C\+\+\>Option配置页面包括如下区域：
+
+Compiler： 
+
+选择当前工程使用的编译器或者平台，编译器相关的宏定义根据选择自动设置。需要注意的是，编译器的某些特性有可能没有得到很好的支持。
+
+Compiler Include Paths： 
+
+输入编译器使用的头文件的所在路径，如\%include\%。
+
+Allow nested comments：>>默认情况下，该选项禁止。打开的状态下，Understand允许C语言的注释符（/**/）可以嵌套使用（这种风格被ANSI禁止，但是有一些编译器支持）。
+
+Prepend the names of externally linkable entities with： 
+
+使用一个随意的字符串作为工程中其他语言编写的代码中定义的实体的前缀。
+
+Append the names of externally linkable entities with： 
+
+使用一个随意的字符串作为工程中其他语言编写的代码中定义的实体的后缀。
+
+Create implicit special member functions： 
+
+源代码没有类和结构实体的相关语句时，Understand数据库自动创建默认构造函数，析构函数和隐式声明引用，从而为分析时提供相关的引用实体。该选项默认禁止。
+
+Create references in inactive code： 
+
+如果希望将条件编译控制的非激活代码排除在外，需要取消该选项，默认选中。
+
+Create references to local objects： 
+
+默认情况下，Understand数据库包含所有局部对象，如果希望不包含函数中声明的变量需要取消该选项。Understand 2.5的主窗口可以选择是否需要在HTML报告中包含局部对象。
+
+Create references to macros during macro expansion： 
+
+选中情况下，数据库保存宏解析时的引用关系。有时候，该选择有用。注意，该选项选中导致数据库增加很多引用关系，会变得很慢。默认关闭。
+
+Create references to parameters： 
+
+关闭该选项取消参数的引用关系，默认开启。
+
+Save comments associated with entities： 
+
+此选项控制代码实体前后注释与实体的关联。
+
+Save duplicate references： 
+
+默认情况下，引用关系只在数据库保存一份，选中该选项，会记录重复的引用关系。
+
+Save macro expansion text： 
+
+选中该选项的情况下，可以在选中宏的右键菜单下选择Expanded Macro Text来查看宏定义值。
+
+Use Include cache： 
+
+由于头文件通常被多个源文件使用，默认情况下，分析阶段头文件都采用高速缓存，这样能够加速分析过程，但是需要更多的内存，如果分析过程碰到内存问题，可以将此选项关闭。同时需要注意的是，高速缓存的使用会影响到分析结果。
+
+Entity Filter窗口
+
+![](./images/2019-05-31-11-39-22.png)
+
+根过滤器
+
+Root Calls： 
+
+仅显示调用而不被调用的实体，如上层代码（mains），硬件调用的代码（中断处理函数）以及哑（不被使用）代码。
+
+Root CallBys： 
+
+仅显示只被调用而不调用其他实体的实体，即最底层的函数。
+
+Root IncludeBys： 
+
+仅显示被其他文件包含的文件，即基础头文件。
+
+Root Classes： 
+
+仅显示不依赖于其他类的类，包括底层类和库类。
+
+Root Decls： 
+
+仅显示最高层的声明过程（Ada）。
+
+Root Withs： 
+
+仅显示被其他单元使用，而不使用其他单元的程序单元（包括包，任务，子程序等）（Ada）。
+
+信息浏览器
+
