@@ -23,7 +23,9 @@ qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -appe
 
 # 3 配置eclipse
 
-右上角"Debug", 
+右上角"Debug", 选择"C/C\+\+"
 
 ![](./images/2019-05-31-12-51-02.png)
+
+new → "Makefile Project with Existing Code"
 
