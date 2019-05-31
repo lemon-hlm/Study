@@ -29,6 +29,10 @@
 qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -append "rdinit=/linuxrc loglevel=8 console=ttyS0" -S -s
 ```
 
+```
+qemu-system-x86_64 -smp 2 -m 1024 -kernel arch/x86/boot/bzImage -nographic -append "rdinit=/linuxrc loglevel=8 console=ttyS0" -S -s
+```
+
 # 3 配置eclipse
 
 右上角"Debug", 选择"C/C\+\+"
@@ -51,3 +55,10 @@ Debugger中
 
 Debugger选择"gdbserver"
 
+Main中, 如下
+
+![](./images/2019-05-31-14-40-39.png)
+
+connection中, 如下, 对端IP填写, 端口为1234
+
+![](./images/2019-05-31-14-41-04.png)
