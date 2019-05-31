@@ -3,7 +3,7 @@
 
 <!-- code_chunk_output -->
 
-* [1 安装Eclipse](#1-安装eclipse)
+* [1 初始化环境配置](#1-初始化环境配置)
 * [2 启动虚拟机](#2-启动虚拟机)
 * [3 配置eclipse](#3-配置eclipse)
 
@@ -11,9 +11,11 @@
 
 使用QEMU \+ GDB \+ Eclipse调试Linux内核
 
-# 1 安装Eclipse
+# 1 初始化环境配置
 
-安装Eclipse for Cpp
+本地安装Eclipse for Cpp
+
+本地checkout一份代码出来, 该代码和编译的kernel commit信息一致
 
 # 2 启动虚拟机
 
