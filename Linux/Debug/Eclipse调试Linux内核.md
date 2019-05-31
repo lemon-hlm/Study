@@ -19,6 +19,10 @@
 
 本地安装gdb
 
+远端的bzImage作为虚拟机启动镜像
+
+本地vmlinux是带有调试信息的镜像, 与上面的对应
+
 # 2 启动虚拟机
 
 ```
@@ -35,7 +39,15 @@ new → "Makefile Project with Existing Code", 这里代码目录选择上面说
 
 ![](./images/2019-05-31-14-06-14.png)
 
-配置debug选项, "Run" → "Debug Configurations", 选择"C/C\+\+ Attach to Application"双击, 新建一个配置
+配置debug选项, "Run" → "Debug Configurations", 选择"C/C\+\+ Attach to Application"双击, 新建一个配置, 起个名字
 
-起个名字, Project选择刚才创建的project, C/C\+\+ Application
+Main中
+
+Project选择刚才创建的project, C/C\+\+ Application选择上面所说的vmlinux. 
+
+![](./images/2019-05-31-14-37-13.png)
+
+Debugger中
+
+Debugger选择"gdbserver"
 
