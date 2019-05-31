@@ -60,6 +60,10 @@ preferences-->C/C++-->indexer 去掉勾选 Enable indexer。
 
 preferences-->General-->Workspace 去掉勾选 Build Automatically。
 
+file-->new-->c project-->project name填写你自己合意的，比如linux-kernel-study / 去掉use default location，location输入框中选择你的linux-4.4.19路径。 / project type 选择 Makefile project-Empty project / Toolschains选择Linux GCC-->next-->Advanced Setting-->C/C++ Build-->去掉勾选use default build command， build command输入框内写上 make CONFIG_DEBUG_SECTION_MISMATCH=y -j2，build directory选择你的linux-4.4.19路径。 / Behavior页签 Build(Increament build) 输入框中输入一个空格即可。然后完成工程创建即可。
+
+点击工具栏中的绿色小虫子右边的箭头，选择Debug Configurations-->C/C++ Remote Application(双击)-->proiect选择你刚创建的project / C/C++ Application选择你的linux-4.4.19路径下的vmlinux。 / 选中 Disable auto build 点击select other换一个启动器 选择 GDB(DSF)Manual Remote Debugging...
+
 ### 1.3.1 创建项目
 
 New → "Makefile Project with Existing Code", 这里代码目录选择上面说的与调试内核代码一致的目录, Toolchain选为None.
