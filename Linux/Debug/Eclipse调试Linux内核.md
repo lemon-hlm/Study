@@ -14,6 +14,7 @@
 * [2 同一个环境](#2-同一个环境)
 	* [2.1 配置eclipse](#21-配置eclipse)
 		* [2.1.1 配置debug选项](#211-配置debug选项)
+* [3 参考](#3-参考)
 
 <!-- /code_chunk_output -->
 
@@ -194,3 +195,6 @@ connection中, 如下, 对端IP填写, 端口为1234
 点击右下的"apply"或者"debug"
 
 
+# 3 参考
+
+https://blog.csdn.net/linuxarmsummary/article/details/44975495
