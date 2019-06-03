@@ -50,7 +50,7 @@
 
 修改颜色: Preference → Editor → Styles
 
->Predefined选为"silver"
+>Predefined选为"onyx"
 
 Preference → General → Application Font
 
