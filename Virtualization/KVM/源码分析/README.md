@@ -13,3 +13,5 @@ http://blog.chinaunix.net/uid/26000137/cid-177246-list-1.html
 http://blog.csdn.net/wanthelping/article/details/47069065
 
 https://my.oschina.net/LastRitter
+
+QEMU源码分析系列: https://blog.csdn.net/u011364612/article/category/6219019
