@@ -10,6 +10,8 @@
 	* [3.2 设备模拟](#32-设备模拟)
 	* [3.3 QEMU中的虚拟机管理命令](#33-qemu中的虚拟机管理命令)
 	* [3.4 块操作](#34-块操作)
+* [4 QEMU源码编译](#4-qemu源码编译)
+* [5 参考](#5-参考)
 
 <!-- /code_chunk_output -->
 
@@ -88,13 +90,27 @@ QEMU中可以使用hmp command对虚拟机进行管理，在虚拟机环境中�
 
 QEMU实现了大量的块设备驱动，从而支持了包括qcow2、qed、raw等格式的镜像，这些格式的实现代码都在block的文件夹下以及主目录下的block.c中。QEMU设计了BlockDriver数据结构，其中包含了大量的回调函数指针，对于每一种磁盘格式，都有一个对应的BlockDriver的对象，并且实现了BlockDriver中的回调函数，然后将这个BlockDriver的对象注册，即添加到一个全局的BlockDriver的链表中。
 
-# 
+# 4 QEMU源码编译
 
+QEMU的编译过程并不复杂，首先进入QEMU的代码目录后，首先运行./configure \–help，查看qemu支持的特性。然后选择相关的特性进行编译。 
 
+由于我们使用的X86_64的平台，并且主要查看的是QEMU与KVM协同工作实现虚拟化的代码，我们使用下列命令配置： 
 
+```
+./configure –enable-debug –enable-kvm –target-list=x86_64-softmmu 
+```
 
+上述命令会生成Makefile文件，然后直接make就可以了，为了加速编译可以使用多线程：make -j number。
 
- 参考
+./configure命令运行时会检查物理机的环境，检查需要的相关的库是否已经安装在宿主机上。因此可能由于相关库没有安装而中断，其中一些库包括： 
+pkg\-config、zlib1g\-dev、libglib2.0\-dev、libpixman\-1\-dev、make等 
+
+以上库都可以通过ubuntu的包管理命令apt\-get install直接安装。
+
+如果需要把QEMU安装到系统中可以使用make install命令。
+
+# 5 参考
 
 - QEMU官网: https://www.qemu.org/
 
+- https://blog.csdn.net/u011364612/article/details/53470925
