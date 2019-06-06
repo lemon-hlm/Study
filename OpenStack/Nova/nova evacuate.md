@@ -9,7 +9,8 @@
 * [4 源码分析](#4-源码分析)
 	* [4.1 evacuate操作](#41-evacuate操作)
 	* [4.2 从原主机删除](#42-从原主机删除)
-* [5 参考](#5-参考)
+* [5 将快速疏散功能加入VM HA程序中](#5-将快速疏散功能加入vm-ha程序中)
+* [6 参考](#6-参考)
 
 <!-- /code_chunk_output -->
 
@@ -439,8 +440,16 @@ def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks, migrate_data)
 ```
 
-# 5 参考
+# 5 将快速疏散功能加入VM HA程序中
+
+
+
+# 6 参考
 
 - https://access.redhat.com/documentation/zh-CN/Red_Hat_Enterprise_Linux_OpenStack_Platform/6/html/Administration_Guide/section-evacuation.html
 
 - https://blog.fabian4.cn/2016/10/27/nova-evacuate/
+
+- 将快速疏散功能加入VM HA程序中: https://www.backendcloud.cn/2017/06/10/add-quick-evacuate/
+
+- 深挖Openstack Nova - evacuate疏散函數: https://www.twblogs.net/a/5b7ae65c2b7177392c970b0e
