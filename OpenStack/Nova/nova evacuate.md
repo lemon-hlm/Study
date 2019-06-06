@@ -264,8 +264,30 @@ def _do_rebuild_instance(self, context, instance, orig_image_ref,
                         orig_sys_metadata, bdms, evacuate,
                         on_shared_storage, preserve_ephemeral,
                         migration, request_spec):
-
+    kwargs = dict(
+        context=context,
+        instance=instance,
+        image_meta=image_meta,
+        injected_files=files,
+        admin_password=new_pass,
+        allocations=allocations,
+        bdms=bdms,
+        detach_block_devices=detach_block_devices,
+        attach_block_devices=self._prep_block_device,
+        block_device_info=block_device_info,
+        network_info=network_info,
+        preserve_ephemeral=preserve_ephemeral,
+        evacuate=evacuate)
+    try:
+        with instance.mutated_migration_context():
+            self.driver.rebuild(**kwargs)
+    except NotImplementedError:
+        # NOTE(rpodolyaka): driver doesn't provide specialized version
+        # of rebuild, fall back to the default implementation
+        self._rebuild_default_impl(**kwargs)
 ```
+
+
 
 
 
