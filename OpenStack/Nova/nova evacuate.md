@@ -252,7 +252,21 @@ def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
                 image_meta, injected_files, new_pass, orig_sys_metadata,
                 bdms, evacuate, on_shared_storage, preserve_ephemeral,
                 migration, request_spec)
+
+def _do_rebuild_instance_with_claim(self, claim_context, *args, **kwargs):
+    """Helper to avoid deep nesting in the top-level method."""
+
+    with claim_context:
+        self._do_rebuild_instance(*args, **kwargs)
+
+def _do_rebuild_instance(self, context, instance, orig_image_ref,
+                        image_meta, injected_files, new_pass,
+                        orig_sys_metadata, bdms, evacuate,
+                        on_shared_storage, preserve_ephemeral,
+                        migration, request_spec):
+
 ```
+
 
 
 
