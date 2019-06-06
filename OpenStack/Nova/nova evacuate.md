@@ -159,9 +159,9 @@ def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
 
 ```python
 def rebuild_instance(self, ctxt, instance, new_pass, injected_files,
-        image_ref, orig_image_ref, orig_sys_metadata, bdms,
-        recreate=False, on_shared_storage=False, host=None,
-        preserve_ephemeral=False, request_spec=None, kwargs=None):
+    image_ref, orig_image_ref, orig_sys_metadata, bdms,
+    recreate=False, on_shared_storage=False, host=None,
+    preserve_ephemeral=False, request_spec=None, kwargs=None):
     version = '1.12'
     kw = {'instance': instance,
             'new_pass': new_pass,
@@ -188,10 +188,10 @@ RPC调用, 转到nova/conductor/manager.py中的rebuild\_instance方法
 ```python
 @targets_cell
 def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
-                        injected_files, new_pass, orig_sys_metadata,
-                        bdms, recreate, on_shared_storage,
-                        preserve_ephemeral=False, host=None,
-                        request_spec=None):
+                    injected_files, new_pass, orig_sys_metadata,
+                    bdms, recreate, on_shared_storage,
+                    preserve_ephemeral=False, host=None,
+                    request_spec=None):
     ......
     # 这里开始调用compute上的manager.py中的rebuild_instance方法
     self.compute_rpcapi.rebuild_instance(context,
@@ -212,7 +212,13 @@ def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
 
 转到nova/compute/manager.py中的rebuild\_instance方法
 
-
+```python
+def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
+                    injected_files, new_pass, orig_sys_metadata,
+                    bdms, recreate, on_shared_storage,
+                    preserve_ephemeral, migration,
+                    scheduled_node, limits, request_spec):
+```
 
 
 
