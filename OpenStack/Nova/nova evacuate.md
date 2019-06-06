@@ -183,6 +183,36 @@ def rebuild_instance(self, ctxt, instance, new_pass, injected_files,
     cctxt.cast(ctxt, 'rebuild_instance', **kw)
 ```
 
+RPC调用, 转到nova/conductor/manager.py中的rebuild\_instance方法
+
+```python
+@targets_cell
+def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
+                        injected_files, new_pass, orig_sys_metadata,
+                        bdms, recreate, on_shared_storage,
+                        preserve_ephemeral=False, host=None,
+                        request_spec=None):
+    ......
+    # 这里开始调用compute上的manager.py中的rebuild_instance方法
+    self.compute_rpcapi.rebuild_instance(context,
+            instance=instance,
+            new_pass=new_pass,
+            injected_files=injected_files,
+            image_ref=image_ref,
+            orig_image_ref=orig_image_ref,
+            orig_sys_metadata=orig_sys_metadata,
+            bdms=bdms,
+            recreate=recreate,
+            on_shared_storage=on_shared_storage,
+            preserve_ephemeral=preserve_ephemeral,
+            migration=migration,
+            host=host, node=node, limits=limits,
+            request_spec=request_spec)
+```
+
+转到nova/compute/manager.py中的rebuild\_instance方法
+
+
 
 
 
