@@ -90,8 +90,47 @@ nova evacuate其实是通过虚拟机rebuild的过程完成的，原compute节�
 
 ```python
 def _evacuate(self, req, id, body):
-
+    try:
+        self.compute_api.evacuate(context, instance, host,
+                                    on_shared_storage, password, force)
 ```
+
+调用compute\_api的evacuate
+
+```python
+def evacuate(self, context, instance, host, on_shared_storage,
+                admin_password=None, force=None):
+    # 在这个地方进行了instance host获取
+    inst_host = instance.host
+    service = objects.Service.get_by_compute_host(context, inst_host)
+    # 判断了host的服务状态，nova-compute service
+    if self.servicegroup_api.service_is_up(service):
+        LOG.error('Instance compute service state on %s '
+                    'expected to be down, but it was up.', inst_host)
+        raise exception.ComputeServiceInUse(host=inst_host)
+
+    request_spec = objects.RequestSpec.get_by_instance_uuid(
+        context, instance.uuid)
+
+    instance.task_state = task_states.REBUILDING
+    instance.save(expected_task_state=[None])
+    self._record_action_start(context, instance, instance_actions.EVACUATE)
+    # 调用rebuild重建
+    return self.compute_task_api.rebuild_instance(context,
+                    instance=instance,
+                    new_pass=admin_password,
+                    injected_files=None,
+                    image_ref=None,
+                    orig_image_ref=None,
+                    orig_sys_metadata=None,
+                    bdms=None,
+                    recreate=True,
+                    on_shared_storage=on_shared_storage,
+                    host=host,
+                    request_spec=request_spec,
+                    )
+```
+
 
 
 
