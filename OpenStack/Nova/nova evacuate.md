@@ -9,6 +9,7 @@
 * [4 源码分析](#4-源码分析)
 	* [4.1 evacuate操作](#41-evacuate操作)
 	* [4.2 从原主机删除](#42-从原主机删除)
+* [5 参考](#5-参考)
 
 <!-- /code_chunk_output -->
 
@@ -391,10 +392,54 @@ compute_driver = libvirt.LibvirtDriver
 class ComputeManager(manager.Manager):
     ......
     def init_host(self):
-
+        try:
+            # checking that instance was not already evacuated to other host
+            evacuated_instances = self._destroy_evacuated_instances(context)
 ```
 
-参考
+再次调用
+
+```python
+def _destroy_evacuated_instances(self, context):
+
+        for instance in evacuated:
+            migration = evacuations[instance.uuid]
+            LOG.info('Deleting instance as it has been evacuated from '
+                     'this host', instance=instance)
+            try:
+                network_info = self.network_api.get_instance_nw_info(
+                    context, instance)
+                bdi = self._get_instance_block_device_info(context,
+                                                           instance)
+                destroy_disks = not (self._is_instance_storage_shared(
+                    context, instance))
+            except exception.InstanceNotFound:
+                network_info = network_model.NetworkInfo()
+                bdi = {}
+                LOG.info('Instance has been marked deleted already, '
+                         'removing it from the hypervisor.',
+                         instance=instance)
+                # always destroy disks if the instance was deleted
+                destroy_disks = True
+            # 调用driver的destroy方法删除
+            self.driver.destroy(context, instance,
+                                network_info,
+                                bdi, destroy_disks)
+```
+
+转到nova/virt/libvirt/driver.py方法
+
+```python
+def destroy(self, context, instance, network_info, block_device_info=None,
+            destroy_disks=True, migrate_data=None):
+    # 先做了关机
+    self._destroy(instance)
+    # 这里做了清理，包括删除虚拟机本地存储的信息，以及网络等
+    self.cleanup(context, instance, network_info, block_device_info,
+                destroy_disks, migrate_data)
+```
+
+# 5 参考
 
 - https://access.redhat.com/documentation/zh-CN/Red_Hat_Enterprise_Linux_OpenStack_Platform/6/html/Administration_Guide/section-evacuation.html
 
