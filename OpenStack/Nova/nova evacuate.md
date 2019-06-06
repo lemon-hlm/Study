@@ -131,7 +131,57 @@ def evacuate(self, context, instance, host, on_shared_storage,
                     )
 ```
 
+调用nova/conductor/api.py中的ComputeTaskAPI类下的rebuild_instance方法
 
+```python
+def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
+                        injected_files, new_pass, orig_sys_metadata,
+                        bdms, recreate=False, on_shared_storage=False,
+                        preserve_ephemeral=False, host=None,
+                        request_spec=None, kwargs=None):
+    # kwargs unused but required for cell compatibility
+    self.conductor_compute_rpcapi.rebuild_instance(context,
+            instance=instance,
+            new_pass=new_pass,
+            injected_files=injected_files,
+            image_ref=image_ref,
+            orig_image_ref=orig_image_ref,
+            orig_sys_metadata=orig_sys_metadata,
+            bdms=bdms,
+            recreate=recreate,
+            on_shared_storage=on_shared_storage,
+            preserve_ephemeral=preserve_ephemeral,
+            host=host,
+            request_spec=request_spec)
+```
+
+调用nova/conductor/rpcapi.py中的ComputeTaskAPI类下的rebuild\_instance方法
+
+```python
+def rebuild_instance(self, ctxt, instance, new_pass, injected_files,
+        image_ref, orig_image_ref, orig_sys_metadata, bdms,
+        recreate=False, on_shared_storage=False, host=None,
+        preserve_ephemeral=False, request_spec=None, kwargs=None):
+    version = '1.12'
+    kw = {'instance': instance,
+            'new_pass': new_pass,
+            'injected_files': injected_files,
+            'image_ref': image_ref,
+            'orig_image_ref': orig_image_ref,
+            'orig_sys_metadata': orig_sys_metadata,
+            'bdms': bdms,
+            'recreate': recreate,
+            'on_shared_storage': on_shared_storage,
+            'preserve_ephemeral': preserve_ephemeral,
+            'host': host,
+            'request_spec': request_spec,
+            }
+    if not self.client.can_send_version(version):
+        version = '1.8'
+        del kw['request_spec']
+    cctxt = self.client.prepare(version=version)
+    cctxt.cast(ctxt, 'rebuild_instance', **kw)
+```
 
 
 
