@@ -264,22 +264,22 @@ def _do_rebuild_instance(self, context, instance, orig_image_ref,
                         orig_sys_metadata, bdms, evacuate,
                         on_shared_storage, preserve_ephemeral,
                         migration, request_spec):
-        if evacuate:
-            self.network_api.setup_networks_on_host(
-                    context, instance, self.host)
-            # For nova-network this is needed to move floating IPs
-            # For neutron this updates the host in the port binding
-            # TODO(cfriesen): this network_api call and the one above
-            # are so similar, we should really try to unify them.
-            self.network_api.setup_instance_network_on_host(
-                    context, instance, self.host, migration)
-            # TODO(mriedem): Consider decorating setup_instance_network_on_host
-            # with @base_api.refresh_cache and then we wouldn't need this
-            # explicit call to get_instance_nw_info.
-            network_info = self.network_api.get_instance_nw_info(context,
-                                                                 instance)
-        else:
-            network_info = instance.get_network_info()
+    if evacuate:
+        self.network_api.setup_networks_on_host(
+                context, instance, self.host)
+        # For nova-network this is needed to move floating IPs
+        # For neutron this updates the host in the port binding
+        # TODO(cfriesen): this network_api call and the one above
+        # are so similar, we should really try to unify them.
+        self.network_api.setup_instance_network_on_host(
+                context, instance, self.host, migration)
+        # TODO(mriedem): Consider decorating setup_instance_network_on_host
+        # with @base_api.refresh_cache and then we wouldn't need this
+        # explicit call to get_instance_nw_info.
+        network_info = self.network_api.get_instance_nw_info(context,
+                                                                instance)
+    else:
+        network_info = instance.get_network_info()
     kwargs = dict(
         context=context,
         instance=instance,
@@ -296,11 +296,21 @@ def _do_rebuild_instance(self, context, instance, orig_image_ref,
         evacuate=evacuate)
     try:
         with instance.mutated_migration_context():
+            # 没实现
             self.driver.rebuild(**kwargs)
     except NotImplementedError:
         # NOTE(rpodolyaka): driver doesn't provide specialized version
         # of rebuild, fall back to the default implementation
+        # 真正调用
         self._rebuild_default_impl(**kwargs)
+```
+
+可以看下libvirtDriver, 没有实现, 
+
+```python
+from nova.virt import driver
+self.driver = driver.load_compute_driver(self.virtapi, compute_driver)
+compute_driver = libvirt.LibvirtDriver
 ```
 
 
