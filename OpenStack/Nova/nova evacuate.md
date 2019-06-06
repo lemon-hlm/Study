@@ -218,6 +218,40 @@ def rebuild_instance(self, context, instance, orig_image_ref, image_ref,
                     bdms, recreate, on_shared_storage,
                     preserve_ephemeral, migration,
                     scheduled_node, limits, request_spec):
+    if evacuate:
+        # This is an evacuation to a new host, so we need to perform a
+        # resource claim.
+        rebuild_claim = self.rt.rebuild_claim
+    else:
+        # This is a rebuild to the same host, so we don't need to make
+        # a claim since the instance is already on this host.
+        rebuild_claim = claims.NopClaim
+
+    # NOTE(mriedem): On an evacuate, we need to update
+    # the instance's host and node properties to reflect it's
+    # destination node for the evacuate.
+    if not scheduled_node:
+        if evacuate:
+            try:
+                compute_node = self._get_compute_info(context, self.host)
+                scheduled_node = compute_node.hypervisor_hostname
+            except exception.ComputeHostNotFound:
+                LOG.exception('Failed to get compute_info for %s',
+                                self.host)
+        else:
+            scheduled_node = instance.node
+
+    with self._error_out_instance_on_exception(context, instance):
+        try:
+            claim_ctxt = rebuild_claim(
+                context, instance, scheduled_node,
+                limits=limits, image_meta=image_meta,
+                migration=migration)
+            self._do_rebuild_instance_with_claim(
+                claim_ctxt, context, instance, orig_image_ref,
+                image_meta, injected_files, new_pass, orig_sys_metadata,
+                bdms, evacuate, on_shared_storage, preserve_ephemeral,
+                migration, request_spec)
 ```
 
 
