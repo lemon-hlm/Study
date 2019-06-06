@@ -8,6 +8,7 @@
 * [3 撤离所有实例](#3-撤离所有实例)
 * [4 源码分析](#4-源码分析)
 	* [4.1 evacuate操作](#41-evacuate操作)
+	* [4.2 从原主机删除](#42-从原主机删除)
 
 <!-- /code_chunk_output -->
 
@@ -280,6 +281,32 @@ def _do_rebuild_instance(self, context, instance, orig_image_ref,
                                                                 instance)
     else:
         network_info = instance.get_network_info()
+
+    ......
+
+    def detach_block_devices(context, bdms):
+        for bdm in bdms:
+            if bdm.is_volume:
+                # NOTE (ildikov): Having the attachment_id set in the BDM
+                # means that it's the new Cinder attach/detach flow
+                # (available from v3.44). In that case we explicitly
+                # attach and detach the volumes through attachment level
+                # operations. In this scenario _detach_volume will delete
+                # the existing attachment which would make the volume
+                # status change to 'available' if we don't pre-create
+                # another empty attachment before deleting the old one.
+                attachment_id = None
+                if bdm.attachment_id:
+                    # detach volume
+                    attachment_id = self.volume_api.attachment_create(
+                        context, bdm['volume_id'], instance.uuid)['id']
+                self._detach_volume(context, bdm, instance,
+                                    destroy_bdm=False)
+                if attachment_id:
+                    bdm.attachment_id = attachment_id
+                    bdm.save()
+
+    files = self._decode_files(injected_files)
     kwargs = dict(
         context=context,
         instance=instance,
@@ -305,7 +332,7 @@ def _do_rebuild_instance(self, context, instance, orig_image_ref,
         self._rebuild_default_impl(**kwargs)
 ```
 
-可以看下libvirtDriver, 没有实现, 
+可以看下libvirtDriver, 没有实现, 父类是ComputeDriver, 直接抛出NotImplementedError异常
 
 ```python
 from nova.virt import driver
@@ -313,10 +340,59 @@ self.driver = driver.load_compute_driver(self.virtapi, compute_driver)
 compute_driver = libvirt.LibvirtDriver
 ```
 
+转到rebuld_default_impl方法
 
+```python
+    def _rebuild_default_impl(self, context, instance, image_meta,
+                              injected_files, admin_password, allocations,
+                              bdms, detach_block_devices, attach_block_devices,
+                              network_info=None,
+                              evacuate=False, block_device_info=None,
+                              preserve_ephemeral=False):
+        if preserve_ephemeral:
+            # The default code path does not support preserving ephemeral
+            # partitions.
+            raise exception.PreserveEphemeralNotSupported()
 
+        if evacuate:
+            # 调用的detach volume
+            detach_block_devices(context, bdms)
+        else:
+            self._power_off_instance(context, instance, clean_shutdown=True)
+            detach_block_devices(context, bdms)
+            self.driver.destroy(context, instance,
+                                network_info=network_info,
+                                block_device_info=block_device_info)
 
+        instance.task_state = task_states.REBUILD_BLOCK_DEVICE_MAPPING
+        instance.save(expected_task_state=[task_states.REBUILDING])
 
+        new_block_device_info = attach_block_devices(context, instance, bdms)
+
+        instance.task_state = task_states.REBUILD_SPAWNING
+        instance.save(
+            expected_task_state=[task_states.REBUILD_BLOCK_DEVICE_MAPPING])
+
+        with instance.mutated_migration_context():
+            # 通过driver的spawn方法来实现driver上的操作,完成最终实现
+            self.driver.spawn(context, instance, image_meta, injected_files,
+                              admin_password, allocations,
+                              network_info=network_info,
+                              block_device_info=new_block_device_info)
+```
+
+## 4.2 从原主机删除
+
+当原nova\-compue节点恢复后，会对evacuate的虚拟机进行删除清理
+
+入口文件在nova/compute/manager.py中ComputeManager下的init\_host方法
+
+```python
+class ComputeManager(manager.Manager):
+    ......
+    def init_host(self):
+
+```
 
 参考
 
