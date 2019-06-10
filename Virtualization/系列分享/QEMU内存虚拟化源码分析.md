@@ -46,7 +46,9 @@ struct kvm_userspace_memory_region {
 
 # 2 相关数据结构
 
-首先，qemu中用**AddressSpace**用来表示**CPU/设备**看到的**内存**，一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过树连接起来，树的根是AddressSpace的root域。
+首先，**所有的CPU架构**都有**内存地址空间**, 有些CPU架构又有一个**IO地址空间**。它们在QEMU中被表示为**AddressSpace数据结构**.
+
+qemu中用**AddressSpace**用来表示**CPU/设备**看到的**内存**，一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过**树**连接起来，树的根是AddressSpace的root域。
 
 ```c
 // include/exec/memory.h
@@ -118,3 +120,38 @@ struct MemoryRegion {
 ```
 
 MemoryRegion有**多种类型**，可以表示一段**ram**、**rom**、**MMIO**、**alias**，alias表示**一个MemoryRegion**的**一部分区域**，**MemoryRegion**也可以表示**一个container**，这就表示它**只是其他若干个MemoryRegion的容器**。在MemoryRegion中，'ram\_block'表示的是**分配的实际内存**。
+
+```c
+// include/exec/ram_addr.h
+typedef uint64_t ram_addr_t;
+
+struct RAMBlock {
+    struct rcu_head rcu; //该数据结构受rcu机制保护
+    struct MemoryRegion *mr;
+    uint8_t *host;  //RAMBlock在host上的虚拟内存起始位置
+    uint8_t *colo_cache; /* For colo, VM's ram cache */
+    ram_addr_t offset;  //在所有的RAMBlock中offset
+    ram_addr_t used_length; //已使用长度
+    ram_addr_t max_length;  //最大分配内存
+    void (*resized)(const char*, uint64_t length, void *host);
+    uint32_t flags;
+    /* Protected by iothread lock.  */
+    char idstr[256];    //RAMBlock的ID
+    /* RCU-enabled, writes protected by the ramlist lock */
+    QLIST_ENTRY(RAMBlock) next;
+    QLIST_HEAD(, RAMBlockNotifier) ramblock_notifiers;
+    int fd; //映射文件的描述符
+    size_t page_size;
+    /* dirty bitmap used during migration */
+    unsigned long *bmap;
+    unsigned long *unsentmap;
+    /* bitmap of already received pages in postcopy */
+    unsigned long *receivedmap;
+};
+```
+
+在这里，'host'指向了动态分配的内存，用于表示实际的**虚拟机物理内存**，而offset表示了这块内存在**虚拟机物理内存**中的偏移。每一个ram_block还会被连接到全局的'ram_list'链表上。Address, MemoryRegion, RAMBlock关系如下图所示。
+
+![](./images/2019-06-10-11-12-09.png)
+
+AddressSpace下面root及其子树形成了一个虚拟机的物理地址，但是在往kvm进行设置的时候，需要将其转换为一个平坦的地址模型，也就是从0开始的。这个就用FlatView表示，一个AddressSpace对应一个FlatView。
