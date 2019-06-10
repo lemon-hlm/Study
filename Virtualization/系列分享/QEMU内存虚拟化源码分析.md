@@ -15,6 +15,7 @@
 	* [2.7 AddressSpaceDispatch](#27-addressspacedispatch)
 * [3 初始化流程](#3-初始化流程)
 	* [3.1 全局memory space和io space初始化](#31-全局memory-space和io-space初始化)
+	* [3.2](#32)
 
 <!-- /code_chunk_output -->
 
@@ -329,6 +330,8 @@ static void memory_map_init(void)
 ```
 
 在随后的**cpu初始化**之中，还会**初始化多个AddressSpace**，这些很多都是disabled的，对虚拟机意义不大。
+
+## 3.2 
 
 重点在随后的main\-\>pc\_init\_v2\_8\-\>pc\_init1\-\>pc\_memory\_init中，这里面是**分配系统ram**，也是第一次**真正为虚拟机分配物理内存**。
 
