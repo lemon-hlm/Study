@@ -350,3 +350,8 @@ qemu_ram_mmap
 mmap
 ```
 
+可以看到，qemu通过使用mmap创建一个内存映射来作为ram。
+
+继续**pc\_memory\_init**，函数在创建好了ram并且分配好了空间之后，创建了**两个mr alias**，**ram\_below\_4g**以及**ram\_above\_4g**，这两个mr分别指向**ram的低4g**以及**高4g空间**，这两个alias是挂在**根system\_memory mr下面**的。
+
+以后的情形类似，创建根mr，创建AddressSpace，然后在根mr下面加subregion。
