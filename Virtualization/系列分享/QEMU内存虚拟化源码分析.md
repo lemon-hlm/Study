@@ -328,13 +328,25 @@ static void memory_map_init(void)
 }
 ```
 
-
-
 在随后的**cpu初始化**之中，还会**初始化多个AddressSpace**，这些很多都是disabled的，对虚拟机意义不大。
 
 重点在随后的main\-\>pc\_init\_v2\_8\-\>pc\_init1\-\>pc\_memory\_init中，这里面是**分配系统ram**，也是第一次**真正为虚拟机分配物理内存**。
 
 整个过程中，分配内存也不会像MemoryRegion那么频繁，**mr**很多时候是**创建一个alias**，指向**已经存在的mr**的一部分，这也是**alias的作用**，就是把一个mr分割成多个不连续的mr。
 
-**真正分配空间**的大概有这么几个，**pc.ram**, **pc.bios**, pc.rom, 以及设备的一些ram, rom等，vga.vram, vga.rom, e1000.rom等。
+**真正分配空间**的大概有这么几个，**pc.ram**, **pc.bios**, **pc.rom**, 以及**设备的一些ram**, rom等，vga.vram, vga.rom, e1000.rom等。
+
+分配pc.ram的流程如下：
+
+```
+memory_region_allocate_system_memory
+allocate_system_memory_nonnuma
+memory_region_init_ram
+qemu_ram_alloc
+ram_block_add
+phys_mem_alloc
+qemu_anon_ram_alloc
+qemu_ram_mmap
+mmap
+```
 
