@@ -119,7 +119,9 @@ struct MemoryRegion {
 };
 ```
 
-MemoryRegion有**多种类型**，可以表示一段**ram**、**rom**、**MMIO**、**alias**，alias表示**一个MemoryRegion**的**一部分区域**，**MemoryRegion**也可以表示**一个container**，这就表示它**只是其他若干个MemoryRegion的容器**。在MemoryRegion中，'ram\_block'表示的是**分配的实际内存**。
+MemoryRegion有**多种类型**，可以表示一段**ram**、**rom**、**MMIO**、**alias**.
+
+alias表示**一个MemoryRegion**的**一部分区域**，**MemoryRegion**也可以表示**一个container**，这就表示它**只是其他若干个MemoryRegion的容器**。在MemoryRegion中，'ram\_block'表示的是**分配的实际内存**。
 
 ```c
 // include/exec/ram_addr.h
