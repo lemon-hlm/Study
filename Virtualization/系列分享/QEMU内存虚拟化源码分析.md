@@ -299,4 +299,24 @@ struct AddressSpaceDispatch {
 
 # 3 初始化流程
 
-首先在main\-\>cpu\_exec\_init\_all\-\>memory\_map\_init中对全局的memory和io进行初始化，system\_memory作为address\_space\_memory的根MemoryRegion，大小涵盖了整个64位空间的大小，当然，这是一个pure contaner,并不会分配空间的，system_io作为address_space_io的根MemoryRegion，大小为65536，也就是平时的io port空间。
+首先在**main**\-\>**cpu\_exec\_init\_all**\-\>**memory\_map\_init**中对**全局的memory和io**进行初始化，
+
+- **system\_memory**作为**address\_space\_memory**的**根MemoryRegion**，大小涵盖了**整个64位空间的大小**，当然，这是一个**pure contaner**,并**不会分配空间**的，
+
+- **system\_io**作为address\_space\_io的根MemoryRegion，大小为**65536**，也就是平时的**io port空间**。
+
+```c
+//exec.c
+static void memory_map_init(void)
+{
+    system_memory = g_malloc(sizeof(*system_memory));
+
+    memory_region_init(system_memory, NULL, "system", UINT64_MAX);
+    address_space_init(&address_space_memory, system_memory, "memory");
+
+    system_io = g_malloc(sizeof(*system_io));
+    memory_region_init_io(system_io, NULL, &unassigned_io_ops, NULL, "io",
+                          65536);
+    address_space_init(&address_space_io, system_io, "I/O");
+}
+```
