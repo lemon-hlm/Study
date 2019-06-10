@@ -12,6 +12,7 @@
 	* [2.4 FlatView](#24-flatview)
 	* [2.5 MemoryRegionSection](#25-memoryregionsection)
 	* [2.6 MemoryListener](#26-memorylistener)
+	* [2.7 AddressSpaceDispatch](#27-addressspacedispatch)
 
 <!-- /code_chunk_output -->
 
@@ -239,3 +240,57 @@ MemoryRegionSection表示的是**MemoryRegion的一部分**。这个其实跟Fla
 为了**监控虚拟机的物理地址访问**，对于**每一个AddressSpace**，会有**一个MemoryListener**与之对应。每当**物理映射（GPA\-\>HVA**)发生改变时，会**回调这些函数**。
 
 所有的MemoryListener都会挂在**全局变量memory\_listeners链表**上。同时，AddressSpace也会有一个链表连接器自己注册的MemoryListener。
+
+```c
+// include/exec/memory.h
+struct MemoryListener {
+    void (*begin)(MemoryListener *listener);
+    void (*commit)(MemoryListener *listener);
+    void (*region_add)(MemoryListener *listener, MemoryRegionSection *section);
+    void (*region_del)(MemoryListener *listener, MemoryRegionSection *section);
+    void (*region_nop)(MemoryListener *listener, MemoryRegionSection *section);
+    void (*log_start)(MemoryListener *listener, MemoryRegionSection *section,
+                      int old, int new);
+    void (*log_stop)(MemoryListener *listener, MemoryRegionSection *section,
+                     int old, int new);
+    void (*log_sync)(MemoryListener *listener, MemoryRegionSection *section);
+    void (*log_global_start)(MemoryListener *listener);
+    void (*log_global_stop)(MemoryListener *listener);
+    void (*eventfd_add)(MemoryListener *listener, MemoryRegionSection *section,
+                        bool match_data, uint64_t data, EventNotifier *e);
+    void (*eventfd_del)(MemoryListener *listener, MemoryRegionSection *section,
+                        bool match_data, uint64_t data, EventNotifier *e);
+    void (*coalesced_io_add)(MemoryListener *listener, MemoryRegionSection *section,
+                               hwaddr addr, hwaddr len);
+    void (*coalesced_io_del)(MemoryListener *listener, MemoryRegionSection *section,
+                               hwaddr addr, hwaddr len);
+    /* Lower = earlier (during add), later (during del) */
+    unsigned priority;
+    AddressSpace *address_space;
+    QTAILQ_ENTRY(MemoryListener) link;
+    QTAILQ_ENTRY(MemoryListener) link_as;
+};
+```
+
+## 2.7 AddressSpaceDispatch
+
+为了在**虚拟机退出**时，能够顺利根据**虚拟机物理地址**找到**对应的HVA**地址，qemu会有一个AddressSpaceDispatch结构，用来在AddressSpace中进行位置的找寻，继而完成对IO/MMIO地址的访问。
+
+```c
+// exec.c
+struct AddressSpaceDispatch {
+    MemoryRegionSection *mru_section;
+    /* This is a multi-level map on the physical address space.
+     * The bottom level has pointers to MemoryRegionSections.
+     */
+    PhysPageEntry phys_map;
+    PhysPageMap map;
+};
+```
+
+这里面有一个**PhysPageMap**，这其实也是**保存**了一个**GPA\-\>HVA**的**一个映射**，通过**多层页表实现**，当**kvm exit退到qemu**之后，通过这个AddressSpaceDispatch里面的map查找对应的MemoryRegionSection，继而找到对应的主机HVA。
+
+这几个结构体的关系如下：
+
+![](./images/2019-06-10-12-16-01.png)
+
