@@ -14,6 +14,7 @@
 	* [2.6 MemoryListener](#26-memorylistener)
 	* [2.7 AddressSpaceDispatch](#27-addressspacedispatch)
 * [3 初始化流程](#3-初始化流程)
+	* [3.1 全局memory space和io space初始化](#31-全局memory-space和io-space初始化)
 
 <!-- /code_chunk_output -->
 
@@ -299,6 +300,8 @@ struct AddressSpaceDispatch {
 
 # 3 初始化流程
 
+## 3.1 全局memory space和io space初始化
+
 首先在**main**\-\>**cpu\_exec\_init\_all**\-\>**memory\_map\_init**中对**全局的memory和io**进行初始化，
 
 - **system\_memory**作为**address\_space\_memory**的**根MemoryRegion**，大小涵盖了**整个64位空间的大小**，当然，这是一个**pure contaner**,并**不会分配空间**的，
@@ -307,10 +310,14 @@ struct AddressSpaceDispatch {
 
 ```c
 //exec.c
+static MemoryRegion *system_memory;
+static MemoryRegion *system_io;
+
+AddressSpace address_space_io;
+AddressSpace address_space_memory;
 static void memory_map_init(void)
 {
     system_memory = g_malloc(sizeof(*system_memory));
-
     memory_region_init(system_memory, NULL, "system", UINT64_MAX);
     address_space_init(&address_space_memory, system_memory, "memory");
 
@@ -320,3 +327,14 @@ static void memory_map_init(void)
     address_space_init(&address_space_io, system_io, "I/O");
 }
 ```
+
+
+
+在随后的**cpu初始化**之中，还会**初始化多个AddressSpace**，这些很多都是disabled的，对虚拟机意义不大。
+
+重点在随后的main\-\>pc\_init\_v2\_8\-\>pc\_init1\-\>pc\_memory\_init中，这里面是**分配系统ram**，也是第一次**真正为虚拟机分配物理内存**。
+
+整个过程中，分配内存也不会像MemoryRegion那么频繁，**mr**很多时候是**创建一个alias**，指向**已经存在的mr**的一部分，这也是**alias的作用**，就是把一个mr分割成多个不连续的mr。
+
+**真正分配空间**的大概有这么几个，**pc.ram**, **pc.bios**, pc.rom, 以及设备的一些ram, rom等，vga.vram, vga.rom, e1000.rom等。
+
