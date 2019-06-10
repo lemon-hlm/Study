@@ -6,6 +6,8 @@
 * [0 内存虚拟化](#0-内存虚拟化)
 * [1 概述](#1-概述)
 * [2 相关数据结构](#2-相关数据结构)
+	* [2.1 AddressSpace](#21-addressspace)
+	* [2.2 MemoryRegion](#22-memoryregion)
 
 <!-- /code_chunk_output -->
 
@@ -46,9 +48,13 @@ struct kvm_userspace_memory_region {
 
 # 2 相关数据结构
 
-首先，**所有的CPU架构**都有**内存地址空间**, 有些CPU架构又有一个**IO地址空间**。它们在QEMU中被表示为**AddressSpace数据结构**.
+## 2.1 AddressSpace
 
-qemu中用**AddressSpace**用来表示**CPU/设备**看到的**内存**，一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过**树**连接起来，树的根是AddressSpace的root域。
+首先，
+
+**所有的CPU架构**都有**内存地址空间**, 有些CPU架构又有一个**IO地址空间**。它们在QEMU中被表示为**AddressSpace数据结构**.
+
+qemu中用**AddressSpace**用来表示**CPU/设备**看到的**内存**.
 
 ```c
 // include/exec/memory.h
@@ -68,7 +74,14 @@ struct AddressSpace {
     QTAILQ_HEAD(, MemoryListener) listeners;
     QTAILQ_ENTRY(AddressSpace) address_spaces_link;
 };
+```
 
+## 2.2 MemoryRegion
+
+一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过**树**连接起来，树的根是AddressSpace的root域。
+
+```c
+// include/exec/memory.h
 struct MemoryRegion {
     Object parent_obj;
 
@@ -86,7 +99,7 @@ struct MemoryRegion {
     //表示哪种dirty map被使用，共有三种
     uint8_t dirty_log_mask;
     bool is_iommu;
-    // 分配的实际内存
+    // 分配的实际内存HVA
     RAMBlock *ram_block;
     Object *owner;
     // 与MemoryRegion相关的操作
@@ -121,7 +134,9 @@ struct MemoryRegion {
 
 MemoryRegion有**多种类型**，可以表示一段**ram**、**rom**、**MMIO**、**alias**.
 
-alias表示**一个MemoryRegion**的**一部分区域**，**MemoryRegion**也可以表示**一个container**，这就表示它**只是其他若干个MemoryRegion的容器**。在MemoryRegion中，'ram\_block'表示的是**分配的实际内存**。
+alias表示**一个MemoryRegion**的**一部分区域**，**MemoryRegion**也可以表示**一个container**，这就表示它**只是其他若干个MemoryRegion的容器**。
+
+**结构体MemoryRegion**是联系**guest物理地址空间**和描述**真实内存的RAMBlocks**之间的桥梁。**每个MemoryRegion结构体**中定义了RAMBlock \***ram\_block**成员指向**其对应的RAMBlock**，而在**RAMBlock**结构体中则定义了struct MemoryRegion \*mr指向**对应的MemoryRegion**。
 
 ```c
 // include/exec/ram_addr.h
