@@ -13,6 +13,7 @@
 	* [2.5 MemoryRegionSection](#25-memoryregionsection)
 	* [2.6 MemoryListener](#26-memorylistener)
 	* [2.7 AddressSpaceDispatch](#27-addressspacedispatch)
+* [3 初始化流程](#3-初始化流程)
 
 <!-- /code_chunk_output -->
 
@@ -187,6 +188,8 @@ struct RAMBlock {
 
 每一个ram\_block还会被连接到全局的'ram\_list'链表上。
 
+
+
 Address, MemoryRegion, RAMBlock关系如下图所示。
 
 ![](./images/2019-06-10-11-12-09.png)
@@ -294,3 +297,6 @@ struct AddressSpaceDispatch {
 
 ![](./images/2019-06-10-12-16-01.png)
 
+# 3 初始化流程
+
+首先在main\-\>cpu\_exec\_init\_all\-\>memory\_map\_init中对全局的memory和io进行初始化，system\_memory作为address\_space\_memory的根MemoryRegion，大小涵盖了整个64位空间的大小，当然，这是一个pure contaner,并不会分配空间的，system_io作为address_space_io的根MemoryRegion，大小为65536，也就是平时的io port空间。
