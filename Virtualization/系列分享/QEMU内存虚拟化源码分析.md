@@ -9,6 +9,8 @@
 	* [2.1 AddressSpace](#21-addressspace)
 	* [2.2 MemoryRegion](#22-memoryregion)
 	* [2.3 RAMBlock](#23-ramblock)
+	* [2.4 FlatView](#24-flatview)
+	* [2.5 MemoryRegionSection](#25-memoryregionsection)
 
 <!-- /code_chunk_output -->
 
@@ -76,6 +78,8 @@ struct AddressSpace {
     QTAILQ_ENTRY(AddressSpace) address_spaces_link;
 };
 ```
+
+AddressSpace下面**root**及其子树形成了**一个虚拟机**的**物理地址**
 
 ## 2.2 MemoryRegion
 
@@ -172,10 +176,60 @@ struct RAMBlock {
 };
 ```
 
-在这里，'host'指向了动态分配的内存，用于表示实际的**虚拟机物理内存**，而offset表示了这块内存在**虚拟机物理内存**中的偏移。每一个ram_block还会被连接到全局的'ram_list'链表上。
+**RAMBlock结构体**中的
+
+- uint8\_t \***host**指向**动态分配的内存**，用于表示**实际的虚拟机物理内存**，指向**host**上**虚拟内存的起始值**，
+- ram\_addr\_t **offset**表示**当前RAMBlock**相对于**RAMList**（描述**host虚拟内存的全局链表**）的**偏移量**。
+
+也就是说**ram\_addr\_t offset**位于一个**全局命名空间**中，可以通过此offset偏移量**定位某个RAMBlock**。
+
+每一个ram\_block还会被连接到全局的'ram\_list'链表上。
 
 Address, MemoryRegion, RAMBlock关系如下图所示。
 
 ![](./images/2019-06-10-11-12-09.png)
 
-AddressSpace下面root及其子树形成了一个虚拟机的物理地址，但是在往kvm进行设置的时候，需要将其转换为一个平坦的地址模型，也就是从0开始的。这个就用FlatView表示，一个AddressSpace对应一个FlatView。
+## 2.4 FlatView
+
+AddressSpace下面**root及其子树**形成了一个**虚拟机的物理地址**，但是在往**kvm进行设置**的时候，需要将其转换为一个**平坦的地址模型**，也就是从0开始的。
+
+这个就用FlatView表示，**一个AddressSpace**对应**一个FlatView**。
+
+```c
+// include/exec/memory.h
+struct FlatView {
+    struct rcu_head rcu;
+    unsigned ref;
+    FlatRange *ranges;
+    unsigned nr;
+    unsigned nr_allocated;
+    struct AddressSpaceDispatch *dispatch;
+    MemoryRegion *root;
+};
+```
+
+在FlatView中，FlatRange表示按照需要被切分为了几个范围。
+
+## 2.5 MemoryRegionSection
+
+在内存虚拟化中，还有一个重要的结构是MemoryRegionSection，这个结构通过函数section\_from\_flat\_range可由FlatRange转换过来。
+
+```c
+// include/exec/memory.h
+struct MemoryRegionSection {
+    MemoryRegion *mr;
+    FlatView *fv;
+    hwaddr offset_within_region;
+    Int128 size;
+    hwaddr offset_within_address_space;
+    bool readonly;
+    bool nonvolatile;
+};
+```
+
+MemoryRegionSection表示的是**MemoryRegion的一部分**。这个其实跟FlatRange差不多。
+
+这几个数据结构关系如下：
+
+![](./images/2019-06-10-11-58-47.png)
+
