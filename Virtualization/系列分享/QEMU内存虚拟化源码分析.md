@@ -11,6 +11,7 @@
 	* [2.3 RAMBlock](#23-ramblock)
 	* [2.4 FlatView](#24-flatview)
 	* [2.5 MemoryRegionSection](#25-memoryregionsection)
+	* [2.6 MemoryListener](#26-memorylistener)
 
 <!-- /code_chunk_output -->
 
@@ -233,3 +234,8 @@ MemoryRegionSection表示的是**MemoryRegion的一部分**。这个其实跟Fla
 
 ![](./images/2019-06-10-11-58-47.png)
 
+## 2.6 MemoryListener
+
+为了**监控虚拟机的物理地址访问**，对于**每一个AddressSpace**，会有**一个MemoryListener**与之对应。每当**物理映射（GPA\-\>HVA**)发生改变时，会**回调这些函数**。
+
+所有的MemoryListener都会挂在**全局变量memory\_listeners链表**上。同时，AddressSpace也会有一个链表连接器自己注册的MemoryListener。
