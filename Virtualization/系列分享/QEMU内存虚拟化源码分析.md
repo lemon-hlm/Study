@@ -8,6 +8,7 @@
 * [2 相关数据结构](#2-相关数据结构)
 	* [2.1 AddressSpace](#21-addressspace)
 	* [2.2 MemoryRegion](#22-memoryregion)
+	* [2.3 RAMBlock](#23-ramblock)
 
 <!-- /code_chunk_output -->
 
@@ -80,6 +81,8 @@ struct AddressSpace {
 
 一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过**树**连接起来，树的根是AddressSpace的root域。
 
+**结构体MemoryRegion**是联系**guest物理地址空间**和描述**真实内存的RAMBlocks(宿主机虚拟地址**)之间的桥梁。
+
 ```c
 // include/exec/memory.h
 struct MemoryRegion {
@@ -136,7 +139,9 @@ MemoryRegion有**多种类型**，可以表示一段**ram**、**rom**、**MMIO**
 
 alias表示**一个MemoryRegion**的**一部分区域**，**MemoryRegion**也可以表示**一个container**，这就表示它**只是其他若干个MemoryRegion的容器**。
 
-**结构体MemoryRegion**是联系**guest物理地址空间**和描述**真实内存的RAMBlocks**之间的桥梁。**每个MemoryRegion结构体**中定义了RAMBlock \***ram\_block**成员指向**其对应的RAMBlock**，而在**RAMBlock**结构体中则定义了struct MemoryRegion \*mr指向**对应的MemoryRegion**。
+**结构体MemoryRegion**是联系**guest物理地址空间**和描述**真实内存的RAMBlocks(宿主机虚拟地址**)之间的桥梁。**每个MemoryRegion结构体**中定义了RAMBlock \***ram\_block**成员指向**其对应的RAMBlock**，而在**RAMBlock**结构体中则定义了struct MemoryRegion \*mr指向**对应的MemoryRegion**。
+
+## 2.3 RAMBlock
 
 ```c
 // include/exec/ram_addr.h
@@ -167,7 +172,9 @@ struct RAMBlock {
 };
 ```
 
-在这里，'host'指向了动态分配的内存，用于表示实际的**虚拟机物理内存**，而offset表示了这块内存在**虚拟机物理内存**中的偏移。每一个ram_block还会被连接到全局的'ram_list'链表上。Address, MemoryRegion, RAMBlock关系如下图所示。
+在这里，'host'指向了动态分配的内存，用于表示实际的**虚拟机物理内存**，而offset表示了这块内存在**虚拟机物理内存**中的偏移。每一个ram_block还会被连接到全局的'ram_list'链表上。
+
+Address, MemoryRegion, RAMBlock关系如下图所示。
 
 ![](./images/2019-06-10-11-12-09.png)
 
