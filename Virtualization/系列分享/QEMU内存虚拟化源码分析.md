@@ -301,13 +301,12 @@ struct AddressSpaceDispatch {
 
 # 3 初始化流程
 
-```
+```c
 main()                          // vl.c
     cpu_exec_init_all()         // exec.c
         memory_map_init()       // exec.c
     machine_run_board_init()    // hw/core/machine.c
         machine_class->init()   // pc_init1, hw/i386/pc_piix.c
-
             pc_cpus_init()      // hw/i386/pc.c
             pc_memory_init()    // hw/i386/pc.c
 
@@ -348,7 +347,6 @@ static void memory_map_init(void)
 在初始化虚拟机中, main中由QEMU入参标识QEMU\_OPTION\_m设定了ram\_size参数, 即虚拟机内存的大小, 通过调用machine\_run\_board\_init, 再调用machine\_class\-\>init(machine), 然后一步步传递给pc\_init1函数.
 
 重点在随后的main\-\>pc\_init\_v2\_8\-\>pc\_init1\-\>pc\_memory\_init中，这里面是**分配系统ram**，也是第一次**真正为虚拟机分配物理内存**。
-
 
 整个过程中，分配内存也不会像MemoryRegion那么频繁，**mr**很多时候是**创建一个alias**，指向**已经存在的mr**的一部分，这也是**alias的作用**，就是把一个mr分割成多个不连续的mr。
 
