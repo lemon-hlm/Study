@@ -16,6 +16,7 @@
 * [3 初始化流程](#3-初始化流程)
 	* [3.1 memory\_map\_init: 全局memory space和io space初始化](#31-memory_map_init-全局memory-space和io-space初始化)
 	* [3.2 pc\_memory\_init](#32-pc_memory_init)
+		* [3.2.1 pc.ram分配](#321-pcram分配)
 
 <!-- /code_chunk_output -->
 
@@ -350,7 +351,14 @@ static void memory_map_init(void)
 
 整个过程中，分配内存也不会像MemoryRegion那么频繁，**mr**很多时候是**创建一个alias**，指向**已经存在的mr**的一部分，这也是**alias的作用**，就是把一个mr分割成多个不连续的mr。
 
+### 3.2.1 pc.ram分配
+
 **真正分配空间**的大概有这么几个，**pc.ram**, **pc.bios**, **pc.rom**, 以及**设备的一些ram**, rom等，vga.vram, vga.rom, e1000.rom等。
+
+```c
+memory_region_allocate_system_memory(ram, NULL, "pc.ram",
+                                    machine->ram_size);
+```
 
 分配pc.ram的流程如下：
 
@@ -358,12 +366,12 @@ static void memory_map_init(void)
 pc_memory_init  // hw/i386/pc.c
 memory_region_allocate_system_memory    // numa.c
 allocate_system_memory_nonnuma          // numa.c
-memory_region_init_ram
-qemu_ram_alloc
-ram_block_add
-phys_mem_alloc
-qemu_anon_ram_alloc
-qemu_ram_mmap
+memory_region_init_ram_shared_nomigrate // memory.c
+qemu_ram_alloc      // exec.c
+ram_block_add       // exec.c
+phys_mem_alloc      // exec.c
+qemu_anon_ram_alloc // util/oslib-posix.c
+qemu_ram_mmap       // util/mmap-alloc.c
 mmap
 ```
 
