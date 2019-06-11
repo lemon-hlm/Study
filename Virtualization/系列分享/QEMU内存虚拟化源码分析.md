@@ -17,6 +17,7 @@
 	* [3.1 memory\_map\_init: 全局memory space和io space初始化](#31-memory_map_init-全局memory-space和io-space初始化)
 	* [3.2 pc\_memory\_init](#32-pc_memory_init)
 		* [3.2.1 pc.ram分配](#321-pcram分配)
+		* [3.2.2 两个mr alias: ram\_below\_4g和ram\_above\_4g](#322-两个mr-alias-ram_below_4g和ram_above_4g)
 
 <!-- /code_chunk_output -->
 
@@ -375,9 +376,30 @@ qemu_ram_mmap       // util/mmap-alloc.c
 mmap
 ```
 
-可以看到，qemu通过使用mmap创建一个内存映射来作为ram。
+可以看到，qemu通过使用**mmap**创建一个**内存映射**来作为ram。
 
-继续**pc\_memory\_init**，函数在创建好了ram并且分配好了空间之后，创建了**两个mr alias**，**ram\_below\_4g**以及**ram\_above\_4g**，这两个mr分别指向**ram的低4g**以及**高4g空间**，这两个alias是挂在**根system\_memory mr下面**的。
+### 3.2.2 两个mr alias: ram\_below\_4g和ram\_above\_4g
+
+继续**pc\_memory\_init**，函数在创建好了ram并且分配好了空间之后，创建了**两个mr alias**，**ram\_below\_4g**以及**ram\_above\_4g**，这两个mr分别指向**ram的低4g**以及**高4g空间**，这两个alias是挂在**根system\_memory mr下面**的。即高低端内存（也不一定是32bit机器）
+
+```c
+ram_below_4g = g_malloc(sizeof(*ram_below_4g));
+memory_region_init_alias(ram_below_4g, NULL, "ram-below-4g", ram,
+                            0, pcms->below_4g_mem_size);
+memory_region_add_subregion(system_memory, 0, ram_below_4g);
+e820_add_entry(0, pcms->below_4g_mem_size, E820_RAM);
+if (pcms->above_4g_mem_size > 0) {
+    ram_above_4g = g_malloc(sizeof(*ram_above_4g));
+    memory_region_init_alias(ram_above_4g, NULL, "ram-above-4g", ram,
+                            pcms->below_4g_mem_size,
+                            pcms->above_4g_mem_size);
+    memory_region_add_subregion(system_memory, 0x100000000ULL,
+                                ram_above_4g);
+    e820_add_entry(0x100000000ULL, pcms->above_4g_mem_size, E820_RAM);
+}
+```
+
+
 
 以后的情形类似，创建根mr，创建AddressSpace，然后在根mr下面加subregion。
 
