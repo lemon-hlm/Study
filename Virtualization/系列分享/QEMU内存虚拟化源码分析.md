@@ -355,9 +355,9 @@ static void memory_map_init(void)
 分配pc.ram的流程如下：
 
 ```
-pc_memory_init
-memory_region_allocate_system_memory
-allocate_system_memory_nonnuma
+pc_memory_init  // hw/i386/pc.c
+memory_region_allocate_system_memory    // numa.c
+allocate_system_memory_nonnuma          // numa.c
 memory_region_init_ram
 qemu_ram_alloc
 ram_block_add
