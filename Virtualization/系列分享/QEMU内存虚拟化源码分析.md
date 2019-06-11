@@ -333,9 +333,10 @@ static void memory_map_init(void)
 
 ## 3.2 pc\_memory\_init
 
+在初始化虚拟机中, main中由QEMU入参标识QEMU\_OPTION\_m设定了ram\_size参数, 即虚拟机内存的大小, 通过调用machine\_run\_board\_init, 再调用machine\_class\-\>init(machine), 然后一步步传递给pc\_init1函数.
+
 重点在随后的main\-\>pc\_init\_v2\_8\-\>pc\_init1\-\>pc\_memory\_init中，这里面是**分配系统ram**，也是第一次**真正为虚拟机分配物理内存**。
 
-在初始化虚拟机中, 由QEMU入参标识QEMU\_OPTION\_m设定了ram\_size参数, 即虚拟机内存的大小, 
 
 整个过程中，分配内存也不会像MemoryRegion那么频繁，**mr**很多时候是**创建一个alias**，指向**已经存在的mr**的一部分，这也是**alias的作用**，就是把一个mr分割成多个不连续的mr。
 
