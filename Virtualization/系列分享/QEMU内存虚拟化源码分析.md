@@ -406,7 +406,7 @@ if (pcms->above_4g_mem_size > 0) {
 
 当我们每一次**更改上层的内存布局**之后，都需要**通知到kvm**。这个过程是通过一系列的**MemoryListener来实现**的。
 
-首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**，在address\_space\_init\-\>address\_space\_init\_dispatch\-\>memory\_listener\_register这个过程中完成**MemoryListener的注册**。
+首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**，在**address\_space\_init**\-\>address\_space\_init\_dispatch\-\>memory\_listener\_register这个过程中完成**MemoryListener的注册**。
 
 每个address\_space都对应一个memory\_listener, 所以在创建address\_space即会注册memory\_listener.
 
