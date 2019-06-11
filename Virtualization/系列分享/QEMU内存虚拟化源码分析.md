@@ -14,7 +14,7 @@
 	* [2.6 MemoryListener](#26-memorylistener)
 	* [2.7 AddressSpaceDispatch](#27-addressspacedispatch)
 * [3 初始化流程](#3-初始化流程)
-	* [3.1 全局memory space和io space初始化](#31-全局memory-space和io-space初始化)
+	* [3.1 memory\_map\_init: 全局memory space和io space初始化](#31-memory_map_init-全局memory-space和io-space初始化)
 	* [3.2 pc\_memory\_init](#32-pc_memory_init)
 
 <!-- /code_chunk_output -->
@@ -301,7 +301,19 @@ struct AddressSpaceDispatch {
 
 # 3 初始化流程
 
-## 3.1 全局memory space和io space初始化
+```
+main()                          // vl.c
+    cpu_exec_init_all()         // exec.c
+        memory_map_init()       // exec.c
+    machine_run_board_init()    // hw/core/machine.c
+        machine_class->init()   // pc_init1, hw/i386/pc_piix.c
+
+            pc_cpus_init()      // hw/i386/pc.c
+            pc_memory_init()    // hw/i386/pc.c
+
+```
+
+## 3.1 memory\_map\_init: 全局memory space和io space初始化
 
 首先在**main**\-\>**cpu\_exec\_init\_all**\-\>**memory\_map\_init**中对**全局的memory和io**进行初始化，
 
