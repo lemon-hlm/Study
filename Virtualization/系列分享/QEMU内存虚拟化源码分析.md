@@ -18,6 +18,7 @@
 	* [3.2 pc\_memory\_init](#32-pc_memory_init)
 		* [3.2.1 pc.ram分配](#321-pcram分配)
 		* [3.2.2 两个mr alias: ram\_below\_4g和ram\_above\_4g](#322-两个mr-alias-ram_below_4g和ram_above_4g)
+* [4 内存的提交](#4-内存的提交)
 
 <!-- /code_chunk_output -->
 
@@ -399,7 +400,12 @@ if (pcms->above_4g_mem_size > 0) {
 }
 ```
 
-
-
 以后的情形类似，创建根mr，创建AddressSpace，然后在根mr下面加subregion。
 
+# 4 内存的提交
+
+当我们每一次**更改上层的内存布局**之后，都需要**通知到kvm**。这个过程是通过一系列的**MemoryListener来实现**的。
+
+首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**，在address\_space\_init\-\>address\_space\_init\_dispatch\-\>memory\_listener\_register这个过程中完成**MemoryListener的注册**。
+
+每个address\_space都对应一个memory\_listener
