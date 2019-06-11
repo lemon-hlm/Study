@@ -335,6 +335,8 @@ static void memory_map_init(void)
 
 重点在随后的main\-\>pc\_init\_v2\_8\-\>pc\_init1\-\>pc\_memory\_init中，这里面是**分配系统ram**，也是第一次**真正为虚拟机分配物理内存**。
 
+在初始化虚拟机中, 由QEMU入参标识QEMU\_OPTION\_m设定了ram\_size参数, 即虚拟机内存的大小, 
+
 整个过程中，分配内存也不会像MemoryRegion那么频繁，**mr**很多时候是**创建一个alias**，指向**已经存在的mr**的一部分，这也是**alias的作用**，就是把一个mr分割成多个不连续的mr。
 
 **真正分配空间**的大概有这么几个，**pc.ram**, **pc.bios**, **pc.rom**, 以及**设备的一些ram**, rom等，vga.vram, vga.rom, e1000.rom等。
@@ -342,6 +344,7 @@ static void memory_map_init(void)
 分配pc.ram的流程如下：
 
 ```
+pc_memory_init
 memory_region_allocate_system_memory
 allocate_system_memory_nonnuma
 memory_region_init_ram
