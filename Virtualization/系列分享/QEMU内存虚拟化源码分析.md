@@ -422,26 +422,9 @@ if (pcms->above_4g_mem_size > 0) {
 
 当我们每一次**更改上层的内存布局**之后，都需要**通知到kvm**。这个过程是通过一系列的**MemoryListener来实现**的。
 
-首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**，在**address\_space\_init**\-\>address\_space\_init\_dispatch\-\>memory\_listener\_register这个过程中完成**MemoryListener的注册**。
+首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**，
 
-每个address\_space都对应一个memory\_listener, 所以在创建address\_space即会注册memory\_listener.
-
-```c
-void address_space_init_dispatch(AddressSpace *as)
-{
-    as->dispatch = NULL;
-    as->dispatch_listener = (MemoryListener) {
-        .begin = mem_begin,
-        .commit = mem_commit,
-        .region_add = mem_add,
-        .region_nop = mem_add,
-        .priority = 0,
-    };
-    memory_listener_register(&as->dispatch_listener, as);
-}
-```
-
-这里有初始化了listener的几个回调，他们的的调用时间之后讨论。 值得注意的是，并不是只有AddressSpace初始化的时候会注册回调，kvm_init同样会注册回调。
+值得注意的是，并不是只有AddressSpace初始化的时候会注册回调，kvm\_init同样会注册回调。
 
 ```c
 static int kvm_init(MachineState *ms)
