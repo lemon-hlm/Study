@@ -21,6 +21,7 @@
 * [4 内存的提交](#4-内存的提交)
 	* [4.1 全局的memory\_listeners](#41-全局的memory_listeners)
 	* [4.2 memory\_listener\_register注册](#42-memory_listener_register注册)
+	* [4.3 内存更新](#43-内存更新)
 
 <!-- /code_chunk_output -->
 
@@ -482,9 +483,11 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 
 在这里我们看到kvm也注册了自己的MemoryListener, 也有自己的几个回调函数。
 
-
+## 4.3 内存更新
 
 在上面看到MemoryListener之后，我们看看什么时候需要更新内存。 
+
+![](./images/2019-06-12-11-02-33.png)
 
 **进行内存更新**有很多个点，比如
 
@@ -504,8 +507,6 @@ void memory_region_set_readonly(MemoryRegion *mr, bool readonly)
     ......
 }
 ```
-
-![](./images/2019-06-12-11-02-33.png)
 
 ```c
 // memory.c
