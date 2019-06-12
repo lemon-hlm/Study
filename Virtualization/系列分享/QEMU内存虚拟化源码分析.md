@@ -535,3 +535,16 @@ void memory_region_transaction_commit(void)
 
 MEMORY\_LISTENER\_CALL\_GLOBAL对memory\_listeners上的各个MemoryListener调用指定函数。commit中最重要的是address\_space\_update\_topology调用。
 
+```c
+// memory.c
+static void address_space_update_topology(AddressSpace *as)
+{
+    MemoryRegion *physmr = memory_region_get_flatview_root(as->root);
+
+    flatviews_init();
+    if (!g_hash_table_lookup(flat_views, physmr)) {
+        generate_memory_topology(physmr);
+    }
+    address_space_set_flatview(as);
+}
+```
