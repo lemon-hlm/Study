@@ -467,7 +467,7 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 
 在上面看到MemoryListener之后，我们看看什么时候需要更新内存。 
 
-进行内存更新有很多个点，比如
+**进行内存更新**有很多个点，比如
 
 - 我们**新创建了一个AddressSpace** address\_space\_init，
 - 我们将**一个mr**添加到**另一个mr的subregions**中memory\_region\_add\_subregion, 
@@ -475,4 +475,63 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 - 将**一个mr设置使能或者非使能**memory\_region\_set\_enabled, 
 
 总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，通过函数memory\_region\_transaction\_commit实现。
+
+```c
+// memory.c
+void memory_region_transaction_commit(void)
+{
+    AddressSpace *as;
+
+    assert(memory_region_transaction_depth);
+    assert(qemu_mutex_iothread_locked());
+
+    --memory_region_transaction_depth;
+    if (!memory_region_transaction_depth) {
+        if (memory_region_update_pending) {
+            flatviews_reset();
+
+            MEMORY_LISTENER_CALL_GLOBAL(begin, Forward);
+
+            QTAILQ_FOREACH(as, &address_spaces, address_spaces_link) {
+                address_space_set_flatview(as);
+                address_space_update_ioeventfds(as);
+            }
+            memory_region_update_pending = false;
+            ioeventfd_update_pending = false;
+            MEMORY_LISTENER_CALL_GLOBAL(commit, Forward);
+        } else if (ioeventfd_update_pending) {
+            QTAILQ_FOREACH(as, &address_spaces, address_spaces_link) {
+                address_space_update_ioeventfds(as);
+            }
+            ioeventfd_update_pending = false;
+        }
+   }
+}
+
+#define MEMORY_LISTENER_CALL_GLOBAL(_callback, _direction, _args...)    \
+    do {                                                                \
+        MemoryListener *_listener;                                      \
+                                                                        \
+        switch (_direction) {                                           \
+        case Forward:                                                   \
+            QTAILQ_FOREACH(_listener, &memory_listeners, link) {        \
+                if (_listener->_callback) {                             \
+                    _listener->_callback(_listener, ##_args);           \
+                }                                                       \
+            }                                                           \
+            break;                                                      \
+        case Reverse:                                                   \
+            QTAILQ_FOREACH_REVERSE(_listener, &memory_listeners, link) { \
+                if (_listener->_callback) {                             \
+                    _listener->_callback(_listener, ##_args);           \
+                }                                                       \
+            }                                                           \
+            break;                                                      \
+        default:                                                        \
+            abort();                                                    \
+        }                                                               \
+    } while (0)
+```
+
+MEMORY\_LISTENER\_CALL\_GLOBAL对memory\_listeners上的各个MemoryListener调用指定函数。commit中最重要的是address\_space\_update\_topology调用。
 
