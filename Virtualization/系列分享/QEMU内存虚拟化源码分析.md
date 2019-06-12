@@ -341,6 +341,22 @@ static void memory_map_init(void)
                           65536);
     address_space_init(&address_space_io, system_io, "I/O");
 }
+
+// memory.c
+void address_space_init(AddressSpace *as, MemoryRegion *root, const char *name)
+{
+    memory_region_ref(root);
+    as->root = root;
+    as->current_map = NULL;
+    as->ioeventfd_nb = 0;
+    as->ioeventfds = NULL;
+    QTAILQ_INIT(&as->listeners);
+    QTAILQ_INSERT_TAIL(&address_spaces, as, address_spaces_link);
+    as->name = g_strdup(name ? name : "anonymous");
+    address_space_update_topology(as);
+    address_space_update_ioeventfds(as);
+}
+
 ```
 
 在随后的**cpu初始化**之中，还会**初始化多个AddressSpace**，这些很多都是disabled的，对虚拟机意义不大。
@@ -474,7 +490,10 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 - 我们**更改了一端内存的属性**memory\_region\_set\_readonly，
 - 将**一个mr设置使能或者非使能**memory\_region\_set\_enabled, 
 
-总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，通过函数memory\_region\_transaction\_commit实现。
+总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，
+
+
+通过函数memory\_region\_transaction\_commit实现。
 
 ```c
 // memory.c
