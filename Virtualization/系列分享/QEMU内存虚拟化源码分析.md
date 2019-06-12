@@ -553,7 +553,9 @@ void memory_region_transaction_commit(void)
     } while (0)
 ```
 
-MEMORY\_LISTENER\_CALL\_GLOBAL对memory\_listeners上的各个MemoryListener调用指定函数。commit中最重要的是address\_space\_update\_topology调用。
+MEMORY\_LISTENER\_CALL\_GLOBAL对**memory\_listeners**上的**各个MemoryListener**调用指定函数。
+
+commit中最重要的是address\_space\_update\_topology调用。
 
 ```c
 // memory.c
