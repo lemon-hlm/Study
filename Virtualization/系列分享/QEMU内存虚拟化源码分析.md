@@ -410,3 +410,69 @@ if (pcms->above_4g_mem_size > 0) {
 
 每个address\_space都对应一个memory\_listener, 所以在创建address\_space即会注册memory\_listener.
 
+```c
+void address_space_init_dispatch(AddressSpace *as)
+{
+    as->dispatch = NULL;
+    as->dispatch_listener = (MemoryListener) {
+        .begin = mem_begin,
+        .commit = mem_commit,
+        .region_add = mem_add,
+        .region_nop = mem_add,
+        .priority = 0,
+    };
+    memory_listener_register(&as->dispatch_listener, as);
+}
+```
+
+这里有初始化了listener的几个回调，他们的的调用时间之后讨论。 值得注意的是，并不是只有AddressSpace初始化的时候会注册回调，kvm_init同样会注册回调。
+
+```c
+static int kvm_init(MachineState *ms)
+{
+    ......
+    kvm_memory_listener_register(s, &s->memory_listener,
+                                 &address_space_memory, 0);
+    memory_listener_register(&kvm_io_listener,
+                             &address_space_io);
+    memory_listener_register(&kvm_coalesced_pio_listener,
+                             &address_space_io);
+    ......
+}
+
+void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
+                                  AddressSpace *as, int as_id)
+{
+    int i;
+
+    kml->slots = g_malloc0(s->nr_slots * sizeof(KVMSlot));
+    kml->as_id = as_id;
+
+    for (i = 0; i < s->nr_slots; i++) {
+        kml->slots[i].slot = i;
+    }
+
+    kml->listener.region_add = kvm_region_add;
+    kml->listener.region_del = kvm_region_del;
+    kml->listener.log_start = kvm_log_start;
+    kml->listener.log_stop = kvm_log_stop;
+    kml->listener.log_sync = kvm_log_sync;
+    kml->listener.priority = 10;
+
+    memory_listener_register(&kml->listener, as);
+}
+```
+
+在这里我们看到kvm也注册了自己的MemoryListener。
+
+在上面看到MemoryListener之后，我们看看什么时候需要更新内存。 
+
+进行内存更新有很多个点，比如
+
+- 我们**新创建了一个AddressSpace** address\_space\_init，
+- 我们将**一个mr**添加到**另一个mr的subregions**中memory\_region\_add\_subregion, 
+- 我们**更改了一端内存的属性**memory\_region\_set\_readonly，
+- 将**一个mr设置使能或者非使能**memory\_region\_set\_enabled, 
+
+总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，通过函数memory\_region\_transaction\_commit实现。
+
