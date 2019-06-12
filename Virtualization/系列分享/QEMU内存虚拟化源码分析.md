@@ -60,6 +60,8 @@ struct kvm_userspace_memory_region {
 
 # 2 相关数据结构
 
+![](./images/2019-06-12-15-16-52.png)
+
 ## 2.1 AddressSpace
 
 首先，
