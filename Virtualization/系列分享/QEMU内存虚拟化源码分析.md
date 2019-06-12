@@ -439,9 +439,9 @@ static QTAILQ_HEAD(, MemoryListener) memory_listeners
     = QTAILQ_HEAD_INITIALIZER(memory_listeners);
 ```
 
-![](./images/2019-06-12-10-42-52.png)
-
 ## 4.2 memory\_listener\_register注册
+
+![](./images/2019-06-12-10-42-52.png)
 
 以kvm\_init为例
 
@@ -496,6 +496,8 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 - 将**一个mr设置使能或者非使能**memory\_region\_set\_enabled, 
 
 总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，通过函数memory\_region\_transaction\_commit实现。
+
+内存更新部分都在begin和commit中间
 
 ```c
 void memory_region_set_readonly(MemoryRegion *mr, bool readonly)
