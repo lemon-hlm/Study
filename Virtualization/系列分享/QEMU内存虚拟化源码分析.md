@@ -19,6 +19,7 @@
 		* [3.2.1 pc.ram分配](#321-pcram分配)
 		* [3.2.2 两个mr alias: ram\_below\_4g和ram\_above\_4g](#322-两个mr-alias-ram_below_4g和ram_above_4g)
 * [4 内存的提交](#4-内存的提交)
+	* [4.1 全局的memory\_listeners](#41-全局的memory_listeners)
 
 <!-- /code_chunk_output -->
 
@@ -422,6 +423,8 @@ if (pcms->above_4g_mem_size > 0) {
 
 当我们每一次**更改上层的内存布局**之后，都需要**通知到kvm**。这个过程是通过一系列的**MemoryListener来实现**的。
 
+## 4.1 全局的memory\_listeners
+
 首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**
 
 ```c
@@ -476,7 +479,6 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 
 **进行内存更新**有很多个点，比如
 
-- 我们**新创建了一个AddressSpace** address\_space\_init，
 - 我们将**一个mr**添加到**另一个mr的subregions**中memory\_region\_add\_subregion, 
 - 我们**更改了一端内存的属性**memory\_region\_set\_readonly，
 - 将**一个mr设置使能或者非使能**memory\_region\_set\_enabled, 
@@ -555,6 +557,24 @@ void memory_region_transaction_commit(void)
 
 MEMORY\_LISTENER\_CALL\_GLOBAL对**memory\_listeners**上的**各个MemoryListener**调用指定函数。
 
+注: 我们**新创建了一个AddressSpace** address\_space\_init，是主动调用更新
+
+```c
+void address_space_init(AddressSpace *as, MemoryRegion *root, const char *name)
+{
+    memory_region_ref(root);
+    as->root = root;
+    as->current_map = NULL;
+    as->ioeventfd_nb = 0;
+    as->ioeventfds = NULL;
+    QTAILQ_INIT(&as->listeners);
+    QTAILQ_INSERT_TAIL(&address_spaces, as, address_spaces_link);
+    as->name = g_strdup(name ? name : "anonymous");
+    address_space_update_topology(as);
+    address_space_update_ioeventfds(as);
+}
+```
+
 commit中最重要的是address\_space\_update\_topology调用。
 
 ```c
@@ -570,4 +590,6 @@ static void address_space_update_topology(AddressSpace *as)
     address_space_set_flatview(as);
 }
 ```
+
+前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先得到上一次的FlatView，之后调用generate_memory_topology生成一个新的FlatView，
 
