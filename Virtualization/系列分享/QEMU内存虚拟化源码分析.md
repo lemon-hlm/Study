@@ -422,7 +422,15 @@ if (pcms->above_4g_mem_size > 0) {
 
 当我们每一次**更改上层的内存布局**之后，都需要**通知到kvm**。这个过程是通过一系列的**MemoryListener来实现**的。
 
-首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**，
+首先系统有一个**全局的memory\_listeners**，上面挂上了**所有的MemoryListener**
+
+```c
+// memory.c
+static QTAILQ_HEAD(, MemoryListener) memory_listeners
+    = QTAILQ_HEAD_INITIALIZER(memory_listeners);
+```
+
+![](./images/2019-06-12-10-42-52.png)
 
 值得注意的是，并不是只有AddressSpace初始化的时候会注册回调，kvm\_init同样会注册回调。
 
