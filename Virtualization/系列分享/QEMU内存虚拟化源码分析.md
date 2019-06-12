@@ -20,6 +20,7 @@
 		* [3.2.2 两个mr alias: ram\_below\_4g和ram\_above\_4g](#322-两个mr-alias-ram_below_4g和ram_above_4g)
 * [4 内存的提交](#4-内存的提交)
 	* [4.1 全局的memory\_listeners](#41-全局的memory_listeners)
+	* [4.2 memory\_listener\_register注册](#42-memory_listener_register注册)
 
 <!-- /code_chunk_output -->
 
@@ -439,7 +440,9 @@ static QTAILQ_HEAD(, MemoryListener) memory_listeners
 
 ![](./images/2019-06-12-10-42-52.png)
 
-值得注意的是，并不是只有AddressSpace初始化的时候会注册回调，kvm\_init同样会注册回调。
+## 4.2 memory\_listener\_register注册
+
+以kvm\_init为例
 
 ```c
 static int kvm_init(MachineState *ms)
@@ -477,7 +480,9 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 }
 ```
 
-在这里我们看到kvm也注册了自己的MemoryListener。
+在这里我们看到kvm也注册了自己的MemoryListener, 也有自己的几个回调函数。
+
+
 
 在上面看到MemoryListener之后，我们看看什么时候需要更新内存。 
 
