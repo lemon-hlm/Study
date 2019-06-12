@@ -187,6 +187,8 @@ struct RAMBlock {
 };
 ```
 
+每一个ram\_block还会被连接到全局的'ram\_list'链表上。
+
 **RAMBlock结构体**中的
 
 - uint8\_t \***host**指向**动态分配的内存**，用于表示**实际的虚拟机物理内存**，指向**host**上**虚拟内存的起始值**，
@@ -194,8 +196,8 @@ struct RAMBlock {
 
 也就是说**ram\_addr\_t offset**位于一个**全局命名空间**中，可以通过此offset偏移量**定位某个RAMBlock**。
 
-每一个ram\_block还会被连接到全局的'ram\_list'链表上。
 
+然而**ram\_addr\_t命名空间**并**不等同**于**guest物理内存空间！！！**，它仅表示**所有RAMBlock集合**构成的**一个地址空间**。
 
 
 Address, MemoryRegion, RAMBlock关系如下图所示。
