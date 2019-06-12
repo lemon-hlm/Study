@@ -481,10 +481,20 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 - 我们**更改了一端内存的属性**memory\_region\_set\_readonly，
 - 将**一个mr设置使能或者非使能**memory\_region\_set\_enabled, 
 
-总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，
+总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，通过函数memory\_region\_transaction\_commit实现。
 
+```c
+void memory_region_set_readonly(MemoryRegion *mr, bool readonly)
+{
+    ......
+    memory_region_transaction_begin();
+    ......
+    memory_region_transaction_commit();
+    ......
+}
+```
 
-通过函数memory\_region\_transaction\_commit实现。
+![](./images/2019-06-12-11-02-33.png)
 
 ```c
 // memory.c
