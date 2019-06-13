@@ -603,5 +603,5 @@ static void address_space_update_topology(AddressSpace *as)
 }
 ```
 
-前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先得到上一次的FlatView，之后调用generate_memory_topology生成一个新的FlatView，
+前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先得到上一次的FlatView，之后调用generate\_memory\_topology生成一个新的FlatView，
 
