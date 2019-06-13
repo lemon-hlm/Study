@@ -22,6 +22,7 @@
 	* [4.1 全局的memory\_listeners](#41-全局的memory_listeners)
 	* [4.2 memory\_listener\_register注册](#42-memory_listener_register注册)
 	* [4.3 内存更新](#43-内存更新)
+		* [4.3.1 新建AddressSpace时更新](#431-新建addressspace时更新)
 
 <!-- /code_chunk_output -->
 
@@ -567,6 +568,8 @@ void memory_region_transaction_commit(void)
 
 MEMORY\_LISTENER\_CALL\_GLOBAL对**memory\_listeners**上的**各个MemoryListener**调用指定函数。
 
+### 4.3.1 新建AddressSpace时更新
+
 注: 我们**新创建了一个AddressSpace** address\_space\_init，是主动调用更新
 
 ```c
@@ -585,7 +588,7 @@ void address_space_init(AddressSpace *as, MemoryRegion *root, const char *name)
 }
 ```
 
-commit中最重要的是address\_space\_update\_topology调用。
+address\_space\_update\_topology调用。
 
 ```c
 // memory.c
