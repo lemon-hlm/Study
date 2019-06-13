@@ -604,7 +604,9 @@ static void address_space_update_topology(AddressSpace *as)
 }
 ```
 
-前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先**得到上一次的FlatView**，之后调用**generate\_memory\_topology**生成一个**新的FlatView**，
+前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先**得到上一次的FlatView**，之后
+
+调用**generate\_memory\_topology**生成一个**新的FlatView**，
 
 ```c
 static FlatView *generate_memory_topology(MemoryRegion *mr)
@@ -637,3 +639,13 @@ static FlatView *generate_memory_topology(MemoryRegion *mr)
 最主要的是render\_memory\_region**生成view**，这个render函数很复杂，需要**递归render子树**，具体以后有机会单独讨论。
 
 在生成了view之后会调用**flatview\_simplify**进行简化，主要是**合并相邻的FlatRange**。在生成了当前as的FlatView之后，我们就可以更新了，这在函数address_space_update_topology_pass中完成，这个函数就是逐一对比新旧FlatView的差别，然后进行更新。
+
+参考
+
+https://www.cnblogs.com/ck1020/p/6729224.html
+
+https://www.binss.me/blog/qemu-note-of-memory/
+
+http://oenhan.com/qemu-memory-struct
+
+https://blog.csdn.net/leoufung/article/details/48781205
