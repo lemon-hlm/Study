@@ -81,11 +81,12 @@ struct AddressSpace {
     /* All fields are private. */
     struct rcu_head rcu;
     char *name;
-    // MR树(多个MR)
+    // MR树(多个MR), 指向根MR
     MemoryRegion *root;
 
     /* Accessed via RCU.  */
     //AddressSpace的一张平面视图，它是AddressSpace所有正在使用的MemoryRegion的集合，这是从CPU的视角来看到的。
+    // 指向当前维护的 FlatView，在 address_space_update_topology 时作为 old 比较
     struct FlatView *current_map;
 
     int ioeventfd_nb;
@@ -216,13 +217,40 @@ AddressSpace下面**root及其子树**形成了一个**虚拟机的物理地址*
 这个就用FlatView表示，**一个AddressSpace**对应**一个FlatView**。
 
 ```c
+// memory.c
+struct AddrRange {
+    Int128 start; // 起始
+    Int128 size; // 大小
+};
+
+struct FlatRange {
+    //指向所属的MR
+    MemoryRegion *mr;
+    //在MR中的offset
+    hwaddr offset_in_region;
+    //本FR代表的区间
+    AddrRange addr;
+    uint8_t dirty_log_mask;
+    bool romd_mode;
+    bool readonly;
+    bool nonvolatile;
+    int has_coalesced_range;
+};
+
 // include/exec/memory.h
+typedef struct AddressSpaceDispatch AddressSpaceDispatch;
+typedef struct FlatRange FlatRange;
+
 struct FlatView {
     struct rcu_head rcu;
+    //引用计数，为0就销毁
     unsigned ref;
+    //对应的flatrange数组
     FlatRange *ranges;
+    //flatrange数目
     unsigned nr;
     unsigned nr_allocated;
+    // 负责根据 GPA 找到 HVA
     struct AddressSpaceDispatch *dispatch;
     MemoryRegion *root;
 };
