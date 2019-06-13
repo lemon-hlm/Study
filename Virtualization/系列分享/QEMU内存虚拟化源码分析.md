@@ -497,8 +497,6 @@ void kvm_memory_listener_register(KVMState *s, KVMMemoryListener *kml,
 
 总之一句话，我们**修改**了**虚拟机的内存布局/属性**时，就需要**通知到各个Listener**，这包括**各个AddressSpace对应**的，以及**kvm注册**的，这个过程叫做**commit**，通过函数memory\_region\_transaction\_commit实现。
 
-内存更新部分都在begin和commit中间
-
 ```c
 void memory_region_set_readonly(MemoryRegion *mr, bool readonly)
 {
@@ -603,5 +601,36 @@ static void address_space_update_topology(AddressSpace *as)
 }
 ```
 
-前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先得到上一次的FlatView，之后调用generate\_memory\_topology生成一个新的FlatView，
+前面我们已经说了，as\-\>root会被**展开**为一个**FlatView**，所以在这里update topology中，首先**得到上一次的FlatView**，之后调用**generate\_memory\_topology**生成一个**新的FlatView**，
 
+```c
+static FlatView *generate_memory_topology(MemoryRegion *mr)
+{
+    int i;
+    FlatView *view;
+
+    view = flatview_new(mr);
+
+    if (mr) {
+        render_memory_region(view, mr, int128_zero(),
+                             addrrange_make(int128_zero(), int128_2_64()),
+                             false, false);
+    }
+    flatview_simplify(view);
+
+    view->dispatch = address_space_dispatch_new(view);
+    for (i = 0; i < view->nr; i++) {
+        MemoryRegionSection mrs =
+            section_from_flat_range(&view->ranges[i], view);
+        flatview_add_to_dispatch(view, &mrs);
+    }
+    address_space_dispatch_compact(view->dispatch);
+    g_hash_table_replace(flat_views, mr, view);
+
+    return view;
+}
+```
+
+最主要的是render\_memory\_region**生成view**，这个render函数很复杂，需要**递归render子树**，具体以后有机会单独讨论。
+
+在生成了view之后会调用**flatview\_simplify**进行简化，主要是**合并相邻的FlatRange**。在生成了当前as的FlatView之后，我们就可以更新了，这在函数address_space_update_topology_pass中完成，这个函数就是逐一对比新旧FlatView的差别，然后进行更新。
