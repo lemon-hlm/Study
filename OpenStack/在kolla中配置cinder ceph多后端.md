@@ -1,1 +1,19 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+* [1 在ceph中创建pool](#1-在ceph中创建pool)
+* [参考](#参考)
+
+<!-- /code_chunk_output -->
+
+# 1 创建pool
+
+
+
+
+
+# 参考
+
 https://www.lijiawang.org/posts/%E5%9C%A8kolla%E4%B8%AD%E9%85%8D%E7%BD%AEcinder%20ceph%E5%A4%9A%E5%90%8E%E7%AB%AF.html?tdsourcetag=s_pcqq_aiomsg
