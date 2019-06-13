@@ -7,7 +7,7 @@
 * [2 修改cinder配置](#2-修改cinder配置)
 * [3 创建不同卷](#3-创建不同卷)
 * [4 测试结果](#4-测试结果)
-* [参考](#参考)
+* [5 参考](#5-参考)
 
 <!-- /code_chunk_output -->
 
@@ -129,10 +129,11 @@ rbd_secret_uuid = b71a525a-3c01-468d-ac97-d2e4d395a652
 在ceph中查看
 
 ```
-
+[root@SH-IDC1-10-5-39-166 ~]# rbd -p volumes_ssd ls
+volume-bd996a17-45c9-4e8a-8305-5cf333b7fb3c
 ```
 
 
-# 参考
+# 5 参考
 
 https://www.lijiawang.org/posts/%E5%9C%A8kolla%E4%B8%AD%E9%85%8D%E7%BD%AEcinder%20ceph%E5%A4%9A%E5%90%8E%E7%AB%AF.html?tdsourcetag=s_pcqq_aiomsg
