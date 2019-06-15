@@ -360,7 +360,7 @@ main()                              // vl.c
 
 - **system\_memory**作为**address\_space\_memory**的**根MemoryRegion**，大小涵盖了**整个64位空间的大小**，当然，这是一个**pure contaner**,并**不会分配空间**的，
 
-- **system\_io**作为address\_space\_io的根MemoryRegion，大小为**65536**，也就是平时的**io port空间**。
+- **system\_io**作为**address\_space\_io**的根MemoryRegion，大小为**65536**，也就是平时的**io port空间**。
 
 ```c
 //exec.c

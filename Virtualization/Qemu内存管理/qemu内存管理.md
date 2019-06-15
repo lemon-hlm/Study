@@ -77,11 +77,25 @@ void address_space_init(AddressSpace *as, MemoryRegion *root, const char *name)
 
 AddressSpace设置了一段内存，其主要信息存储在root成员 中，root成员是个MemoryRegion结构，主要存储内存区的结构。在Qemu中最主要的两个AddressSpace是 address\_space_memory和address_space_io，分别对应的MemoryRegion变量是system_memory和 system\_io。
 
-Qemu的主函数是vl.c中的main函数，其中调用了configure\_accelerator()，是KVM初始化的配置部分。
+Qemu的**主函数**是**vl.c**中的main函数，其中调用了**configure\_accelerator**()，是KVM初始化的配置部分。
 
-configure_accelerator中首先根据命令行输入的参数找到对应的accelerator，这里是KVM。之后调用accel_list[i].init()，即kvm_init()。
+configure\_accelerator中首先根据命令行输入的参数找到对应的accelerator，这里是KVM。之后调用accel\_list\[i].init()，即kvm\_init()。
 
 在kvm_init()函数中主要做如下几件事情：
+
+1. s\-\>fd = qemu\_open("/dev/kvm", O_RDWR)，打开kvm控制的总设备文件/dev/kvm
+2. s\-\>vmfd = kvm\_ioctl(s, KVM_CREATE_VM, 0)，调用创建虚拟机的API
+3. kvm\_check\_extension，检查各种extension，并设置对应的features
+4. ret = kvm\_arch\_init(s)，做一些体系结构相关的初始化，如msr、identity map、mmu pages number等等
+5. kvm\_irqchip\_create，调用kvm\_vm\_ioctl(s, KVM\_CREATE\_IRQCHIP)在KVM中虚拟IRQ芯片
+6. memory\_listener\_register，该函数是初始化内存的主要函数
+7. memory\_listener\_register调用了两次，分别注册了 kvm\_memory\_listener和kvm\_io\_listener，即通用的内存和MMIO是分开管理的。以通用的内存注册为例，函数首先在全局 的memory\_listener链表中添加了kvm\_memory\_listener，之后调用listener_add_address_space 分别将该listener添加到address_space_memory和address_space_io中, address_space_io是虚机的io地址空间（设备的io port就分布在这个地址空间里）。
+8. 然后调用listener的region_add（即 kvm_region_add()），该函数最终调用了kvm_set_user_memory_region()，其中调用 kvm_vm_ioctl(s, KVM_SET_USER_MEMORY_REGION, &mem)，该调用是最终将内存区域注册到kvm中的函数。
+9. 之后在vl.c的main函数中调用了cpu\_exec\_init\_all() => memory\_map\_init()，设置system\_memory和system\_io。
+
+至此初始化好了所有Qemu中需要维护的相关的内存结构，并完成了在KVM中的注册。下面需要初始化KVM中的MMU支持。
+
+ram_size内存大小从内存被读取到ram_size中，在vl.c的main中调用machine->init()来初始化，machine是命令行指定的机器类型，默认的init是pc_init_pci
 
 参考
 
