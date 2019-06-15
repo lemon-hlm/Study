@@ -36,9 +36,44 @@ Qemu需要做的有两方面工作：
 Qemu主要通过如下结构来维护内存：
 
 ```c
+// include/exec/memory.h
+struct AddressSpace {
+    /* All fields are private. */
+    struct rcu_head rcu;
+    char *name;
+    // MR树(多个MR)
+    MemoryRegion *root;
 
+    /* Accessed via RCU.  */
+    //AddressSpace的一张平面视图，它是AddressSpace所有正在使用的MemoryRegion的集合，这是从CPU的视角来看到的。
+    struct FlatView *current_map;
+
+    int ioeventfd_nb;
+    struct MemoryRegionIoeventfd *ioeventfds;
+    QTAILQ_HEAD(, MemoryListener) listeners;
+    QTAILQ_ENTRY(AddressSpace) address_spaces_link;
+};
 ```
 
+"memory"的root是static MemoryRegion system_memory;
+使用**链表address\_spaces**保存**虚拟机的内存**，该链表保存AddressSpace address\_space\_io和AddressSpace address\_space\_memory等信息
+
+```c
+// memory.c
+void address_space_init(AddressSpace *as, MemoryRegion *root, const char *name)
+{
+    memory_region_ref(root);
+    as->root = root;
+    as->current_map = NULL;
+    as->ioeventfd_nb = 0;
+    as->ioeventfds = NULL;
+    QTAILQ_INIT(&as->listeners);
+    QTAILQ_INSERT_TAIL(&address_spaces, as, address_spaces_link);
+    as->name = g_strdup(name ? name : "anonymous");
+    address_space_update_topology(as);
+    address_space_update_ioeventfds(as);
+}
+```
 
 参考
 

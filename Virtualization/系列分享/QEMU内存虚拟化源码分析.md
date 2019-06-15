@@ -343,13 +343,14 @@ struct AddressSpaceDispatch {
 # 3 初始化流程
 
 ```c
-main()                          // vl.c
-    cpu_exec_init_all()         // exec.c
-        memory_map_init()       // exec.c
-    machine_run_board_init()    // hw/core/machine.c
-        machine_class->init()   // pc_init1, hw/i386/pc_piix.c
-            pc_cpus_init()      // hw/i386/pc.c
-            pc_memory_init()    // hw/i386/pc.c
+main()                              // vl.c
+    cpu_exec_init_all()             // exec.c
+        memory_map_init()           // exec.c
+            address_space_init()    // memory.c
+    machine_run_board_init()        // hw/core/machine.c
+        machine_class->init()       // pc_init1, hw/i386/pc_piix.c
+            pc_cpus_init()          // hw/i386/pc.c
+            pc_memory_init()        // hw/i386/pc.c
 
 ```
 
