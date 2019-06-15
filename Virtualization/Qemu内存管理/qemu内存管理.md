@@ -75,6 +75,14 @@ void address_space_init(AddressSpace *as, MemoryRegion *root, const char *name)
 }
 ```
 
+AddressSpace设置了一段内存，其主要信息存储在root成员 中，root成员是个MemoryRegion结构，主要存储内存区的结构。在Qemu中最主要的两个AddressSpace是 address_space_memory和address_space_io，分别对应的MemoryRegion变量是system_memory和 system_io。
+
+Qemu的主函数是vl.c中的main函数，其中调用了configure_accelerator()，是KVM初始化的配置部分。
+
+configure_accelerator中首先根据命令行输入的参数找到对应的accelerator，这里是KVM。之后调用accel_list[i].init()，即kvm_init()。
+
+在kvm_init()函数中主要做如下几件事情：
+
 参考
 
 https://blog.51cto.com/zybcloud/2149626
