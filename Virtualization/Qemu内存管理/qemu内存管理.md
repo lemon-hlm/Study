@@ -95,7 +95,7 @@ configure\_accelerator中首先根据命令行输入的参数找到对应的acce
 
 至此初始化好了所有Qemu中需要维护的相关的内存结构，并完成了在KVM中的注册。下面需要初始化KVM中的MMU支持。
 
-ram_size内存大小从内存被读取到ram_size中，在vl.c的main中调用machine->init()来初始化，machine是命令行指定的机器类型，默认的init是pc_init_pci
+ram\_size内存大小从内存被读取到ram\_size中，在vl.c的main中调用machine\-\>init()来初始化，machine是命令行指定的机器类型，默认的init是pc\_init\_pci
 
 参考
 
