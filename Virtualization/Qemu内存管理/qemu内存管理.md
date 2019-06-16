@@ -83,8 +83,8 @@ configure\_accelerator中首先根据命令行输入的参数找到对应的acce
 
 在kvm_init()函数中主要做如下几件事情：
 
-1. s\-\>fd = qemu\_open("/dev/kvm", O_RDWR)，打开kvm控制的总设备文件/dev/kvm
-2. s\-\>vmfd = kvm\_ioctl(s, KVM_CREATE_VM, 0)，调用创建虚拟机的API
+1. s\-\>fd = qemu\_open("/dev/kvm", O\_RDWR)，**打开kvm控制的总设备文件/dev/kvm**
+2. s\-\>vmfd = kvm\_ioctl(s, KVM\_CREATE\_VM, 0)，调用**创建虚拟机的API**
 3. kvm\_check\_extension，检查各种extension，并设置对应的features
 4. ret = kvm\_arch\_init(s)，做一些体系结构相关的初始化，如msr、identity map、mmu pages number等等
 5. kvm\_irqchip\_create，调用kvm\_vm\_ioctl(s, KVM\_CREATE\_IRQCHIP)在KVM中虚拟IRQ芯片
