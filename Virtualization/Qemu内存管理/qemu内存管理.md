@@ -181,6 +181,24 @@ MemoryRegion mr：对应的是system\_memory或者system\_io，通过memory\_lis
 
 通用栈如下：
 
+```c
+memory_region_update_container_subregions
+memory_region_transaction_commit
+address_space_update_topology
+generate_memory_topology
+address_space_update_topology_pass
+memory_region_update_container_subregions函数在链表中寻找合适的位置插入,
+/插入指定的位置/
+QTAILQ_FOREACH(other, &mr->subregions, subregions_link) {
+if (subregion->priority >= other->priority) {
+QTAILQ_INSERT_BEFORE(other, subregion, subregions_link);
+goto done;
+}
+}
+QTAILQ_INSERT_TAIL(&mr->subregions, subregion, subregions_link);
+```
+
+
 
 
 参考
