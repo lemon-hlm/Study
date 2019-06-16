@@ -86,7 +86,7 @@ configure\_accelerator中首先根据命令行输入的参数找到对应的acce
 1. s\-\>fd = qemu\_open("/dev/kvm", O\_RDWR)，**打开kvm控制的总设备文件/dev/kvm**
 2. s\-\>vmfd = kvm\_ioctl(s, KVM\_CREATE\_VM, 0)，调用**创建虚拟机的API**
 3. kvm\_check\_extension，检查各种extension，并设置对应的features
-4. ret = kvm\_arch\_init(s)，做一些体系结构相关的初始化，如msr、identity map、mmu pages number等等
+4. ret = kvm\_arch\_init(s)，做一些**体系结构相关的初始化**，如msr、identity map、mmu pages number等等
 5. kvm\_irqchip\_create，调用kvm\_vm\_ioctl(s, KVM\_CREATE\_IRQCHIP)在KVM中虚拟IRQ芯片
 6. memory\_listener\_register，该函数是初始化内存的主要函数
 7. memory\_listener\_register调用了两次，分别注册了 kvm\_memory\_listener和kvm\_io\_listener，即通用的内存和MMIO是分开管理的。以通用的内存注册为例，函数首先在全局 的memory\_listener链表中添加了kvm\_memory\_listener，之后调用listener_add_address_space 分别将该listener添加到address_space_memory和address_space_io中, address_space_io是虚机的io地址空间（设备的io port就分布在这个地址空间里）。
