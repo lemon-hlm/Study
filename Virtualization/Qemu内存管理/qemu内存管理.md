@@ -7,6 +7,8 @@
 * [2 内存初始化](#2-内存初始化)
 * [3 内存分配](#3-内存分配)
 * [4 内存映射](#4-内存映射)
+* [5 客户机物理地址到主机虚拟地址的转换](#5-客户机物理地址到主机虚拟地址的转换)
+	* [5.1 地址属性](#51-地址属性)
 
 <!-- /code_chunk_output -->
 
@@ -198,7 +200,48 @@ goto done;
 QTAILQ_INSERT_TAIL(&mr->subregions, subregion, subregions_link);
 ```
 
+memory\_region\_transaction\_commit中引入了新的结构address\_spaces（AS），内存有不同的应用类型，address_spaces以链表形式存在，commit函数则是对所有AS执行 address\_space\_update\_topology，先看AS在哪里注册的，就是前面提到的kvm\_init里面，执行 memory\_listener\_register，注册了address\_space\_memory和address\_space\_io两个，涉及的另 外一个结构体则是MemoryListener，有kvm\_memory\_listener和kvm\_io\_listener，就是用于监控内存映射关系 发生变化之后执行回调函数。
 
+address_space_update_topology_pass函数比较之前的内存块，做相应的处理
+
+MEMORY_LISTENER_UPDATE_REGION函数，将变化的FlatRange构造一个MemoryRegionSection，然后 遍历所有的memory_listeners，如果memory_listeners监控的内存区域和MemoryRegionSection一样，则执 行第四个入参函数，如region_del函数，即kvm_region_del函数，这个是在kvm_init中初始化的。 kvm_region_add主要是kvm_set_phys_mem函数，主要是将MemoryRegionSection有效值转换成KVMSlot 形式，在kvm_set_user_memory_region中使用kvm_vm_ioctl(s, KVM_SET_USER_MEMORY_REGION, &mem)传递给kernel。
+
+# 5 客户机物理地址到主机虚拟地址的转换
+
+## 5.1 地址属性
+内存映射是以页为单位的, 也就意味着phys_offset的低12bit为0, Qemu使用这些bit标识地址属性:
+Bit 11-3 Bit 2 Bit 1 Bit 0
+MMIO索引, 其中4个固定分配 SUBWIDTH SUBPAGE ROMD
+0: RAM
+1: ROM
+2: UNASSIGNED
+3: NOTDIRTY 
+5.2 客户机物理地址到主机虚拟地址的转换步骤
+虚拟机因mmio退出时，qemu处理该退出事件，相关的函数：
+void cpu_physical_memory_rw(hwaddr addr, uint8_t buf, int len, int is_write)
+该函数实现虚拟机的物理地址到主机虚拟地址的转换
+
+查找该地址所应的MemoryRegionSection结构, 函数为 static MemoryRegionSection phys_page_find(PhysPageEntry lp, hwaddr addr, Node nodes, MemoryRegionSection *sections), 即将客户物理地址分为4段, 取每一段的索引查找下一段, 直至找到Level 3的MemoryRegionSection结构.
+调函数void qemu_get_ram_ptr(ram_addr_t addr), 取主机虚拟地址起始位置, 再加上页内偏移, 即为对应的主机虚拟地址
+6 Kvm映射
+static void kvm_set_phys_mem(MemoryRegionSection section, bool add)
+该函数把guest机的物理内存映射主机的虚拟内存
+typedef struct KVMSlot
+{
+hwaddr start_addr; /guest物理地址/
+ram_addr_t memory_size; /内存大小/
+void ram; /对应的虚拟地址/
+int slot; /对应的插槽号*/
+int flags;
+} KVMSlot;
+Qemu支持kvm时, 还需通知kvm将客户机物理内存进行映射, 方法为先定义一个映射结构:
+struct kvm_userspace_memory_region memory = {
+.memory_size = len,
+.guest_phys_addr = phys_start, // 客户机物理地址
+.userspace_addr = userspace_addr, // 主机虚拟地址, 而非上面的偏移
+.flags = log ? KVM_MEM_LOG_DIRTY_PAGES : 0,
+};
+然后调用kvm的ioctl r = kvm_vm_ioctl(kvm_state, KVM_SET_USER_MEMORY_REGION, &memory);同时, qemu的kvm用户空间代码, 还定义了一些结构如mapping/slot, 用于地址空间的管理, 如防止重复映射等.
 
 
 参考
