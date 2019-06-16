@@ -11,6 +11,7 @@
 	* [5.1 地址属性](#51-地址属性)
 	* [5.2 客户机物理地址到主机虚拟地址的转换步骤](#52-客户机物理地址到主机虚拟地址的转换步骤)
 * [6 Kvm映射](#6-kvm映射)
+* [7 参考](#7-参考)
 
 <!-- /code_chunk_output -->
 
@@ -272,11 +273,6 @@ struct kvm_userspace_memory_region memory = {
 
 然后调用kvm的ioctl r = kvm\_vm\_ioctl(kvm\_state, KVM\_SET\_USER\_MEMORY\_REGION, \&memory);同时, qemu的kvm用户空间代码, 还定义了一些结构如mapping/slot, 用于地址空间的管理, 如防止重复映射等.
 
-
-
-
-
-
-参考
+# 7 参考
 
 https://blog.51cto.com/zybcloud/2149626
