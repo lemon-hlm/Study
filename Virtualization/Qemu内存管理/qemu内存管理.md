@@ -5,6 +5,7 @@
 
 * [1 Qemu内存分布](#1-qemu内存分布)
 * [2 内存初始化](#2-内存初始化)
+* [3 内存分配](#3-内存分配)
 
 <!-- /code_chunk_output -->
 
@@ -96,9 +97,9 @@ configure\_accelerator中首先根据命令行输入的参数找到对应的acce
 8. 然后**调用listener的region\_add**（即 kvm_region_add()），该函数最终调用了kvm\_set\_user\_memory\_region()，其中调用 kvm\_vm\_ioctl(s, **KVM\_SET\_USER\_MEMORY\_REGION**, &mem)，该调用是最终**将内存区域注册到kvm**中的函数。
 9. 之后在vl.c的main函数中调用了cpu\_exec\_init\_all() \=\> memory\_map\_init()，设置**system\_memory**和**system\_io**。
 
-至此初始化好了所有Qemu中需要维护的相关的内存结构，并完成了在KVM中的注册。下面需要初始化KVM中的MMU支持。
+至此**初始化好**了所有Qemu中需要维护的**相关的内存结构**，并完成了在KVM中的注册。下面需要初始化KVM中的MMU支持。
 
-ram\_size内存大小从内存被读取到ram\_size中，在vl.c的main中调用machine\-\>init()来初始化，machine是命令行指定的机器类型，默认的init是pc\_init\_pci
+ram\_size内存大小从内存被读取到ram\_size中，在vl.c的main中调用machine\-\>init()来初始化，**machine**是命令行**指定的机器类型**，默认的init是pc\_init\_pci
 
 ```c
 pc_memory_init
@@ -112,6 +113,12 @@ generate_memory_topology
 render_memory_region
 flatview_insert
 ```
+
+# 3 内存分配
+
+**内存的分配**实现函数为 ram\_addr\_t **qemu\_ram\_alloc**(ram\_addr\_t size, MemoryRegion \*mr),输出为该次分配的内存在所有分配内存中的顺序偏移(即下图中的红色数字). 
+
+该函数最终调用phys\_mem\_alloc分配内存, 并将所分配的全部内存块, 串在一个ram\_blocks开头的链表中, 如下示意:
 
 
 
