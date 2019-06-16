@@ -241,9 +241,12 @@ void cpu_physical_memory_rw(hwaddr addr, uint8_t buf, int len, int is_write)
 调函数void qemu_get_ram_ptr(ram_addr_t addr), 取主机虚拟地址起始位置, 再加上页内偏移, 即为对应的主机虚拟地址
 
 # 6 Kvm映射
-static void kvm_set_phys_mem(MemoryRegionSection section, bool add)
 
-该函数把guest机的物理内存映射主机的虚拟内存
+```c
+static void kvm_set_phys_mem(MemoryRegionSection section, bool add)
+```
+
+该函数把**guest的物理内存**映射**主机的虚拟内存**
 
 ```c
 typedef struct KVMSlot
@@ -256,7 +259,7 @@ int flags;
 } KVMSlot;
 ```
 
-Qemu支持kvm时, 还需通知kvm将客户机物理内存进行映射, 方法为先定义一个映射结构:
+**Qemu支持kvm**时, 还需**通知kvm**将**客户机物理内存**进行映射, 方法为先定义一个映射结构:
 
 ```c
 struct kvm_userspace_memory_region memory = {
