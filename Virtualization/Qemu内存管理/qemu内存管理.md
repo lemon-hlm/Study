@@ -6,6 +6,7 @@
 * [1 Qemu内存分布](#1-qemu内存分布)
 * [2 内存初始化](#2-内存初始化)
 * [3 内存分配](#3-内存分配)
+* [4 内存映射](#4-内存映射)
 
 <!-- /code_chunk_output -->
 
@@ -118,9 +119,61 @@ flatview_insert
 
 **内存的分配**实现函数为 ram\_addr\_t **qemu\_ram\_alloc**(ram\_addr\_t size, MemoryRegion \*mr), 输出为**该次分配的内存**在**所有分配内存**中的**顺序偏移**(即下图中的红色数字). 
 
-该函数最终调用phys\_mem\_alloc分配内存, 并将所分配的全部内存块, 串在一个ram\_blocks开头的链表中, 如下示意:
+该函数**最终**调用**phys\_mem\_alloc**分配内存, 并将所分配的**全部内存块**, **串**在一个**ram\_blocks开头的链表**中, 如下示意:
 
 ![](./images/2019-06-16-14-06-50.png)
+
+上图中分配了4个内存块, 每次分配时偏移offset顺序累加, host指向该内存块在主机中的虚拟地址. 
+
+调用memory_listener_register注册
+
+# 4 内存映射
+
+使用的相关结构体如下：
+
+```c
+// memory.c
+struct AddrRange {
+    Int128 start; // 起始
+    Int128 size; // 大小
+};
+
+struct FlatRange {
+    //指向所属的MR
+    MemoryRegion *mr;
+    //在MR中的offset
+    hwaddr offset_in_region;
+    //本FR代表的区间
+    AddrRange addr;
+    uint8_t dirty_log_mask;
+    bool romd_mode;
+    bool readonly;
+    bool nonvolatile;
+    int has_coalesced_range;
+};
+
+// include/exec/memory.h
+typedef struct AddressSpaceDispatch AddressSpaceDispatch;
+typedef struct FlatRange FlatRange;
+
+struct FlatView {
+    struct rcu_head rcu;
+    //引用计数，为0就销毁
+    unsigned ref;
+    //对应的flatrange数组
+    FlatRange *ranges;
+    //flatrange数目
+    unsigned nr;
+    unsigned nr_allocated;
+    // 负责根据 GPA 找到 HVA
+    struct AddressSpaceDispatch *dispatch;
+    MemoryRegion *root;
+};
+```
+
+映射是将上面分配的地址块映射为客户机的物理地址, 函数如下, 输入为映射后的物理地址, 内存偏移，通用内存块的地址
+
+
 
 
 
