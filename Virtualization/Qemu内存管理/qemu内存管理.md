@@ -173,7 +173,13 @@ struct FlatView {
 
 映射是将上面**分配的地址块**映射为**客户机的物理地址**, 函数如下, 输入为映射后的物理地址, 内存偏移，通用内存块的地址
 
+```c
+static void memory_region_add_subregion_common(MemoryRegion mr, hwaddr offset, MemoryRegion subregion)
+```
 
+MemoryRegion mr：对应的是system\_memory或者system\_io，通过memory\_listener\_register函数注册内存块。
+
+通用栈如下：
 
 
 
