@@ -117,7 +117,7 @@ flatview_insert
 
 # 3 内存分配
 
-**内存的分配**实现函数为 ram\_addr\_t **qemu\_ram\_alloc**(ram\_addr\_t size, MemoryRegion \*mr), 输出为**该次分配的内存**在**所有分配内存**中的**顺序偏移**(即下图中的红色数字). 
+**内存的分配**实现函数为 ram\_addr\_t **qemu\_ram\_alloc**(ram\_addr\_t size, MemoryRegion \*mr), 输出为**该次分配的内存**在**所有分配内存**中的**顺序偏移**(即下图中的红色数字).
 
 该函数**最终**调用**phys\_mem\_alloc**分配内存, 并将所分配的**全部内存块**, **串**在一个**ram\_blocks开头的链表**中, 如下示意:
 
@@ -125,7 +125,7 @@ flatview_insert
 
 上图中分配了4个内存块, 每次分配时偏移offset顺序累加, host指向该内存块在主机中的虚拟地址. 
 
-调用memory_listener_register注册
+调用memory\_listener\_register注册
 
 # 4 内存映射
 
