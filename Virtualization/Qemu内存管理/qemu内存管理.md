@@ -88,8 +88,10 @@ configure\_accelerator中首先根据命令行输入的参数找到对应的acce
 3. kvm\_check\_extension，检查各种extension，并设置对应的features
 4. ret = kvm\_arch\_init(s)，做一些**体系结构相关的初始化**，如**msr**、**identity map**、**mmu pages number**等等
 5. kvm\_irqchip\_create，调用kvm\_vm\_ioctl(s, KVM\_CREATE\_IRQCHIP)**在KVM中虚拟IRQ芯片**
-6. memory\_listener\_register，该函数是初始化内存的主要函数
-7. memory\_listener\_register调用了两次，分别注册了 kvm\_memory\_listener和kvm\_io\_listener，即通用的内存和MMIO是分开管理的。以通用的内存注册为例，函数首先在全局 的memory\_listener链表中添加了kvm\_memory\_listener，之后调用listener\_add\_address\_space 分别将该listener添加到address\_space\_memory和address\_space\_io中, address\_space\_io是虚机的io地址空间（设备的io port就分布在这个地址空间里）。
+6. **memory\_listener\_register**，该函数是**初始化内存**的主要函数
+7. **memory\_listener\_register调用了两次**，分别注册了 **kvm\_memory\_listener**和**kvm\_io\_listener**，即**通用的内存**和**MMIO**是**分开管理**的。
+
+以**通用的内存注册**为例，函数首先在**全局的memory\_listener链表**中添加了**kvm\_memory\_listener**，之后调用listener\_add\_address\_space 分别将该listener添加到address\_space\_memory和address\_space\_io中, address\_space\_io是虚机的io地址空间（设备的io port就分布在这个地址空间里）。
 8. 然后调用listener的region\_add（即 kvm_region_add()），该函数最终调用了kvm\_set\_user\_memory\_region()，其中调用 kvm\_vm\_ioctl(s, KVM\_SET\_USER\_MEMORY\_REGION, &mem)，该调用是最终将内存区域注册到kvm中的函数。
 9. 之后在vl.c的main函数中调用了cpu\_exec\_init\_all() => memory\_map\_init()，设置system\_memory和system\_io。
 
