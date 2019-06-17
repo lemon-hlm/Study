@@ -105,7 +105,7 @@ AddressSpace下面**root**及其子树形成了**一个虚拟机**的**物理地
 
 ## 2.2 MemoryRegion
 
-一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过**树**连接起来，树的根是AddressSpace的root域。
+一个AddressSpace下面包含**多个MemoryRegion**，这些MemoryRegion结构通过**树**连接起来，**树的根**是AddressSpace的**root域**。
 
 **结构体MemoryRegion**是联系**guest物理地址空间**和描述**真实内存的RAMBlocks(宿主机虚拟地址**)之间的桥梁。
 
