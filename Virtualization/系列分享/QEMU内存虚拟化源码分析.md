@@ -59,7 +59,9 @@ struct kvm_userspace_memory_region {
 	__u32 flags;
     // guest物理地址
 	__u64 guest_phys_addr;
+    // 内存大小
 	__u64 memory_size; /* bytes */
+    // HVA起始地址
 	__u64 userspace_addr; /* start of the userspace allocated memory */
 };
 ```
