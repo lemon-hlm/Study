@@ -57,6 +57,7 @@ KVM的**ioctl**中，**设置虚拟机内存**的为**KVM\_SET\_USER\_MEMORY\_RE
 struct kvm_userspace_memory_region {
 	__u32 slot;
 	__u32 flags;
+    // guest物理地址
 	__u64 guest_phys_addr;
 	__u64 memory_size; /* bytes */
 	__u64 userspace_addr; /* start of the userspace allocated memory */
