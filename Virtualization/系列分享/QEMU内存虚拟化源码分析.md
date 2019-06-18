@@ -207,9 +207,7 @@ struct RAMBlock {
 
 也就是说**ram\_addr\_t offset**位于一个**全局命名空间**中，可以通过此offset偏移量**定位某个RAMBlock**。
 
-
 然而**ram\_addr\_t命名空间**并**不等同**于**guest物理内存空间！！！**，它仅表示**所有RAMBlock集合**构成的**一个地址空间**。
-
 
 Address, MemoryRegion, RAMBlock关系如下图所示。
 
