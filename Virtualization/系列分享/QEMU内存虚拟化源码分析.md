@@ -78,6 +78,8 @@ struct kvm_userspace_memory_region {
 
 **所有的CPU架构**都有**内存地址空间**, 有些CPU架构又有一个**IO地址空间**。它们在QEMU中被表示为**AddressSpace数据结构**.
 
+虚拟机物理地址
+
 qemu中用**AddressSpace**用来表示**CPU/设备**看到的**内存**.
 
 ```c
