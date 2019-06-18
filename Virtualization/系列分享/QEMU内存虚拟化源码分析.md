@@ -103,7 +103,7 @@ struct AddressSpace {
 };
 ```
 
-AddressSpace下面**root**及其子树形成了**一个虚拟机**的**物理地址**
+AddressSpace下面**root**及其**子树**形成了**一个虚拟机**的**物理地址！！！**
 
 ## 2.2 MemoryRegion
 
@@ -137,6 +137,7 @@ struct MemoryRegion {
     const MemoryRegionOps *ops;
     void *opaque;
     MemoryRegion *container;
+    // 在AddressSpace中的地址的大小?
     Int128 size;
     //在AddressSpace中的地址
     hwaddr addr;
