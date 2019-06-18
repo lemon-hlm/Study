@@ -215,7 +215,7 @@ Address, MemoryRegion, RAMBlock关系如下图所示。
 
 ## 2.4 FlatView
 
-AddressSpace下面**root及其子树**形成了一个**虚拟机的物理地址**，但是在往**kvm进行设置**的时候，需要将其转换为一个**平坦的地址模型**，也就是从0开始的。
+AddressSpace下面**root及其子树**形成了一个**虚拟机的物理地址！！！**，但是在往**kvm进行设置！！！**的时候，需要将其转换为一个**平坦的地址模型**，也就是从0开始的。
 
 这个就用FlatView表示，**一个AddressSpace**对应**一个FlatView**。
 
