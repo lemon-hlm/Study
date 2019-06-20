@@ -89,7 +89,7 @@ nova evacuate其实是通过虚拟机rebuild的过程完成的，原compute节�
 
 ## 4.1 evacuate操作
 
-入口文件nova/api/openstack/compute//evacuate.py中Controller类下的\_evacuate方法
+入口文件nova/api/openstack/compute/evacuate.py中Controller类下的\_evacuate方法
 
 ```python
 def _evacuate(self, req, id, body):
