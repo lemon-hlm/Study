@@ -7,7 +7,7 @@
 - [ 2 下载内核源码](#2-下载内核源码)
   - [ 2.1 从官网下载](#21-从官网下载)
   - [ 2.2 通过yum下载](#22-通过yum下载)
-- [ 3 抽取源码包](#3-抽取源码包)
+- [ 3 获得源码](#3-获得源码)
 
 <!-- /code_chunk_output -->
 
@@ -53,7 +53,9 @@ rpm -qf /bin/vim
 # yumdownloader --source vim
 ```
 
-# 3 抽取源码包
+# 3 获得源码
+
+抽取源码包
 
 ```
 [root@gerrylee vim]# rpm2cpio vim-7.4.160-1.el7.src.rpm |cpio -id
