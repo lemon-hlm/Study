@@ -14,6 +14,9 @@
   - [ 2 QEMU的线程](#2-qemu的线程)
 - [ 3 QEMU的初始化流程](#3-qemu的初始化流程)
   - [ 4 QEMU虚拟网卡设备的创建流程](#4-qemu虚拟网卡设备的创建流程)
+  - [ 5 QEMU网卡的流程](#5-qemu网卡的流程)
+- [ 三、相关技术-处理器管理和硬件辅助虚拟化技术](#三-相关技术-处理器管理和硬件辅助虚拟化技术)
+  - [ 1 KVM中Guest OS的调度执行](#1-kvm中guest-os的调度执行)
 
 <!-- /code_chunk_output -->
 
@@ -249,23 +252,29 @@ d.4) 返回步骤2
 
 由于这里的值是pci.0，因此其实只进行了一次qbus_find_recursive调用
 
-e) 如果bus路径为空，则调用qbus_find_recursive(main_system_bus, NULL, info->bus_info)来获取bus实例。这里的info是driver("virtio-net-pci")所对应的DeviceInfo，即最上面的结构virtio-pci的初始化步骤是virtio_pci_register_devices -> pci_qdev_register_many -> pci_qdev_register，在该函数中，会设置info->bus_info = &pci_bus_info，这样就把PCIDeviceInfo
-和pci的BusInfo联系起来了
+e) 如果bus路径为空，则调用qbus_find_recursive(main_system_bus, NULL, info->bus_info)来获取bus实例。这里的info是driver("virtio-net-pci")所对应的DeviceInfo，即最上面的结构virtio-pci的初始化步骤是virtio_pci_register_devices -> pci_qdev_register_many -> pci_qdev_register，在该函数中，会设置info->bus_info = &pci_bus_info，这样就把PCIDeviceInfo和pci的BusInfo联系起来了
+
 qbus_find_recursive是一个递归函数，其流程如下：
 
-e.1) 如果当前bus的名称和指定的名称相同(指定名称不为空的情况下)，并且当前bus指向的bus info和
-    指定的bus info相同(指定bus info不为空的情况下)，则返回当前bus
-e.2) 这里是一个两重循环:
-    对于当前bus所有附属的设备(bus->children为链表头)
-        对于当前设备所有的附属bus(dev->child_bus为链表头)
-            调用qbus_find_recursive函数
-f) 调用qdev_create_from_info(bus, info)来创建设备，返回的是DeviceState结构。这里其实返回的是
-一个VirtIOPCIProxy实例，因为create的时候是根据qdev.size来分配内存大小的。
-g) 如果qemu_opts_id(opts)不为空，则设置qdev->id
-h) 调用qemu_opt_foreach(opts, set_property, qdev, 1)来设置设备的各种属性
-i) 调用qdev_init来初始化设备。
-j) qdev_init会调用dev->info->init函数。这里实际调用的函数是virtio_net_init_pci
+e.1) 如果当前bus的名称和指定的名称相同(指定名称不为空的情况下)，并且当前bus指向的bus info和指定的bus info相同(指定bus info不为空的情况下)，则返回当前bus
 
+e.2) 这里是一个两重循环:
+
+对于当前bus所有附属的设备(bus->children为链表头)
+
+对于当前设备所有的附属bus(dev->child_bus为链表头)
+
+调用qbus_find_recursive函数
+
+f) 调用qdev_create_from_info(bus, info)来创建设备，返回的是DeviceState结构。这里其实返回的是一个VirtIOPCIProxy实例，因为create的时候是根据qdev.size来分配内存大小的。
+
+g) 如果qemu_opts_id(opts)不为空，则设置qdev->id
+
+h) 调用qemu_opt_foreach(opts, set_property, qdev, 1)来设置设备的各种属性
+
+i) 调用qdev_init来初始化设备。
+
+j) qdev_init会调用dev->info->init函数。这里实际调用的函数是virtio_net_init_pci
 
 在这里也大致描述一下bus pci.0是如何生成的
 1). 在main函数里面很前面的地方会调用module_call_init(MODULE_INIT_MACHINE);
@@ -299,3 +308,108 @@ bus->name = buf;
 main-system-bus ---->  i440FX-pcihost ----> pci.0
 
 与这段流程类似的有一张流程图可以更加详尽的介绍一下流程，但与上文介绍的内容不是一一对应的。
+
+![](./images/2019-07-03-22-39-24.png)
+
+## 5 QEMU网卡的流程
+
+![](./images/2019-07-03-22-40-35.png)
+
+6 QEMU中使用BIOS的流程分析
+http://www.ibm.com/developerworks/cn/linux/1410_qiaoly_qemubios/
+
+
+# 三、相关技术-处理器管理和硬件辅助虚拟化技术
+
+Intel 在2006年发布了硬件虚拟化技术。其中支持X86体系结构的称为Intel VT-x技术。ADM称为SVM技术。
+
+VT-x引入了一种新的处理器操作，叫做VMX（Virtual Machine Extension），提供了两种处理器的工作环境。VMCS结构实现两种环境之间的切换。VM Entry使虚拟机进去客户模式，VM Exit使虚拟机退出客户模式。
+
+## 1 KVM中Guest OS的调度执行
+
+VMM调度Guest OS执行时，Qemu通过ioctl系统调用进入内核模式，在KVM Driver中通过get_cpu获得当前物理CPU的引用。之后将Guest状态从VMCS中读出。并装入物理CPU中。执行VMLAUCH指令使得物理处理器进入非根操作环境，运行客户代码。
+
+当Guest OS执行一些特权指令或者外部事件时，比如I/O访问，对控制寄存器的操作，MSR的读写数据包到达等。都会导致物理CPU发生VMExit，停止运行Guest OS。将Guest OS保存到VMCS中，Host状态装入物理处理器中，处理器进入根操作环境，KVM取得控制权，通过读取VMCS中VM_EXIT_REASON字段得到引起VM Exit的原因。从而调用kvm_exit_handler处理函数。如果由于I/O获得信号到达，则退出到用户模式的Qemu处理。处理完毕后，重新进入客户模式运行虚拟CPU。如果是因为外部中断，则在Lib KVM中做一些必要的处理，重新进入客户模式执行客户代码。
+
+2 KVM中内存管理
+
+KVM使用影子页表实现客户物理地址到主机物理地址的转换。初始为空，随着虚拟机页访问实效的增加，影子页表被逐渐建立起来，并随着客户机页表的更新而更新。在KVM中提供了一个哈希列表和哈希函数，以客户机页表项中的虚拟页号和该页表项所在页表的级别作为键值，通过该键值查询，如不为空，则表示该对应的影子页表项中的物理页号已经存在并且所指向的影子页表已经生成。如为空，则需新生成一张影子页表，KVM将获取指向该影子页表的主机物理页号填充到相应的影子页表项的内容中，同时以客户机页表虚拟页号和表所在的级别生成键值，在代表该键值的哈希桶中填入主机物理页号，以备查询。但是一旦Guest OS中出现进程切换，会把整个影子页表全部删除重建，而刚被删掉的页表可能很快又被客户机使用，如果只更新相应的影子页表的表项，旧的影子页表就可以重用。因此在KVM中采用将影子页表中对应主机物理页的客户虚拟页写保护并且维护一张影子页表的逆向映射表，即从主机物理地址到客户虚拟地址之间的转换表，这样VM对页表或页目录的修改就可以触发一个缺页异常，从而被KVM捕获，对客户页表或页目录项的修改就可以同样作用于影子页表，通过这种方式实现影子页表与客户机页表保持同步。
+
+3 KVM中设备管理
+
+一个机器只有一套I/O地址和设备。设备的管理和访问是操作系统中的突出问题、同样也是虚拟机实现的难题，另外还要提供虚拟设备供各个VM使用。在KVM中通过移植Qemu中的设备模型(Device Model)进行设备的管理和访问。操作系统中，软件使用可编程I/O（PIO）和内存映射I/O（MMIO）与硬件交互。而且硬件可以发出中断请求，由操作系统处理。在有虚拟机的情况下，虚拟机必须要捕获并且模拟PIO和MMIO的请求，模拟虚拟硬件中断。
+
+捕获PIO：由硬件直接提供。当VM发出PIO指令时，导致VM Exit然后硬件会将VM Exit原因及对应的指令写入VMCS控制结构中，这样KVM就会模拟PIO指令。MMIO捕获：对MMIO页的访问导致缺页异常，被KVM捕获，通过X86模拟器模拟执行MMIO指令。KVM中的I/O虚拟化都是用户空间的Qemu实现的。所有PIO和MMIO的访问都是被转发到Qemu的。Qemu模拟硬件设备提供给虚拟机使用。KVM通过异步通知机制以及I/O指令的模拟来完成设备访问，这些通知包括：虚拟中断请求，信号驱动机制以及VM间的通信。
+
+以虚拟机接收数据包来说明虚拟机和设备的交互。
+
+![](./images/2019-07-03-22-42-49.png)
+
+(1)当数据包到达主机的物理网卡后，调用物理网卡的驱动程序，在其中利用Linux内核中的软件网桥，实现数据的转发。
+
+(2)在软件网挢这一层，会判断数据包是发往那个设备的，同时调用网桥的发送函数，向对应的端口发送数据包。
+
+(3)若数据包是发往虚拟机的，则要通过tap设备进行转发，tap设备由两部分组成，网络设备和字符设备。网络设备负责接收和发送数据包，字符设备负责将数据包往内核空间和用户空间进行转发。Tap网络部分收到数据包后，将其设备文件符置位，同时向正在运行VM的进程发出I/O可用信号，引起VM Exit，停止VM运行，进入根操作状态。KVM根据KVM_EXIT_REASON判断原因，模拟I/O指令的执行，将中断注入到VM的中断向量表中。
+
+(4)返回用户模式的Qemu中，执行设备模型。返回到kvm_main_loop中，执行kvm_main_loop_wait，之后进入main_loop_wait中，在这个函数里收集对应设备的设备文件描述符的状态，此时tap设备文件描述符的状态同样被集到fd set。
+
+(5)kvm_main_loop不停地循环，通过select系统调用判断哪个文件描述符的状态发生变化，相应的调用对应的处理函数。对予tap来说，就会通过qemu_send_packet将数据发往rtl8139_do_receiver，在这个函数中完成相当于硬件RTL8139网卡的逻辑操作。KVM通过模拟I/O指令操作虚拟RTL8139将数据拷贝到用户地址空间，放在相应的I/O地址。用户模式处理完毕后返回内核模式，而后进入客户模式，VM被再次执行，继续收发数据包。
+
+三、 源码分析
+
+1 源码文件结构
+
+源码文件主要是分为三部分：kvm核心代码（平台无关）、kvm平台相关代码以及头文件
+
+kvm核心代码目录：virt/kvm，其中所包含文件：
+
+* ioapic.h
+* ioapic.c
+* iodev.h
+* kvm_main.c
+
+kvm平台相关源代码文件。比如针对intel的HVM支持的vmx.c文件，以及针对AMD的HVM支持的svm.c文件。其所在目录为：arch/x86/kvm，其中所包含的文件为：
+* Kconfig
+* Makefile
+* i8259.c
+* irq.c
+* irq.h
+* kvm_svm.h
+* lapic.c
+* lapic.h
+* mmu.c
+* mmu.h
+* paging_tmpl.h
+* segment_descriptor.h
+* svm.c
+* svm.h
+* vmx.c
+* vmx.h
+* x86.c
+* x86_emulate.c
+
+
+头文件分为两种，根据平台分为include/linux和include/asm-x86目录。
+
+include/linux目录包含的是通用pc上linux的头文件，其对应文件为：
+
+* kvm.h
+* kvm_host.h
+* kvm_para.h
+* kvm_x86_emulate.h
+
+include/asm-x86/
+* kvm.h
+* kvm_host.h
+* kvm_para.h
+* kvm_x86_emulate.h
+
+2 KVM创建和运行虚拟机的流程
+
+KVM虚拟机创建和运行虚拟机分为用户态和核心态两个部分，用户态主要提供应用程序接口，为虚拟机创建虚拟机上下文环境，在libkvm中提供访问内核字符设备/dev/kvm的接口；内核态为添加到内核中的字符设备/dev/kvm，模块加载进内核后即可进行接口用户空间调用创建虚拟机。在创建虚拟机过程中，kvm字符设备主要为客户机创建kvm数据机构，创建该虚拟机的虚拟机文件描述符及其相应的数据结构以及创建虚拟处理器及其相应的数据结构。Kvm创建虚拟机的流程如下图所示。
+
+![](./images/2019-07-03-22-44-48.png)
+
+首先申明一个kvm_context_t变量用以描述用户态虚拟机上下文信息，然后调用kvm_init()函数初始化虚拟机上下文信息；函数kvm_create()创建虚拟机实例，该函数通过ioctl系统调用创建虚拟机相关的内核数据结构并且返回虚拟机文件描述符给用户态kvm_context_t数据结构；创建完内核虚拟机数据结构后，再创建内核pit以及mmio等基本外设模拟设备，然后调用kvm_create_vcpu()函数来创建虚拟处理器，kvm_create_vcpu()函数通过ioctl()系统调用向由vm_fd文件描述符指向的虚拟文件调用创建虚拟处理器，并将虚拟处理器的文件描述符返回给用户态程序，用以以后的调度使用；创建完虚拟处理器后，由用户态的QEMU程序申请客户机用户空间，用以加载和运行客户机代码；为了使得客户虚拟机正确执行，必须要在内核中为客户机建立正确的内存映射关系，即影子页表信息。因此，申请客户机内存地址空间后，调用函数kvm_create_phys_mem()创建客户机内存映射关系，该函数主要通过ioctl系统调用向vm_fd指向的虚拟文件调用设置内核数据结构中客户机内存域相关信息，主要建立影子页表信息；当创建好虚拟处理器和影子页表后，即可读取客户机到指定分配的空间中，然后调度虚拟处理器运行。调度虚拟机的函数为kvm_run()，该函数通过ioctl系统调用调用由虚拟处理器文件描述符指向的虚拟文件调度处理函数kvm_run()调度虚拟处理器的执行，该系统调用将虚拟处理器vcpu信息加载到物理处理器中，通过vm_entry执行进入客户机执行。在客户机正常运行期间kvm_run()函数不返回，只有发生以下两种情况时，函数返回：1，发生了I/O事件，如客户机发出读写I/O的指令；2，产生了客户机和内核KVM都无法处理的异常。I/O事件处理完毕后，通过重新调用kvm_run()函数继续调度客户机的执行。
+
+内存相关：http://www.linux-kvm.org/page/Memory
