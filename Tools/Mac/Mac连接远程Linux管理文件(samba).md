@@ -3,15 +3,16 @@
 
 <!-- code_chunk_output -->
 
-* [1 需求背景](#1-需求背景)
-* [2 samba简介](#2-samba简介)
-* [3 Linux配置](#3-linux配置)
-	* [3.1 安装samba](#31-安装samba)
-	* [3.2 共享文件夹](#32-共享文件夹)
-	* [3.3 配置samba.conf](#33-配置sambaconf)
-	* [3.4 添加samba账户](#34-添加samba账户)
-* [4 在mac上连接](#4-在mac上连接)
-	* [4.1 \.DS\_Store安全隐患](#41-ds_store安全隐患)
+- [1 需求背景](#1-需求背景)
+- [2 samba简介](#2-samba简介)
+- [3 Linux配置](#3-linux配置)
+  - [3.1 安装samba](#31-安装samba)
+  - [3.2 共享文件夹](#32-共享文件夹)
+  - [3.3 配置samba.conf](#33-配置sambaconf)
+  - [3.4 添加samba账户](#34-添加samba账户)
+  - [3.5 重启smb.service](#35-重启smbservice)
+- [4 在mac上连接](#4-在mac上连接)
+  - [4.1 \.DS\_Store安全隐患](#41-ds_store安全隐患)
 
 <!-- /code_chunk_output -->
 
@@ -81,6 +82,12 @@ sudo smbpasswd -a USER_NAME
 ```
 
 我是用了root用户
+
+## 3.5 重启smb.service
+
+```
+systemctl restart smb.service
+```
 
 # 4 在mac上连接
 
