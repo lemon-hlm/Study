@@ -19,7 +19,9 @@
   - [4.4 sysexit执行流程](#44-sysexit执行流程)
 - [5 sysenter/sysexit编程示例](#5-sysentersysexit编程示例)
 - [6 Linux SCI](#6-linux-sci)
-- [参考](#参考)
+  - [6.1 基于多路分解的系统调用实现](#61-基于多路分解的系统调用实现)
+  - [6.2 直接内核态子函数调用实现系统调用](#62-直接内核态子函数调用实现系统调用)
+- [7 参考](#7-参考)
 
 <!-- /code_chunk_output -->
 
@@ -507,30 +509,39 @@ int main() {
 
 # 6 Linux SCI
 
-Linux中系统调用的实现会根据不同的架构而有所变化，而且即使在某种给定的体架构上也会不同。例如，早期的x86处理器使用了中断机制从用户空间迁移到内核空间中，不过新的IA-32处理器则提供了一些指令对这种转换进行优化(使用sysentersysexit指令)
+Linux中系统调用的实现会根据不同的架构而有所变化，而且即使在某种给定的体架构上也会不同。例如，早期的x86处理器使用了中断机制从用户空间迁移到内核空间中，不过新的IA\-32处理器则提供了一些指令对这种转换进行优化(使用sysentersysexit指令)
 
-0x1: 基于多路分解的系统调用实现
+## 6.1 基于多路分解的系统调用实现
 
-在Linux内核中，多路分解是一种很常见的逻辑架构，每个系统调用都是通过一个单一的入口点多路传入内核。eax寄存器用来标识应当调用的某个系统调用。例如，BSD(Berkeley Software Distribution)socket 调用(socket、bind、 connect 等)都与一个单独的系统调用索引(__NR_socketcall)关联在一起，不过在内核中会进行多路分解，通过另外一个参数进入适当的调用。请参看 ./linux/net/socket.c中的sys_socketcall 函数
+在Linux内核中，多路分解是一种很常见的逻辑架构，**每个系统调用**都是通过一个**单一的入口点多路**传入内核。eax寄存器用来标识应当调用的某个系统调用。例如，BSD(Berkeley Software Distribution)socket 调用(socket、bind、 connect 等)都与一个单独的系统调用索引(\_\_NR\_socketcall)关联在一起，不过在内核中会进行多路分解，通过另外一个参数进入适当的调用。请参看 ./linux/net/socket.c中的sys\_socketcall 函数
 
-关于BSD sys_socketcall的相关知识，请参阅另一篇文章
+关于BSD sys\_socketcall的相关知识，请参阅另一篇文章
 
+```
 http://www.cnblogs.com/LittleHann/p/3875451.html
 //搜索：2. connect() API原理
-0x2: 直接内核态子函数调用实现系统调用
+```
 
-通过一个系统调用，将工作委托给多个其他函数，是内核前期的常见做法，内核后来移植的某些体系结构(例如IA-64、AMD64)没有实现多路分解，而是直接使用原始多路复用的子函数直接作为系统调用
+## 6.2 直接内核态子函数调用实现系统调用
+
+通过一个系统调用，将工作委托给多个其他函数，是内核前期的常见做法，内核后来移植的某些体系结构(例如IA\-64、AMD64)没有实现多路分解，而是直接使用原始多路复用的子函数直接作为系统调用
+
 例如socketcall的多路分解就演变成了直接的子函数系统调用
 
 Relevant Link:
 
 http://www.ibm.com/developerworks/cn/linux/l-system-calls/
+
 http://blog.chinaunix.net/uid-29643701-id-4240657.html 
 
-# 参考
+# 7 参考
 
 https://www.cnblogs.com/LittleHann/p/4111692.html
 
 https://www.ibm.com/developerworks/cn/linux/kernel/l-k26ncpu/index.html
 
 http://www.cnblogs.com/LittleHann/p/3871630.html
+
+http://blog.chinaunix.net/uid-29643701-id-4240657.html 
+
+http://www.ibm.com/developerworks/cn/linux/l-system-calls/
