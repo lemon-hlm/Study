@@ -9,7 +9,7 @@
   - [3.1 安装samba](#31-安装samba)
   - [3.2 共享文件夹](#32-共享文件夹)
   - [3.3 配置samba.conf](#33-配置sambaconf)
-  - [3.4 添加samba账户](#34-添加samba账户)
+  - [3.4 添加samba账户和密码](#34-添加samba账户和密码)
   - [3.5 重启smb.service](#35-重启smbservice)
 - [4 在mac上连接](#4-在mac上连接)
   - [4.1 \.DS\_Store安全隐患](#41-ds_store安全隐患)
@@ -74,7 +74,7 @@ USER\_NAME就是你的用户名。
     directory mask = 0777
 ```
 
-## 3.4 添加samba账户
+## 3.4 添加samba账户和密码
 
 ```
 sudo touch /etc/samba/smbpasswd
