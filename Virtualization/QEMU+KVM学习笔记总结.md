@@ -381,9 +381,9 @@ j) qdev\_init会调用dev\-\>info\-\>init函数。这里实际调用的函数是
 
 2). module\_call_init会调用**所有已注册QEMUMachine**的**init**函数。该版本的qemu是注册了pc\_machine\_rhel610, pc\_machine\_rhel600, pc\_machine\_rhel550, pc\_machine\_rhel544, pc\_machine\_rhel540这几个 (**pc.c**)
 
-3). 这些Machine的init函数(pc_init_rhel600, ...)都会调用到pc_init_pci函数
+3). 这些Machine的init函数(pc\_init\_rhel600, ...)都会调用到pc\_init\_pci函数
 
-4). pc_init_pci会调用pc_init1，pc_init1在pci_enabled情况下会调用i440fx_init (piix_pci.c)
+4). pc\_init\_pci会调用pc\_init1，pc_init1在pci_enabled情况下会调用i440fx_init (piix_pci.c)
 
 5). i440fx_init首先会调用qdev_create(NULL, "i440FX-pcihost")创建一个host device
 
