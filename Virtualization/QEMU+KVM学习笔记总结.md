@@ -21,6 +21,8 @@
     - [4.1.4 卸下特殊的任务到工作线程](#414-卸下特殊的任务到工作线程)
     - [4.1.5 执行guest代码](#415-执行guest代码)
     - [4.1.6 IOTHREAD和NON\-IOTHREAD线程架构](#416-iothread和non-iothread线程架构)
+      - [4.1.6.1 non\-iothread线程架构](#4161-non-iothread线程架构)
+      - [4.1.6.2 iothread线程架构](#4162-iothread线程架构)
   - [2 QEMU的线程](#2-qemu的线程)
 - [3 QEMU的初始化流程](#3-qemu的初始化流程)
   - [4 QEMU虚拟网卡设备的创建流程](#4-qemu虚拟网卡设备的创建流程)
@@ -206,13 +208,21 @@ TCG通过**动态二进制转化(dynamic binary translation**)来模拟guest，�
 
 ### 4.1.6 IOTHREAD和NON\-IOTHREAD线程架构
 
-**传统的架构**是**单个QEMU线程**来执行**guest代码**和**事件循环**。这个模型就是所谓的**non\-iothread**或者说!CONFIG\_IOTHREAD，它是QEMU**默认使用**./configure && make的设置。**QEMU线程**执行**guest代码**直到一个**异常或者信号！！！** 出现才回到**控制器**。然后它在**select**(2)**不被阻塞**的情况执行一次**事件循环的一次迭代**。然后它又回到guest代码中并重复上述过程直到QEMU被关闭。
+#### 4.1.6.1 non\-iothread线程架构
+
+**传统的架构**是**单个QEMU线程**来执行**guest代码**和**事件循环**。这个模型就是所谓的**non\-iothread**或者说!CONFIG\_IOTHREAD，它是QEMU**默认使用**./configure && make的设置。
+
+**QEMU线程**执行**guest代码**直到一个**异常或者信号！！！** 出现才回到**控制器**。然后它在**select**(2)**不被阻塞**的情况执行一次**事件循环的一次迭代**。然后它又回到guest代码中并重复上述过程直到QEMU被关闭。
 
 如果guest使用，例如\-**smp 2**，以启动一个**多vcpu**启动，也**不会有多的QEMU线程被创建！！！**。取而代之的是在**单个QEMU线程**中**多重执行两个vcpu和事件循环**。因而non\-iothread不能很好利用**多核心的host硬件**，而使得对SMP guest的模拟性能很差。
 
-需要注意的是，虽然只有一个QEMU线程，但可能会有0或多个工作线程。这些线程可能是临时的也可能是永久的。记住这些工作线程只执行特殊的任务而不执行guest代码也不处理事件。我之说以要强调这个是因为当监视host时很容易被工作线程迷惑而把他们当做vcpu线程来中断。记住，non-iothread只有一个QEMU线程。
+需要注意的是，虽然**只有一个QEMU线程**，但可能会有**0或多个工作线程**。这些线程可能是临时的也可能是永久的。记住这些工作线程**只执行特殊的任务**而**不执行guest代码**也**不处理事件**。我之说以要强调这个是因为当监视host时很容易被工作线程迷惑而把他们当做vcpu线程来中断。记住，**non\-iothread只有一个QEMU线程**。
 
-一种更新的架构是每个vcpu一个QEMU线程外加一个专用的事件循环线程。这个模型被定义为iothread或者CONFIG_IOTHREAD，它可以通过./configure --enable-io-thread在创建时开启。每个vcpu线程可以平行的执行guest代码，以此提供真正的SMP支持。而iothread执行事件循环。核心QEMU代码不能同时执行的规则通过一个全局互斥来维护，并通过该互斥锁同步vcpu和iothread间核心QEMU代码。大多数时候vcpu线程在执行guest代码而不需要获取全局互斥锁。大多数时间iothread被阻塞在select(2)因而也不需要获取全局互斥锁。
+#### 4.1.6.2 iothread线程架构
+
+一种更新的架构是**每个vcpu一个QEMU线程**外加**一个专用的事件循环线程**。这个模型被定义为iothread或者CONFIG\_IOTHREAD，它可以通过./configure \-\-enable\-io\-thread在创建时开启。
+
+**每个vcpu线程**可以**平行的执行guest代码**，以此提供真正的SMP支持。而**iothread**执行**事件循环**。核心QEMU代码不能同时执行的规则通过一个全局互斥来维护，并通过该互斥锁同步vcpu和iothread间核心QEMU代码。大多数时候vcpu线程在执行guest代码而不需要获取全局互斥锁。大多数时间iothread被阻塞在select(2)因而也不需要获取全局互斥锁。
 
 注意，TCG不是线程安全的，所以即使在在iothread模式下，它还是在一个QEMU线程中执行多个vcpu。只有KVM可以真正利用每个vcpu一个线程的优势。
 
