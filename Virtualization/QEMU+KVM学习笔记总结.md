@@ -245,13 +245,19 @@ bash(9080)───qemu-system-x86(10962)─┬─{qemu-system-x86}(10963)
                                     ├─{qemu-system-x86}(10967)
                                     ├─{qemu-system-x86}(10968)
                                     └─{qemu-system-x86}(10970)
+
+[root@gerrylee ~]# pstree -p 9080
+bash(9080)───qemu-system-x86(10962)─┬─{qemu-system-x86}(10963)
+                                    ├─{qemu-system-x86}(10967)
+                                    ├─{qemu-system-x86}(10968)
+                                    └─{qemu-system-x86}(10970)
 ```
 
 QEMU的主要线程:
 
-- **主线程（main\_loop**），**一个**
-- **vCPU线程**，**一个或者多个**
-- **I/O线程（aio**），**一个或者多个**
+- **主线程（main\_loop**），**一个**, 10962
+- **vCPU线程**，**一个或者多个**, 10967, 10968
+- **I/O线程（aio**），**一个或者多个**, 
 - **worker thread(VNC/SPICE**)，**一个**
 
 qemu里有个**主线程**处于**无限循环**，会做如下操作
