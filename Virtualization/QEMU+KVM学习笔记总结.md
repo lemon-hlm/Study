@@ -363,35 +363,43 @@ e.2) 这里是一个两重循环:
 
 对于当前设备所有的附属bus(dev\-\>child\_bus为链表头)
 
-调用qbus_find_recursive函数
+调用qbus\_find\_recursive函数
 
-f) 调用qdev_create_from_info(bus, info)来创建设备，返回的是DeviceState结构。这里其实返回的是一个VirtIOPCIProxy实例，因为create的时候是根据qdev.size来分配内存大小的。
+f) 调用**qdev\_create\_from\_info**(bus, info)来**创建设备**，返回的是**DeviceState**结构。这里其实返回的是一个**VirtIOPCIProxy实例**，因为create的时候是根据**qdev.size**来分配内存大小的。
 
-g) 如果qemu_opts_id(opts)不为空，则设置qdev->id
+g) 如果qemu\_opts\_id(opts)不为空，则设置qdev\-\>id
 
-h) 调用qemu_opt_foreach(opts, set_property, qdev, 1)来设置设备的各种属性
+h) 调用qemu\_opt\_foreach(opts, set\_property, qdev, 1)来设置设备的各种属性
 
-i) 调用qdev_init来初始化设备。
+i) 调用qdev\_init来初始化设备。
 
-j) qdev_init会调用dev->info->init函数。这里实际调用的函数是virtio_net_init_pci
+j) qdev\_init会调用dev\-\>info\-\>init函数。这里实际调用的函数是virtio\_net\_init\_pci
 
 在这里也大致描述一下bus pci.0是如何生成的
-1). 在main函数里面很前面的地方会调用module_call_init(MODULE_INIT_MACHINE);
-2). module_call_init会调用所有已注册QEMUMachine的init函数。该版本的qemu是注册了
-pc_machine_rhel610, pc_machine_rhel600, pc_machine_rhel550, pc_machine_rhel544,
-pc_machine_rhel540这几个 (pc.c)
-3). 这些Machine的init函数(pc_init_rhel600, ...)都会调用到pc_init_pci函数
-4). pc_init_pci会调用pc_init1，pc_init1在pci_enabled情况下会调用i440fx_init (piix_pci.c)
-5). i440fx_init首先会调用qdev_create(NULL, "i440FX-pcihost")创建一个host device
-6). 然后调用pci_bus_new在该设备下面创建一个附属的pci bus。在调用该函数时，传递的name为NULL。
-下面再看看这个bus的名称怎么会变成pci.0的
-7). pci_bus_new调用pci_bus_new_inplace(bus, parent, name, devfn_min)，其中bus指向刚分配的
-内存，parent是前面创建的host device，name为NULL，devfn_min为0
-8). pci_bus_new_inplace会调用qbus_create_inplace(&bus->qbus, &pci_bus_info, parent, name)，
-注意这里的第二个参数是&pci_bus_info
-9). qbus_create_inplace在开始的地方会为该bus生成一个名称。因为传递进来的name为NULL，并且
-parent(那个host device)的id也为NULL，因此分支会跳到下面的代码
 
+1). 在main函数里面很前面的地方会调用module\_call\_init(**MODULE\_INIT\_MACHINE**);
+
+2). module\_call_init会调用**所有已注册QEMUMachine**的**init**函数。该版本的qemu是注册了pc\_machine\_rhel610, pc\_machine\_rhel600, pc\_machine\_rhel550, pc\_machine\_rhel544, pc\_machine\_rhel540这几个 (**pc.c**)
+
+3). 这些Machine的init函数(pc_init_rhel600, ...)都会调用到pc_init_pci函数
+
+4). pc_init_pci会调用pc_init1，pc_init1在pci_enabled情况下会调用i440fx_init (piix_pci.c)
+
+5). i440fx_init首先会调用qdev_create(NULL, "i440FX-pcihost")创建一个host device
+
+6). 然后调用pci_bus_new在该设备下面创建一个附属的pci bus。在调用该函数时，传递的name为NULL。
+
+下面再看看这个bus的名称怎么会变成pci.0的
+
+7). pci_bus_new调用pci_bus_new_inplace(bus, parent, name, devfn_min)，其中bus指向刚分配的内存，parent是前面创建的host device，name为NULL，devfn_min为0
+
+8). pci_bus_new_inplace会调用qbus_create_inplace(&bus->qbus, &pci_bus_info, parent, name)，
+
+注意这里的第二个参数是&pci_bus_info
+
+9). qbus_create_inplace在开始的地方会为该bus生成一个名称。因为传递进来的name为NULL，并且parent(那个host device)的id也为NULL，因此分支会跳到下面的代码
+
+```c
 len = strlen(info->name) + 16;
 buf = qemu_malloc(len);
 len = snprintf(buf, len, "%s.%d", info->name,
@@ -399,8 +407,9 @@ len = snprintf(buf, len, "%s.%d", info->name,
 for (i = 0; i < len; i++)
     buf[i] = qemu_tolower(buf[i]);
 bus->name = buf;
-10). 在该段代码中，info就是之前pci_bus_new_inplace调用时传进来的&pci_bus_info，info->name是
-字符串"PCI"。并且，因为这是在host device上创建的第一个bus，因此parent->num_child_bus = 0，
+```
+
+10). 在该段代码中，info就是之前pci_bus_new_inplace调用时传进来的&pci_bus_info，info->name是字符串"PCI"。并且，因为这是在host device上创建的第一个bus，因此parent->num_child_bus = 0，
 最后经过小写处理之后，该bus的名称就成为了"pci.0"
 
 这一段分析所对应的bus/device layout如下
