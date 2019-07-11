@@ -353,15 +353,15 @@ d.4) 返回步骤2
 
 e) 如果**bus路径为空**，则调用qbus\_find\_recursive(main\_system\_bus, NULL, info\-\>bus\_info)来获取**bus实例**。这里的**info**是driver("virtio\-net\-pci")所对应的**DeviceInfo**，即最上面的结构**virtio\-pci**的初始化步骤是virtio\_pci\_register\_devices \-\> pci\_qdev\_register\_many \-\> pci\_qdev\_register，在该函数中，会设置info\-\>bus\_info = \&pci\_bus\_info，这样就把**PCIDeviceInfo**和pci的**BusInfo**联系起来了
 
-qbus_find_recursive是一个递归函数，其流程如下：
+qbus\_find\_recursive是一个递归函数，其流程如下：
 
 e.1) 如果当前bus的名称和指定的名称相同(指定名称不为空的情况下)，并且当前bus指向的bus info和指定的bus info相同(指定bus info不为空的情况下)，则返回当前bus
 
 e.2) 这里是一个两重循环:
 
-对于当前bus所有附属的设备(bus->children为链表头)
+对于当前bus所有附属的设备(bus\-\>children为链表头)
 
-对于当前设备所有的附属bus(dev->child_bus为链表头)
+对于当前设备所有的附属bus(dev\-\>child\_bus为链表头)
 
 调用qbus_find_recursive函数
 
