@@ -381,23 +381,23 @@ j) qdev\_init会调用dev\-\>info\-\>init函数。这里实际调用的函数是
 
 2). module\_call_init会调用**所有已注册QEMUMachine**的**init**函数。该版本的qemu是注册了pc\_machine\_rhel610, pc\_machine\_rhel600, pc\_machine\_rhel550, pc\_machine\_rhel544, pc\_machine\_rhel540这几个 (**pc.c**)
 
-3). 这些Machine的init函数(pc\_init\_rhel600, ...)都会调用到pc\_init\_pci函数
+3). 这些**Machine**的**init函数**(pc\_init\_rhel600, ...)都会调用到**pc\_init\_pci函数**
 
-4). pc\_init\_pci会调用pc\_init1，pc_init1在pci_enabled情况下会调用i440fx_init (piix_pci.c)
+4). pc\_init\_pci会调用**pc\_init1**，pc\_init1在pci\_enabled情况下会调用**i440fx\_init** (piix\_pci.c)
 
-5). i440fx_init首先会调用qdev_create(NULL, "i440FX-pcihost")创建一个host device
+5). i440fx\_init首先会调用**qdev\_create**(NULL, "i440FX\-pcihost")创建一个**host device**
 
-6). 然后调用pci_bus_new在该设备下面创建一个附属的pci bus。在调用该函数时，传递的name为NULL。
+6). 然后调用pci\_bus\_new在该设备下面创建一个附属的pci bus。在调用该函数时，传递的name为NULL。
 
 下面再看看这个bus的名称怎么会变成pci.0的
 
-7). pci_bus_new调用pci_bus_new_inplace(bus, parent, name, devfn_min)，其中bus指向刚分配的内存，parent是前面创建的host device，name为NULL，devfn_min为0
+7). pci\_bus\_new调用pci\_bus\_new\_inplace(bus, parent, name, devfn\_min)，其中bus指向刚分配的内存，parent是前面创建的host device，name为NULL，devfn\_min为0
 
-8). pci_bus_new_inplace会调用qbus_create_inplace(&bus->qbus, &pci_bus_info, parent, name)，
+8). pci\_bus\_new\_inplace会调用qbus\_create\_inplace(\&bus\-\>qbus, \&pci\_bus\_info, parent, name)，
 
-注意这里的第二个参数是&pci_bus_info
+注意这里的第二个参数是\&pci\_bus\_info
 
-9). qbus_create_inplace在开始的地方会为该bus生成一个名称。因为传递进来的name为NULL，并且parent(那个host device)的id也为NULL，因此分支会跳到下面的代码
+9). qbus\_create\_inplace在开始的地方会为该bus生成一个名称。因为传递进来的name为NULL，并且parent(那个host device)的id也为NULL，因此分支会跳到下面的代码
 
 ```c
 len = strlen(info->name) + 16;
@@ -409,11 +409,12 @@ for (i = 0; i < len; i++)
 bus->name = buf;
 ```
 
-10). 在该段代码中，info就是之前pci_bus_new_inplace调用时传进来的&pci_bus_info，info->name是字符串"PCI"。并且，因为这是在host device上创建的第一个bus，因此parent->num_child_bus = 0，
+10). 在该段代码中，info就是之前pci\_bus\_new\_inplace调用时传进来的\&pci\_bus\_info，info\-\>name是字符串"PCI"。并且，因为这是在host device上创建的第一个bus，因此parent\-\>num\_child\_bus = 0，
 最后经过小写处理之后，该bus的名称就成为了"pci.0"
 
 这一段分析所对应的bus/device layout如下
-main-system-bus ---->  i440FX-pcihost ----> pci.0
+
+main\-system\-bus \-\-\-\-\>  i440FX\-pcihost \-\-\-\-\> pci.0
 
 与这段流程类似的有一张流程图可以更加详尽的介绍一下流程，但与上文介绍的内容不是一一对应的。
 
@@ -429,15 +430,15 @@ http://www.ibm.com/developerworks/cn/linux/1410_qiaoly_qemubios/
 
 # 三、相关技术-处理器管理和硬件辅助虚拟化技术
 
-Intel 在2006年发布了硬件虚拟化技术。其中支持X86体系结构的称为Intel VT-x技术。ADM称为SVM技术。
+Intel 在2006年发布了硬件虚拟化技术。其中支持X86体系结构的称为Intel VT\-x技术。ADM称为SVM技术。
 
-VT-x引入了一种新的处理器操作，叫做VMX（Virtual Machine Extension），提供了两种处理器的工作环境。VMCS结构实现两种环境之间的切换。VM Entry使虚拟机进去客户模式，VM Exit使虚拟机退出客户模式。
+VT\-x引入了一种新的处理器操作，叫做VMX（Virtual Machine Extension），提供了两种处理器的工作环境。VMCS结构实现两种环境之间的切换。VM Entry使虚拟机进去客户模式，VM Exit使虚拟机退出客户模式。
 
 ## 1 KVM中Guest OS的调度执行
 
-VMM调度Guest OS执行时，Qemu通过ioctl系统调用进入内核模式，在KVM Driver中通过get_cpu获得当前物理CPU的引用。之后将Guest状态从VMCS中读出。并装入物理CPU中。执行VMLAUCH指令使得物理处理器进入非根操作环境，运行客户代码。
+VMM调度Guest OS执行时，Qemu通过ioctl系统调用进入内核模式，在KVM Driver中通过get\_cpu获得当前物理CPU的引用。之后将Guest状态从VMCS中读出。并装入物理CPU中。执行VMLAUCH指令使得物理处理器进入非根操作环境，运行客户代码。
 
-当Guest OS执行一些特权指令或者外部事件时，比如I/O访问，对控制寄存器的操作，MSR的读写数据包到达等。都会导致物理CPU发生VMExit，停止运行Guest OS。将Guest OS保存到VMCS中，Host状态装入物理处理器中，处理器进入根操作环境，KVM取得控制权，通过读取VMCS中VM_EXIT_REASON字段得到引起VM Exit的原因。从而调用kvm_exit_handler处理函数。如果由于I/O获得信号到达，则退出到用户模式的Qemu处理。处理完毕后，重新进入客户模式运行虚拟CPU。如果是因为外部中断，则在Lib KVM中做一些必要的处理，重新进入客户模式执行客户代码。
+当Guest OS执行一些特权指令或者外部事件时，比如I/O访问，对控制寄存器的操作，MSR的读写数据包到达等。都会导致物理CPU发生VMExit，停止运行Guest OS。将Guest OS保存到VMCS中，Host状态装入物理处理器中，处理器进入根操作环境，KVM取得控制权，通过读取VMCS中VM\_EXIT\_REASON字段得到引起VM Exit的原因。从而调用kvm\_exit\_handler处理函数。如果由于I/O获得信号到达，则退出到用户模式的Qemu处理。处理完毕后，重新进入客户模式运行虚拟CPU。如果是因为外部中断，则在Lib KVM中做一些必要的处理，重新进入客户模式执行客户代码。
 
 2 KVM中内存管理
 
@@ -477,6 +478,7 @@ kvm核心代码目录：virt/kvm，其中所包含文件：
 * kvm_main.c
 
 kvm平台相关源代码文件。比如针对intel的HVM支持的vmx.c文件，以及针对AMD的HVM支持的svm.c文件。其所在目录为：arch/x86/kvm，其中所包含的文件为：
+
 * Kconfig
 * Makefile
 * i8259.c
@@ -497,7 +499,7 @@ kvm平台相关源代码文件。比如针对intel的HVM支持的vmx.c文件，�
 * x86_emulate.c
 
 
-头文件分为两种，根据平台分为include/linux和include/asm-x86目录。
+头文件分为两种，根据平台分为include/linux和include/asm\-x86目录。
 
 include/linux目录包含的是通用pc上linux的头文件，其对应文件为：
 
@@ -507,6 +509,7 @@ include/linux目录包含的是通用pc上linux的头文件，其对应文件为
 * kvm_x86_emulate.h
 
 include/asm-x86/
+
 * kvm.h
 * kvm_host.h
 * kvm_para.h
@@ -518,6 +521,6 @@ KVM虚拟机创建和运行虚拟机分为用户态和核心态两个部分，�
 
 ![](./images/2019-07-03-22-44-48.png)
 
-首先申明一个kvm_context_t变量用以描述用户态虚拟机上下文信息，然后调用kvm_init()函数初始化虚拟机上下文信息；函数kvm_create()创建虚拟机实例，该函数通过ioctl系统调用创建虚拟机相关的内核数据结构并且返回虚拟机文件描述符给用户态kvm_context_t数据结构；创建完内核虚拟机数据结构后，再创建内核pit以及mmio等基本外设模拟设备，然后调用kvm_create_vcpu()函数来创建虚拟处理器，kvm_create_vcpu()函数通过ioctl()系统调用向由vm_fd文件描述符指向的虚拟文件调用创建虚拟处理器，并将虚拟处理器的文件描述符返回给用户态程序，用以以后的调度使用；创建完虚拟处理器后，由用户态的QEMU程序申请客户机用户空间，用以加载和运行客户机代码；为了使得客户虚拟机正确执行，必须要在内核中为客户机建立正确的内存映射关系，即影子页表信息。因此，申请客户机内存地址空间后，调用函数kvm_create_phys_mem()创建客户机内存映射关系，该函数主要通过ioctl系统调用向vm_fd指向的虚拟文件调用设置内核数据结构中客户机内存域相关信息，主要建立影子页表信息；当创建好虚拟处理器和影子页表后，即可读取客户机到指定分配的空间中，然后调度虚拟处理器运行。调度虚拟机的函数为kvm_run()，该函数通过ioctl系统调用调用由虚拟处理器文件描述符指向的虚拟文件调度处理函数kvm_run()调度虚拟处理器的执行，该系统调用将虚拟处理器vcpu信息加载到物理处理器中，通过vm_entry执行进入客户机执行。在客户机正常运行期间kvm_run()函数不返回，只有发生以下两种情况时，函数返回：1，发生了I/O事件，如客户机发出读写I/O的指令；2，产生了客户机和内核KVM都无法处理的异常。I/O事件处理完毕后，通过重新调用kvm_run()函数继续调度客户机的执行。
+首先申明一个kvm\_context\_t变量用以描述用户态虚拟机上下文信息，然后调用kvm\_init()函数初始化虚拟机上下文信息；函数kvm\_create()创建虚拟机实例，该函数通过ioctl系统调用创建虚拟机相关的内核数据结构并且返回虚拟机文件描述符给用户态kvm\_context\_t数据结构；创建完内核虚拟机数据结构后，再创建内核pit以及mmio等基本外设模拟设备，然后调用kvm\_create\_vcpu()函数来创建虚拟处理器，kvm\_create\_vcpu()函数通过ioctl()系统调用向由vm_fd文件描述符指向的虚拟文件调用创建虚拟处理器，并将虚拟处理器的文件描述符返回给用户态程序，用以以后的调度使用；创建完虚拟处理器后，由用户态的QEMU程序申请客户机用户空间，用以加载和运行客户机代码；为了使得客户虚拟机正确执行，必须要在内核中为客户机建立正确的内存映射关系，即影子页表信息。因此，申请客户机内存地址空间后，调用函数kvm\_create_phys_mem()创建客户机内存映射关系，该函数主要通过ioctl系统调用向vm_fd指向的虚拟文件调用设置内核数据结构中客户机内存域相关信息，主要建立影子页表信息；当创建好虚拟处理器和影子页表后，即可读取客户机到指定分配的空间中，然后调度虚拟处理器运行。调度虚拟机的函数为kvm\_run()，该函数通过ioctl系统调用调用由虚拟处理器文件描述符指向的虚拟文件调度处理函数kvm_run()调度虚拟处理器的执行，该系统调用将虚拟处理器vcpu信息加载到物理处理器中，通过vm_entry执行进入客户机执行。在客户机正常运行期间kvm\_run()函数不返回，只有发生以下两种情况时，函数返回：1，发生了I/O事件，如客户机发出读写I/O的指令；2，产生了客户机和内核KVM都无法处理的异常。I/O事件处理完毕后，通过重新调用kvm\_run()函数继续调度客户机的执行。
 
 内存相关：http://www.linux-kvm.org/page/Memory
