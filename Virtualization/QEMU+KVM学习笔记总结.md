@@ -11,8 +11,9 @@
   - [3.3 KVM三种类型的文件描述符](#33-kvm三种类型的文件描述符)
     - [3.3.1 kvm设备](#331-kvm设备)
     - [3.3.2 具体的VM](#332-具体的vm)
-- [5 KVM工作原理](#5-kvm工作原理)
-- [二、QEMU简介](#二-qemu简介)
+    - [3.3.3 具体的VCPU](#333-具体的vcpu)
+  - [3.4 KVM工作原理](#34-kvm工作原理)
+- [4 QEMU简介](#4-qemu简介)
   - [1 QEMU的框架](#1-qemu的框架)
   - [2 QEMU的线程](#2-qemu的线程)
 - [3 QEMU的初始化流程](#3-qemu的初始化流程)
@@ -81,17 +82,29 @@ kvm驱动解析此种请求的函数是**kvm\_dev\_ioctl**(kvm\_main.c)，如**K
 
 ### 3.3.2 具体的VM
 
-其次是**具体的VM**。通过**KVM\_CREATE\_VM**创建了一个VM后，用户程序需要发送一些命令给VM，如**KVM\_CREATE\_VCPU**。这些命令当然也是要通过ioctl来发送，所以VM也需要对应一个文件描述符才行。用户程序中用ioctl发送KVM\_CREATE\_VM得到的**返回值**就是**新创建VM对应的fd**，之后利用此fd发送命令给此VM。kvm驱动解析此种请求的函数是**kvm\_vm\_ioctl**。此外，与OS线程类似，**每个VM**在kvm驱动中会对应一个VM控制块结构**struct kvm**，**每个对VM的内核操作**都基本要访问这个**结构**，那么**kvm驱动**是如何找到**请求这次命令的VM的控制块**的呢？回答这个问题首先要知道，linux内核用一个struct file结构来表示每个打开的文件，其中有一个void *private\_data字段，kvm驱动将VM控制块的地址保存到对应struct file的private_data中。用户程序发送ioctl时，指定具体的fd，内核根据fd可以找到相应的struct file，传递给kvm_vm_ioctl，再通过private_data就可以找到了。
+其次是**具体的VM**。通过**KVM\_CREATE\_VM**创建了一个VM后，用户程序需要发送一些命令给VM，如**KVM\_CREATE\_VCPU**。这些命令当然也是要通过ioctl来发送，所以**VM**也需要对应一个**文件描述符**才行。用户程序中用ioctl发送KVM\_CREATE\_VM得到的**返回值**就是**新创建VM对应的fd**，之后利用此fd发送命令给此VM。
 
-最后是具体的VCPU。原理基本跟VM情况差不多，kvm驱动解析此种请求的函数是kvm\_vcpu\_ioctl。VCPU控制块结构为**struct kvm\_vcpu**。
+kvm驱动解析此种请求的函数是**kvm\_vm\_ioctl**。
 
-# 5 KVM工作原理
+此外，与OS线程类似，**每个VM**在kvm驱动中会对应一个VM控制块结构**struct kvm**，**每个对VM的内核操作**都基本要访问这个**结构**，那么**kvm驱动**是如何找到**请求这次命令的VM的控制块**的呢？
 
-KVM的基本工作原理：用户模式的Qemu利用接口libkvm通过ioctl系统调用进入内核模式。KVM Driver为虚拟机创建虚拟内存和虚拟CPU后执行VMLAUCH指令进入客户模式。装载Guest OS执行。如果Guest OS发生外部中断或者影子页表（shadow page）缺页之类的事件，暂停Guest OS的执行，退出客户模式进行一些必要的处理。然后重新进入客户模式，执行客户代码。如果发生I/O事件或者信号队列中有信号到达，就会进入用户模式处理。KVM采用全虚拟化技术。客户机不用修改就可以运行。
+回答这个问题首先要知道，**linux内核**用一个**struct file结构**来表示**每个打开的文件**，其中有一个**void \*private\_data**字段，kvm驱动将**VM控制块的地址**保存到**对应struct file**的**private\_data**中。用户程序**发送ioctl**时，指定**具体的fd**，内核根据**fd**可以找到**相应的struct file**，传递给**kvm\_vm\_ioctl**，再通过**private\_data**就可以找到了。
+
+### 3.3.3 具体的VCPU
+
+最后是具体的VCPU。
+
+原理基本跟VM情况差不多，kvm驱动解析此种请求的函数是**kvm\_vcpu\_ioctl**。
+
+VCPU控制块结构为**struct kvm\_vcpu**。
+
+## 3.4 KVM工作原理
+
+KVM的基本工作原理：**用户模式**的**Qemu**利用接口**libkvm**通过ioctl系统调用进入内核模式。**KVM Driver**为**虚拟机**创建**虚拟内存**和**虚拟CPU**后执行**VMLAUCH指令**进入**客户模式**。装载Guest OS执行。如果Guest OS发生**外部中断**或者**影子页表**（shadow page）缺页之类的事件，暂停Guest OS的执行，退出客户模式进行一些必要的处理。然后重新进入客户模式，执行客户代码。如果发生I/O事件或者信号队列中有信号到达，就会进入用户模式处理。KVM采用全虚拟化技术。客户机不用修改就可以运行。
 
 ![](./images/2019-07-03-21-52-02.png)
 
-# 二、QEMU简介
+# 4 QEMU简介
 
 ## 1 QEMU的框架
 
