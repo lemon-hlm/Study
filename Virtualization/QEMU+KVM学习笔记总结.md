@@ -239,10 +239,13 @@ QEMU 4.0.50 monitor - type 'help' for more information
 * CPU #0: thread_id=10967
   CPU #1: thread_id=10968
 
-
+[root@gerrylee ~]# pstree -p 9080
+bash(9080)───qemu-system-x86(10962)─┬─{qemu-system-x86}(10963)
+                                    ├─{qemu-system-x86}(10964)
+                                    ├─{qemu-system-x86}(10967)
+                                    ├─{qemu-system-x86}(10968)
+                                    └─{qemu-system-x86}(10970)
 ```
-
-
 
 QEMU的主要线程:
 
@@ -251,17 +254,17 @@ QEMU的主要线程:
 - **I/O线程（aio**），**一个或者多个**
 - **worker thread(VNC/SPICE**)，**一个**
 
-qemu里有个主线程处于无限循环，会做如下操作
+qemu里有个**主线程**处于**无限循环**，会做如下操作
 
-IO线程里有个select函数，它阻塞在一个文件描述符(fd)集合上，等待其就绪。fd可以通过qemu_set_fd_handler()
+- **IO线程**里有个**select函数**，它阻塞在一个**文件描述符(fd)集合！！！** 上，等待其就绪。fd可以通过qemu\_set\_fd\_handler()添加
 
-运行到期的定时器，定时器通过qemu_mod_timer添加
+- 运行**到期的定时器**，定时器通过qemu\_mod\_timer()添加
 
-运行BH（bottom-halves），BH通过qemu_bh_schedule添加
+- 运行**BH（bottom\-halves**），BH通过qemu\_bh\_schedule()添加
 
-当文件描述符就绪，定期器到期或者BH被调度，相应的callback会被调用
+当**文件描述符就绪**，**定期器到期**或者**BH被调度**，**相应的callback**会被调用
 
-qemu中还有一些worker threads。一些占用CPU较多的工作会明显增大主IO线程的IO处理延迟，这些工作可以放在专用的线程里，例如posix-aio-compat.c中实现了异步文件I/O，当有aio请求产生，该请求被置于队列，工作线程可以在qemu主线程之外处理这些请求。VNC就是这样一个例子，它用了一个专门的worker thread(ui/vnc-jobs.c)进行计算密集型的图像压缩和编码工作。
+qemu中还有一些**worker threads**。一些占用CPU较多的工作会明显增大主IO线程的IO处理延迟，这些工作可以放在专用的线程里，例如**posix\-aio\-compat.c**中实现了**异步文件I/O**，当有aio请求产生，该请求被**置于队列**，**工作线程**可以在qemu主线程之外处理这些请求。**VNC**就是这样一个例子，它用了一个**专门的worker thread**(ui/vnc\-jobs.c)进行**计算密集型**的**图像压缩和编码**工作。
 
 # 3 QEMU的初始化流程
 
