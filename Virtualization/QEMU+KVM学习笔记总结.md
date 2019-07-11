@@ -293,7 +293,7 @@ virtio网卡设备对应的命令行参数为
 
 2). 调用module\_call\_init(MODULE\_INIT\_DEVICE); 往系统中**添加所有支持的设备类型**
 
-**virtio\-net\-pci的设备类型**信息如下(virtio\-pci.c)：
+**virtio\-net\-pci的设备类型**信息如下(**virtio\-pci.c**)：
 
 ```c
 static PCIDeviceInfo virtio_info[] = {
@@ -323,11 +323,11 @@ static PCIDeviceInfo virtio_info[] = {
 
 3). 调用**qemu\_opts\_foreach**(\&qemu\_device\_opts, **device\_init\_func**, NULL, 1) **创建命令行上指定的设备**
 
-4). **device\_init\_func**调用qdev\_device\_add(opts)
+4). **device\_init\_func**调用**qdev\_device\_add**(opts)
 
-5). qdev_device_add函数的流程如下：
+5). qdev\_device\_add函数的流程如下：
 
-a) 调用qemu_opt_get(opts, "driver")获取driver选项，这里应该是virtio-net-pci
+a) 调用qemu\_opt\_get(opts, "driver")获取**driver选项**，这里应该是virtio\-net\-pci
 
 b) 调用qdev_find_info(NULL, driver)来获取注册的DeviceInfo，这里应该是上面virtio_info里面关于virtio-net-pci的结构
 
