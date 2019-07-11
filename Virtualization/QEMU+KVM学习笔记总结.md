@@ -192,7 +192,9 @@ QEMU的**主事件循环**是**main\_loop\_wait**()（**main\-loop.c**文件）�
 
 TCG通过**动态二进制转化(dynamic binary translation**)来模拟guest，它也以**即时编译(Just\-in\-Time compilation**)被熟知。
 
-而KVM则是利用现有的现代intel和AMD CPU中硬件虚拟化扩展来**直接**安全的在host CPU上执行guest代码。在这篇文章中，真正重要的并不是实际的技术，不管是TCG还是KVM都允许我们跳转到guest代码中并且执行它。
+而KVM则是利用现有的现代intel和AMD CPU中硬件虚拟化扩展来**直接**安全的在**host CPU**上执行guest代码。
+
+在这篇文章中，真正重要的并不是实际的技术，不管是**TCG**还是**KVM**都允许我们**跳转到guest代码**中并且执行它。
 
 **跳入guest代码**中会使我们失去对程序执行的控制而**把控制交给guest**。而一个**正在执行guest代码**的**线程**不能同时处在**事件循环**中，因为**guest控制着CPU**。一般情况下，花在guest代码中的时间是有限的。因为对于被**模拟设备**的寄存器的读写和其他异常导致我们离开guest而把控制交还给QEMU。在极端的情况下一个guest可以花费无限制的时间而不放弃控制权，而这会引起QEMU无响应。
 
