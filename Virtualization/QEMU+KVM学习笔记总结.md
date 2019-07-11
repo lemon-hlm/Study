@@ -252,9 +252,8 @@ bash(9080)───qemu-system-x86(10962)─┬─{qemu-system-x86}(10963)
                                     ├─{qemu-system-x86}(10968)
                                     └─{qemu-system-x86}(10970)
 
-(qemu) info cpus
-* CPU #0: thread_id=10967
-  CPU #1: thread_id=10968
+(qemu) info iothreads
+(qemu)
 ```
 
 QEMU的主要线程:
