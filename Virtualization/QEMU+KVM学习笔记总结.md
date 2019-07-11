@@ -24,8 +24,8 @@
       - [4.1.6.1 non\-iothread线程架构](#4161-non-iothread线程架构)
       - [4.1.6.2 iothread线程架构](#4162-iothread线程架构)
   - [4.2 QEMU的线程](#42-qemu的线程)
-- [3 QEMU的初始化流程](#3-qemu的初始化流程)
-  - [4 QEMU虚拟网卡设备的创建流程](#4-qemu虚拟网卡设备的创建流程)
+- [5 QEMU的初始化流程](#5-qemu的初始化流程)
+- [6 QEMU虚拟网卡设备的创建流程](#6-qemu虚拟网卡设备的创建流程)
   - [5 QEMU网卡的流程](#5-qemu网卡的流程)
 - [三、相关技术-处理器管理和硬件辅助虚拟化技术](#三-相关技术-处理器管理和硬件辅助虚拟化技术)
   - [1 KVM中Guest OS的调度执行](#1-kvm中guest-os的调度执行)
@@ -275,13 +275,13 @@ qemu里有个**主线程**处于**无限循环**，会做如下操作(main\_loop
 
 qemu中还有一些**worker threads**。一些占用CPU较多的工作会明显增大主IO线程的IO处理延迟，这些工作可以放在专用的线程里，例如**posix\-aio\-compat.c**中实现了**异步文件I/O**，当有aio请求产生，该请求被**置于队列**，**工作线程**可以在qemu主线程之外处理这些请求。**VNC**就是这样一个例子，它用了一个**专门的worker thread**(ui/vnc\-jobs.c)进行**计算密集型**的**图像压缩和编码**工作。
 
-# 3 QEMU的初始化流程
+# 5 QEMU的初始化流程
 
 待续
 
-## 4 QEMU虚拟网卡设备的创建流程
+# 6 QEMU虚拟网卡设备的创建流程
 
-虚拟网卡类型为virtio-net-pci
+**虚拟网卡类型**为**virtio\-net\-pci**
 
 virtio网卡设备对应的命令行参数为 
 
@@ -289,11 +289,11 @@ virtio网卡设备对应的命令行参数为
 -device virtio-net-pci,netdev=hostnet0,id=net0,mac=00:16:36:01:c4:86,bus=pci.0,addr=0x3
 ```
 
-1). 在parse命令行的时候，qemu把所有的-device选项parse后保存到qemu_device_opts中
+1). 在parse命令行的时候，qemu把**所有的\-device选项**parse后保存到**qemu\_device\_opts**中
 
-2). 调用module_call_init(MODULE_INIT_DEVICE); 往系统中添加所有支持的设备类型
+2). 调用module\_call\_init(MODULE\_INIT\_DEVICE); 往系统中**添加所有支持的设备类型**
 
-virtio-net-pci的设备类型信息如下(virtio-pci.c)：
+**virtio\-net\-pci的设备类型**信息如下(virtio\-pci.c)：
 
 ```c
 static PCIDeviceInfo virtio_info[] = {
@@ -321,9 +321,9 @@ static PCIDeviceInfo virtio_info[] = {
    };
 ```
 
-3). 调用qemu_opts_foreach(&qemu_device_opts, device_init_func, NULL, 1) 创建命令行上指定的设备
+3). 调用**qemu\_opts\_foreach**(\&qemu\_device\_opts, **device\_init\_func**, NULL, 1) **创建命令行上指定的设备**
 
-4). device_init_func调用qdev_device_add(opts)
+4). **device\_init\_func**调用qdev\_device\_add(opts)
 
 5). qdev_device_add函数的流程如下：
 
