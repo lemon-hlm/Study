@@ -327,17 +327,17 @@ static PCIDeviceInfo virtio_info[] = {
 
 5). qdev\_device\_add函数的流程如下：
 
-a) 调用**qemu\_opt\_get**(opts, "driver")获取**driver选项**，这里应该是**virtio\-net\-pci**
+a) 调用**qemu\_opt\_get**(opts, "**driver**")获取**driver选项**，这里应该是**virtio\-net\-pci**
 
 b) 调用**qdev\_find\_info**(NULL, driver)来获取**注册的DeviceInfo**，这里应该是上面**virtio\_info里面**关于**virtio\-net\-pci的结构**
 
-c) 调用qemu\_opt_get(opts, "bus")获取bus路径，以/分隔各组件。这里是pci.0
+c) 调用qemu\_opt_get(opts, "**bus**")获取**bus路径**，以/分隔各组件。这里是**pci.0**
 
-d) 如果bus路径不为空，则调用qbus_find(path)来获取bus实例(BusState结构)
+d) 如果**bus路径不为空**，则调用**qbus\_find**(path)来获取**bus实例**(**BusState结构**)
 
-qbus_find函数的流程如下：
+qbus\_find函数的流程如下：
 
-d.1) 先找到路径中的根bus，如果路径以/开头，则根bus为main_system_bus，否则，使用qbus_find_recursive(main_system_bus, elem, NULL)来查找。这里的elem = "pci.0"
+d.1) 先找到路径中的**根bus**，如果路径以/开头，则根bus为**main\_system\_bus**，否则，使用qbus\_find\_recursive(main\_system\_bus, elem, NULL)来查找。这里的elem = "pci.0"
 
 d.2) 如果整个路径已经完成，则返回当前bus
 
