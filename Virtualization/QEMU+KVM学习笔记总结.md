@@ -331,7 +331,7 @@ a) 调用**qemu\_opt\_get**(opts, "driver")获取**driver选项**，这里应该
 
 b) 调用**qdev\_find\_info**(NULL, driver)来获取**注册的DeviceInfo**，这里应该是上面**virtio\_info里面**关于**virtio\-net\-pci的结构**
 
-c) 调用qemu_opt_get(opts, "bus")获取bus路径，以/分隔各组件。这里是pci.0
+c) 调用qemu\_opt_get(opts, "bus")获取bus路径，以/分隔各组件。这里是pci.0
 
 d) 如果bus路径不为空，则调用qbus_find(path)来获取bus实例(BusState结构)
 
