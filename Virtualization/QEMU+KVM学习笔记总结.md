@@ -327,9 +327,9 @@ static PCIDeviceInfo virtio_info[] = {
 
 5). qdev\_device\_add函数的流程如下：
 
-a) 调用qemu\_opt\_get(opts, "driver")获取**driver选项**，这里应该是virtio\-net\-pci
+a) 调用**qemu\_opt\_get**(opts, "driver")获取**driver选项**，这里应该是**virtio\-net\-pci**
 
-b) 调用qdev_find_info(NULL, driver)来获取注册的DeviceInfo，这里应该是上面virtio_info里面关于virtio-net-pci的结构
+b) 调用**qdev\_find\_info**(NULL, driver)来获取**注册的DeviceInfo**，这里应该是上面**virtio\_info里面**关于**virtio\-net\-pci的结构**
 
 c) 调用qemu_opt_get(opts, "bus")获取bus路径，以/分隔各组件。这里是pci.0
 
