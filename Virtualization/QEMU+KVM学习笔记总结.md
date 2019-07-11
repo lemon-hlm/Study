@@ -289,7 +289,7 @@ virtio网卡设备对应的命令行参数为
 -device virtio-net-pci,netdev=hostnet0,id=net0,mac=00:16:36:01:c4:86,bus=pci.0,addr=0x3
 ```
 
-注: \-device是**QEMU模拟的前端**, 即**客户机里看到的设备**
+注: \-device是**QEMU模拟的前端**, 即**客户机里看到的设备**, 这是统一的设备命令参数
 
 1). 在parse命令行的时候，qemu把**所有的\-device选项**parse后保存到**qemu\_device\_opts**中
 
@@ -339,19 +339,19 @@ d) 如果**bus路径不为空**，则调用**qbus\_find**(path)来获取**bus实
 
 qbus\_find函数的流程如下：
 
-d.1) 先找到路径中的**根bus**，如果路径以/开头，则根bus为**main\_system\_bus**，否则，使用qbus\_find\_recursive(main\_system\_bus, elem, NULL)来查找。这里的elem = "pci.0"
+d.1) 先找到路径中的**根bus**，如果**路径以/开头**，则根bus为**main\_system\_bus**，否则，使用qbus\_find\_recursive(main\_system\_bus, elem, NULL)来查找。这里的elem = "**pci.0**"
 
-d.2) 如果整个路径已经完成，则返回当前bus
+d.2) 如果整个路径已经完成，则返回**当前bus**
 
-d.2) parse出下一个组件，调用qbus_find_dev查找对应的设备
+d.2) parse出下一个组件，调用qbus\_find\_dev查找对应的设备
 
-d.3) parse出下一个组件，调用qbus_find_bus查找属于上层设备的子bus
+d.3) parse出下一个组件，调用qbus\_find\_bus查找属于上层设备的**子bus**
 
 d.4) 返回步骤2
 
-由于这里的值是pci.0，因此其实只进行了一次qbus_find_recursive调用
+由于这里的值是pci.0，因此其实只进行了一次qbus\_find\_recursive调用
 
-e) 如果bus路径为空，则调用qbus_find_recursive(main_system_bus, NULL, info->bus_info)来获取bus实例。这里的info是driver("virtio-net-pci")所对应的DeviceInfo，即最上面的结构virtio-pci的初始化步骤是virtio_pci_register_devices -> pci_qdev_register_many -> pci_qdev_register，在该函数中，会设置info->bus_info = &pci_bus_info，这样就把PCIDeviceInfo和pci的BusInfo联系起来了
+e) 如果**bus路径为空**，则调用qbus\_find\_recursive(main\_system\_bus, NULL, info\-\>bus\_info)来获取**bus实例**。这里的**info**是driver("virtio\-net\-pci")所对应的**DeviceInfo**，即最上面的结构virtio\-pci的初始化步骤是virtio\_pci\_register\_devices \-\> pci\_qdev\_register\_many \-\> pci\_qdev\_register，在该函数中，会设置info\-\>bus\_info = \&pci\_bus\_info，这样就把**PCIDeviceInfo**和pci的**BusInfo**联系起来了
 
 qbus_find_recursive是一个递归函数，其流程如下：
 
