@@ -23,7 +23,7 @@
     - [4.1.6 IOTHREAD和NON\-IOTHREAD线程架构](#416-iothread和non-iothread线程架构)
       - [4.1.6.1 non\-iothread线程架构](#4161-non-iothread线程架构)
       - [4.1.6.2 iothread线程架构](#4162-iothread线程架构)
-  - [2 QEMU的线程](#2-qemu的线程)
+  - [4.2 QEMU的线程](#42-qemu的线程)
 - [3 QEMU的初始化流程](#3-qemu的初始化流程)
   - [4 QEMU虚拟网卡设备的创建流程](#4-qemu虚拟网卡设备的创建流程)
   - [5 QEMU网卡的流程](#5-qemu网卡的流程)
@@ -222,22 +222,34 @@ TCG通过**动态二进制转化(dynamic binary translation**)来模拟guest，�
 
 一种更新的架构是**每个vcpu一个QEMU线程**外加**一个专用的事件循环线程**。这个模型被定义为iothread或者CONFIG\_IOTHREAD，它可以通过./configure \-\-enable\-io\-thread在创建时开启。
 
-**每个vcpu线程**可以**平行的执行guest代码**，以此提供真正的SMP支持。而**iothread**执行**事件循环**。核心QEMU代码不能同时执行的规则通过一个全局互斥来维护，并通过该互斥锁同步vcpu和iothread间核心QEMU代码。大多数时候vcpu线程在执行guest代码而不需要获取全局互斥锁。大多数时间iothread被阻塞在select(2)因而也不需要获取全局互斥锁。
+**每个vcpu线程**可以**平行的执行guest代码**，以此提供真正的SMP支持。而**iothread**执行**事件循环**。**核心QEMU代码**不能同时执行的规则通过一个**全局互斥**来维护，并通过**该互斥锁**同步**vcpu**和**iothread**间核心QEMU代码。大多数时候**vcpu线程**在执行**guest代码**而不需要获取全局互斥锁。大多数时间**iothread**被阻塞在**select**(2)因而也不需要获取全局互斥锁。
 
-注意，TCG不是线程安全的，所以即使在在iothread模式下，它还是在一个QEMU线程中执行多个vcpu。只有KVM可以真正利用每个vcpu一个线程的优势。
+注意，**TCG不是线程安全**的，所以即使在在**iothread模式**下，它还是在**一个QEMU线程**中**执行多个vcpu**。只有KVM可以真正利用每个vcpu一个线程的优势。
 
-## 2 QEMU的线程
+## 4.2 QEMU的线程
 
-HOST将qemu当做一个普通的进程和其他进程统一调度，可以使用资源对qemu进行资源预留隔离(cpuset)和优先级提升(chrt)。qemu进程包含多个线程，分配给GUEST的每个vcpu都对应一个vcpu线程，另外qemu还有一个线程循环执行select专门处理I/O事件。
+HOST将**qemu**当做一个**普通的进程**和其他进程统一调度，可以使用资源对qemu进行**资源预留隔离(cpuset**)和**优先级提升(chrt**)。
+
+**qemu进程**包含**多个线程**，分配给GUEST的**每个vcpu**都对应**一个vcpu线程**，另外**qemu**还有一个**线程**循环执行**select专门处理I/O事件**。
+
+```
+[root@gerrylee ~]# qemu-system-x86_64 -enable-kvm -smp 2 -m 2G,slots=4,maxmem=4G -hda /data/images/centos7.4.20g.qcow2 -display vnc=:0 -device piix3-usb-uhci -device usb-tablet -monitor stdio
+QEMU 4.0.50 monitor - type 'help' for more information
+(qemu) info cpus
+* CPU #0: thread_id=10967
+  CPU #1: thread_id=10968
+
+
+```
+
+
 
 QEMU的主要线程:
 
-主线程（main_loop），一个
-vCPU线程，一个或者多个
-
-I/O线程（aio），一个或者多个
-
-worker thread(VNC/SPICE)，一个
+- **主线程（main\_loop**），**一个**
+- **vCPU线程**，**一个或者多个**
+- **I/O线程（aio**），**一个或者多个**
+- **worker thread(VNC/SPICE**)，**一个**
 
 qemu里有个主线程处于无限循环，会做如下操作
 
