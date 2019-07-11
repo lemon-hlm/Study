@@ -289,6 +289,8 @@ virtio网卡设备对应的命令行参数为
 -device virtio-net-pci,netdev=hostnet0,id=net0,mac=00:16:36:01:c4:86,bus=pci.0,addr=0x3
 ```
 
+注: \-device是**QEMU模拟的前端**, 即**客户机里看到的设备**
+
 1). 在parse命令行的时候，qemu把**所有的\-device选项**parse后保存到**qemu\_device\_opts**中
 
 2). 调用module\_call\_init(MODULE\_INIT\_DEVICE); 往系统中**添加所有支持的设备类型**
