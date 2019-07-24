@@ -195,7 +195,7 @@ No.|sub-commands|comment
 
 例如：
 
-> $> perf top -e cycles:pp
+> \$> perf top \-e cycles:pp
 
 ### 4.2.1 性能事件的精度级别
 
@@ -204,7 +204,7 @@ Level | Comment
 0 | 无精度保证
 1 | 采样指令与触发性能事件的指令之间的偏差为常数（:p）
 2 | 需要尽量保证采样指令与触发性能事件的指令的偏差为0（:pp）
-3 | 保证采样指令与触发性能事件的指令之间的偏差必须为0（：ppp）
+3 | 保证采样指令与触发性能事件的指令之间的偏差必须为0（ppp）
 
 目前X86处理器，包括Intel处理器与AMD处理器Jun仅能实现前3个精度级别。
 
@@ -223,7 +223,7 @@ p | 精度级别。
 
 另外需要补充的是，perf list工具仅列出了具有字符描述的硬件性能事件。而那些没有预定义字符描述的性能事件，也可以通过特殊方式使用。这时，就需要我们根据CPU的手册，通过性能事件的标号配置PMU的性能计数器。可以采用如下方式：
 
-> $> perf top -e r[UMask+EventSelect]
+> \$\> perf top \-e r\[UMask\+EventSelect]
 
 举个例子，我们现在想统计所有从内存中读过数据的指令的个数，perf list中并为预定义此事件的字符描述。通过查找intel的处理器手册，我们找了此事件编码：
 
@@ -235,7 +235,7 @@ Event Num. | Umask Value | Event Mask Mnemonic | Description
 
 便可以通过以下方式使用此事件：
 
-> $> perf stat -e r010b ls
+> \$\> perf stat \-e r010b ls
 
 # 5 Perf top工具
 
