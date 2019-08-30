@@ -95,7 +95,7 @@ Authoritative answers can be found from:
 
 cname记录是别名记录，也成为规范名字。这种记录允许将多个名字映射到同一台计算机
 
-输入set type=cname可以查询
+输入`set type=cname`可以查询
 
 ```
 [root@gerry ~]# nslookup
