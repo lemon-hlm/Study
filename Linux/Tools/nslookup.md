@@ -7,6 +7,7 @@
 - [2 A记录](#2-a记录)
 - [3 MX记录](#3-mx记录)
 - [4 NS记录](#4-ns记录)
+- [5 CNAME记录](#5-cname记录)
 
 <!-- /code_chunk_output -->
 
@@ -46,7 +47,7 @@ Address: 106.75.240.122
 
 # 3 MX记录
 
-MX（mail exchanger）记录，邮件交换记录，它指向一个邮件服务器，用于电子邮件系统
+MX（mail exchanger）记录，**邮件交换记录**，它指向一个邮件服务器，用于电子邮件系统
 
 发邮件时根据收信人的地址后缀来定位邮件服务器。
 
@@ -90,3 +91,19 @@ Authoritative answers can be found from:
 >
 ```
 
+# 5 CNAME记录
+
+cname记录是别名记录，也成为规范名字。这种记录允许将多个名字映射到同一台计算机
+
+输入set type=cname可以查询
+
+```
+[root@gerry ~]# nslookup
+> set type=cname
+> bilibili.com
+Server:		172.16.100.2
+Address:	172.16.100.2#53
+
+Name:	bilibili.com
+Address: 106.75.240.122
+```
