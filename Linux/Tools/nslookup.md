@@ -6,6 +6,7 @@
 - [1 nslookup作用](#1-nslookup作用)
 - [2 A记录](#2-a记录)
 - [3 MX记录](#3-mx记录)
+- [4 NS记录](#4-ns记录)
 
 <!-- /code_chunk_output -->
 
@@ -50,4 +51,42 @@ MX（mail exchanger）记录，邮件交换记录，它指向一个邮件服务�
 发邮件时根据收信人的地址后缀来定位邮件服务器。
 
 输入set type=mx，再输入域名可查询mx类型记录
+
+```
+[root@gerry ~]# nslookup
+> set type=mx
+> bilibili.com
+Server:		172.16.100.2
+Address:	172.16.100.2#53
+
+Non-authoritative answer:
+bilibili.com	mail exchanger = 5 mxbiz1.qq.com.
+bilibili.com	mail exchanger = 10 mxbiz2.qq.com.
+
+Authoritative answers can be found from:
+>
+```
+
+MX perference = 10 指MX记录的优先级
+
+# 4 NS记录
+
+NS（nameserver）记录，用来指定改域名由那个DNS服务器来进行解析。
+
+先输入set type=ns再输入域名
+
+```
+[root@gerry ~]# nslookup
+> set type=ns
+> bilibili.com
+Server:		172.16.100.2
+Address:	172.16.100.2#53
+
+Non-authoritative answer:
+bilibili.com	nameserver = ns3.dnsv5.com.
+bilibili.com	nameserver = ns4.dnsv5.com.
+
+Authoritative answers can be found from:
+>
+```
 
