@@ -8,7 +8,7 @@
 - [3 MX记录](#3-mx记录)
 - [4 NS记录](#4-ns记录)
 - [5 CNAME记录](#5-cname记录)
-- [](#)
+- [6 其他记录](#6-其他记录)
 
 <!-- /code_chunk_output -->
 
@@ -79,6 +79,30 @@ Address: 106.75.240.122
 >
 ```
 
+```
+[root@gerry ~]# nslookup -type=A tencent.com 8.8.8.8
+Server:		8.8.8.8
+Address:	8.8.8.8#53
+
+Non-authoritative answer:
+Name:	tencent.com
+Address: 113.107.238.15
+Name:	tencent.com
+Address: 119.147.33.33
+Name:	tencent.com
+Address: 113.96.156.151
+Name:	tencent.com
+Address: 113.96.156.150
+Name:	tencent.com
+Address: 203.205.158.34
+Name:	tencent.com
+Address: 113.107.238.11
+Name:	tencent.com
+Address: 119.147.33.36
+Name:	tencent.com
+Address: 113.107.238.14
+```
+
 # 3 MX记录
 
 ```
@@ -122,6 +146,10 @@ MX perference = 10 指MX记录的优先级
 
 NS（nameserver）记录，用来指定**该域名由那个DNS服务器**来进行解析。
 
+```
+nslookup -type=mx bilibili.com
+```
+
 先输入set type=ns再输入域名
 
 ```
@@ -156,4 +184,30 @@ Name:	bilibili.com
 Address: 106.75.240.122
 ```
 
-# 
+# 6 其他记录
+
+```
+nslookup -type=type domain [dns-server]
+```
+
+其中，type可以是以下这些类型：
+
+* A 地址记录（Ipv4）
+* AAAA 地址记录（Ipv6）
+* AFSDB Andrew文件系统数据库服务器记录
+* ATMA ATM地址记录
+* CNAME 别名记录
+* HINFO 硬件配置记录，包括CPU、操作系统信息
+* ISDN 域名对应的ISDN号码
+* MB 存放指定邮箱的服务器
+* MG 邮件组记录
+* MINFO 邮件组和邮箱的信息记录
+* MR 改名的邮箱记录
+* MX 邮件服务器记录
+* NS 名字服务器记录
+* PTR 反向记录（从IP地址解释域名）
+* RP 负责人记录
+* RT 路由穿透记录
+* SRV TCP服务器信息记录
+* TXT 域名对应的文本信息
+* X25 域名对应的X.25地址记录
