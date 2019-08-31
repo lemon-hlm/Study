@@ -8,6 +8,7 @@
 - [3 MX记录](#3-mx记录)
 - [4 NS记录](#4-ns记录)
 - [5 CNAME记录](#5-cname记录)
+- [](#)
 
 <!-- /code_chunk_output -->
 
@@ -29,10 +30,22 @@ nameserver 172.16.100.2
 
 # 2 A记录
 
+默认选项
+
 A（Address）记录指的是用来指定**主机名或域名对应的IP记录**。
 
 ```
 nslookup domain [dns-server]
+```
+
+```
+[root@gerry ~]# nslookup -type=A bilibili.com 8.8.8.8
+Server:		8.8.8.8
+Address:	8.8.8.8#53
+
+Non-authoritative answer:
+Name:	bilibili.com
+Address: 106.75.240.122
 ```
 
 如果没有指定dns\-server, 用系统默认的dns服务器.
@@ -68,7 +81,23 @@ Address: 106.75.240.122
 
 # 3 MX记录
 
+```
+nslookup -type=mx domain [dns-server]
+```
+
 MX（mail exchanger）记录，**邮件交换记录**，它指向一个**邮件服务器**，用于电子邮件系统发邮件时根据**收信人的地址后缀**来**定位邮件服务器**。
+
+```
+[root@gerry ~]# nslookup -type=mx bilibili.com
+Server:		172.16.100.2
+Address:	172.16.100.2#53
+
+Non-authoritative answer:
+bilibili.com	mail exchanger = 10 mxbiz2.qq.com.
+bilibili.com	mail exchanger = 5 mxbiz1.qq.com.
+
+Authoritative answers can be found from:
+```
 
 输入set type=mx，再输入域名可查询mx类型记录
 
@@ -91,7 +120,7 @@ MX perference = 10 指MX记录的优先级
 
 # 4 NS记录
 
-NS（nameserver）记录，用来指定改域名由那个DNS服务器来进行解析。
+NS（nameserver）记录，用来指定**该域名由那个DNS服务器**来进行解析。
 
 先输入set type=ns再输入域名
 
@@ -112,7 +141,7 @@ Authoritative answers can be found from:
 
 # 5 CNAME记录
 
-cname记录是别名记录，也成为规范名字。这种记录允许将多个名字映射到同一台计算机
+cname记录是**别名记录**，也成为规范名字。这种记录允许将多个名字映射到同一台计算机
 
 输入`set type=cname`可以查询
 
@@ -127,3 +156,4 @@ Name:	bilibili.com
 Address: 106.75.240.122
 ```
 
+# 
