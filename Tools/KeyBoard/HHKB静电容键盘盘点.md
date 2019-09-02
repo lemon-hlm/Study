@@ -3,11 +3,11 @@
 
 <!-- code_chunk_output -->
 
-* [0 概述](#0-概述)
-* [1 HHKB Professional 2](#1-hhkb-professional-2)
-* [2 HHKB Professional 2 Type\-S](#2-hhkb-professional-2-type-s)
-* [3 HHKB Professional BT](#3-hhkb-professional-bt)
-* [4 参考](#4-参考)
+- [0 概述](#0-概述)
+- [1 HHKB Professional 2](#1-hhkb-professional-2)
+- [2 HHKB Professional 2 Type\-S](#2-hhkb-professional-2-type-s)
+- [3 HHKB Professional BT](#3-hhkb-professional-bt)
+- [4 参考](#4-参考)
 
 <!-- /code_chunk_output -->
 
@@ -45,7 +45,7 @@ HHKB Professional BT是HHKB第一款无线产品，并且同样兼容全平台�
 
 HHKB Professional BT外观依旧是延续其经典的按键布局，共推出了黑有刻、黑无刻、白有刻、白无刻四种不同配色，用户可以根据个人需求进行选择。
 
-![config](./images/5.jpg)
+![config](./images/5.jpeg)
 
 与以往系列的静电容键盘不同的是HHKB Professional BT在上边缘位置设计了圆柱形的电池仓，采用AA电池进行供电，虽然看起来有点落伍，但与内置锂电池的设计相比，续航时间大幅延长，即便偶尔遇到电池没电也可以通过更换电池来快速解决。
 
