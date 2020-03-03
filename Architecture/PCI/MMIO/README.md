@@ -1,0 +1,1 @@
+MMIO（Memory mapping I/O，内存映射I/O）。

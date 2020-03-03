@@ -1,0 +1,120 @@
+#=============================================================================
+# basic.toml --- basic configuration example for SpaceVim
+# Copyright (c) 2016-2017 Wang Shidong & Contributors
+# Author: Wang Shidong < wsdjeg at 163.com >
+# URL: https://spacevim.org
+# License: GPLv3
+#=============================================================================
+
+# All SpaceVim option below [option] section
+[options]
+    # set spacevim theme. by default colorscheme layer is not loaded,
+    # if you want to use more colorscheme, please load the colorscheme
+    # layer
+    colorscheme = "gruvbox"
+    background = "dark"
+    # Disable guicolors in basic mode, many terminal do not support 24bit
+    # true colors
+    enable_guicolors = true
+    # Disable statusline separator, if you want to use other value, please
+    # install nerd fonts
+#statusline_separator = "curve"
+#statusline_inactive_separator = "bar"
+    buffer_index_type = 0
+    windows_index_type = 3
+    enable_tabline_filetype_icon = true
+    enable_statusline_display_mode = false
+#statusline_unicode_symbols = false
+    # Enable vim compatible mode, avoid changing origin vim key bindings
+    vimcompatible = true
+    guifont = "SauceCodePro Nerd Font Mono:h13"
+    statusline_unicode_symbols = true
+    termguicolors = true
+    # 默认缩进
+    default_indent = 4
+    # 使用原生vim的配置
+    vimcompatible = false
+    # 中文帮助文档
+    vim_help_language = "cn"
+
+# Enable autocomplete layer
+[[layers]]
+name = 'autocomplete'
+auto-completion-return-key-behavior = "complete"
+auto-completion-tab-key-behavior = "complete"
+auto-completion-delay = 50
+auto-completion-complete-with-key-sequence = 'kl'
+auto-completion-complete-with-key-sequence-delay = 0.1
+
+[[layers]]
+name = 'core#banner'
+
+[[layers]]
+name = "core#statusline"
+
+[[layers]]
+name = 'core#tabline'
+
+[[layers]]
+name = 'cscope'
+
+[[layers]]
+name = "ctrlp"
+
+[[layers]]
+name = "debug"
+
+[[layers]]
+name = "git"
+
+[[layers]]
+name = 'tags'
+
+[[layers]]
+name = 'sudo'
+
+#[[layers]]
+#name = "unite"
+
+[[layers]]
+name = 'shell'
+default_position = 'top'
+default_height = 30
+
+[[layers]]
+name = "lang#python"
+
+[[layers]]
+name = "VersionControl"
+
+[[layers]]
+name = 'chinese'
+
+[[layers]]
+name = "lang#c"
+
+[[layers]]
+name = 'ui'
+
+#[[custom_plugins]]
+#name = 'majutsushi/tagbar'
+
+# 快速文件搜索
+#[[custom_plugins]]
+#name = "kien/ctrlp.vim"
+
+# 自动进行tab2space转换
+[[custom_plugins]]
+name = 'vim-scripts/Smart-Tabs'
+
+# vim 列对齐线
+[[custom_plugins]]
+name = 'nathanaelkane/vim-indent-guides'
+
+# 撤销记录列表 
+[[custom_plugins]]
+name = 'sjl/gundo.vim'
+
+# 为buff自动创建不存在的目录
+[[custom_plugins]]
+name = 'pbrisbin/vim-mkdir'

@@ -1,0 +1,3 @@
+- MCA机制: 硬件错误检测框架: https://blog.csdn.net/chengm8/article/details/53003134
+- RAS在x86上的应用及Linux实现: https://www.ibm.com/developerworks/cn/linux/l-cn-ras/
+- Intel MCE CMCI概述: https://blog.csdn.net/leoufung/article/details/48780325

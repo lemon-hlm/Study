@@ -1,0 +1,3 @@
+- Intel Optane Technology首页: https://www.intel.cn/content/www/cn/zh/architecture-and-technology/intel-optane-technology.html
+- 英特尔傲腾内存原理及介绍: https://www.intel.cn/content/www/cn/zh/architecture-and-technology/optane-memory-brief.html
+- Intel Optane Memory: https://www.intel.com/content/www/us/en/architecture-and-technology/optane-memory.html
